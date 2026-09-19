@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NuNa &middot; Financial Clarity</title>
+<meta name="description" content="NuNa - clareza financeira para Ana, Manuela e o que e do casal.">
+<link rel="icon" href="data:image/svg+xml,<svg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'>%20%20<rect%20width='64'%20height='64'%20rx='16'%20fill='%231B4332'/>%20%20<path%20d='M18%2044V20h6l16%2016V20h6v24h-6L24%2028v16z'%20fill='%23FAFAF7'/></svg>">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="tela-app" hidden>
+  <div id="boot"><div class="spin"></div>Carregando seus dados&hellip;</div>
+<div class="wrap">
+  <div class="topbar">
+    <div class="marca">
+      <img class="brasao" src="assets/brasao.png" alt="Bras&atilde;o NuNa">
+      <div style="min-width:0">
+      <h1>Financial Clarity &middot; NuNa</h1>
+      <p class="period">Ana &amp; Manuela &middot; mar a out/2026 &middot; consolida&ccedil;&atilde;o autom&aacute;tica</p>
+      <p class="period" id="top-sessao" style="margin:0"></p>
+      </div>
+    </div>
+    <button class="pill" id="top-sair" title="Encerrar a sess&atilde;o e voltar para o acesso" style="flex:none;align-self:center">Sair</button>
+    <div class="theme" role="group" aria-label="Tema do dashboard">
+      <span class="theme-lab">Tema</span>
+      <div class="seg" id="theme-sel">
+        <button data-t="claro" title="Sempre claro">&#9728;&#65039; Claro</button>
+        <button data-t="escuro" title="Sempre escuro">&#127769; Escuro</button>
+        <button data-t="auto" class="on" title="Claro de dia, escuro a noite">&#9201;&#65039; Autom&aacute;tico</button>
+      </div>
+      <span class="theme-hint" id="theme-hint"></span>
+    </div>
+  </div>
+
+  <div class="profsel" id="profsel">
+    <button class="prof on" data-p="NuNa"><b>Conjunto &mdash; NuNa</b><span>o custo da vida em comum</span></button>
+    <button class="prof" data-p="Ana"><b>Ana</b><span>perfil individual</span></button>
+    <button class="prof" data-p="Manuela"><b>Manuela</b><span>perfil individual</span></button>
+  </div>
+
+  <div id="ag-cta" class="cta-row" hidden>
+    <button class="btn-big" id="ag-open">+ ACABEI DE GASTAR<span>registrar um gasto agora, sem esperar a fatura</span></button>
+    <button class="btn-big blue" id="ca-abrir">CONTRIBUI&Ccedil;&Atilde;O<span>registrar quanto ela p&ocirc;s nas contas conjuntas</span></button>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">Vis&atilde;o Geral</button>
+    <button data-tab="transactions">Transa&ccedil;&otilde;es</button>
+    <button data-tab="mvm">M&ecirc;s vs M&ecirc;s</button>
+    <button data-tab="budget">Or&ccedil;amento</button>
+    <button data-tab="gastei" id="tab-gastei" hidden>Acabei de Gastar <span class="pin" id="ag-pin" data-zero="1">0</span></button>
+    <button data-tab="review">Revisar <span class="pin" id="rev-pin">0</span></button>
+    <button data-tab="insights">Insights</button>
+    <button data-tab="dados">Dados</button>
+  </nav>
+
+  <div id="panel-overview" class="panel active">
+    <div class="pills" id="ov-months"></div>
+    <div class="kpis" id="ov-kpis"></div>
+    <div class="card" id="collab-card" hidden>
+      <h2>Indicadores de colabora&ccedil;&atilde;o</h2>
+      <div class="grid3" id="collab-kpis" style="margin-bottom:14px"></div>
+      <div id="collab-bar"></div>
+      <p class="note" id="collab-note"></p>
+    </div>
+    <div class="row">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <h2 style="margin:0">Gastos por Categoria</h2>
+          <div class="pills" style="margin:0" id="axis-sel">
+            <button class="pill on" data-ax="plano">Categoria do plano</button>
+            <button class="pill" data-ax="tipo">Tipo de gasto</button>
+          </div>
+        </div>
+        <div class="split split-donut">
+          <div style="position:relative;height:280px"><canvas id="donut"></canvas></div>
+          <ul class="legend" id="donut-legend"></ul>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <h2 style="margin:0">Caixinha</h2>
+          <span style="font-size:20px;font-weight:650;letter-spacing:-.02em;color:var(--acc)" id="caixinha-total">R$ 0,00</span>
+        </div>
+        <div id="transfers"></div>
+        <p class="note" id="transfers-note"></p>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Rastreador de Economia</h2>
+      <div class="split">
+        <div class="tile t-warn"><div class="lab">Pode cancelar (potencial economia)</div><div class="big" id="sv-pode">R$ 0,00</div><div class="sub">Soma dos lan&ccedil;amentos marcados como &ldquo;pode cancelar&rdquo; neste m&ecirc;s.</div></div>
+        <div class="tile t-ok"><div class="lab">Cancelado (j&aacute; economizado)</div><div class="big" id="sv-canc">R$ 0,00</div><div class="sub">Soma dos lan&ccedil;amentos marcados como &ldquo;cancelado&rdquo; neste m&ecirc;s.</div></div>
+      </div>
+      <p class="note" id="sv-year"></p>
+    </div>
+    <div id="contrib-row" hidden style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start">
+      <div class="card" id="ca-painel" hidden style="flex:0 0 300px;min-width:0;padding:16px">
+        <p class="note" id="ca-nota" style="margin:0 0 12px"></p>
+        <div class="agform" style="grid-template-columns:1fr">
+          <label>Valor (R$)<input type="text" id="ca-valor" inputmode="decimal" placeholder="0,00"></label>
+          <label>Descri&ccedil;&atilde;o<input type="text" id="ca-desc" placeholder="Contribui&ccedil;&atilde;o do m&ecirc;s"></label>
+        </div>
+        <button class="pill" id="ca-add" style="margin-top:12px;width:100%;justify-content:center">Registrar</button>
+        <div class="scroll" style="margin-top:12px"><table id="ca-lista"><tbody></tbody></table></div>
+      </div>
+      <div class="card" id="saldo-form" style="flex:1 1 340px;min-width:0"></div>
+    </div>
+    <footer class="insight-footer"><p class="insight-text" id="ins-ov"></p><p class="insight-meta">n4flow finance insights</p></footer>
+  </div>
+
+  <div id="panel-transactions" class="panel">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+        <h2 style="margin:0">Transa&ccedil;&otilde;es</h2>
+        <button class="btn" id="refresh-btn">Atualizar + Exportar overrides.json</button>
+      </div>
+      <div class="pills" id="tx-months"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <input type="search" id="tx-search" placeholder="Buscar descri&ccedil;&atilde;o..." style="flex:1 1 200px">
+        <select id="tx-status"><option value="">Todos os status</option><option value="pode cancelar">pode cancelar</option><option value="cancelado">cancelado</option><option value="__none">sem marca&ccedil;&atilde;o</option></select>
+        <select id="tx-tipo"><option value="">Conjunto e individual</option><option value="cj">S&oacute; conjuntos</option><option value="ind">S&oacute; individuais</option></select>
+        <select id="tx-rev"><option value="">Revisados e n&atilde;o revisados</option><option value="sim">S&oacute; a revisar</option><option value="nao">S&oacute; j&aacute; conferidos</option><option value="dup">S&oacute; poss&iacute;veis duplicidades</option></select>
+        <select id="tx-fonte"><option value="">Todas as fontes</option></select>
+      </div>
+      <div class="scroll"><table id="tx-table">
+        <thead><tr>
+          <th data-s="data">Data</th><th data-s="desc">Descri&ccedil;&atilde;o</th><th data-s="fonteLabel">Fonte</th><th data-s="perfil">Perfil</th>
+          <th data-s="divisao">Divis&atilde;o</th><th data-s="grupo">Conjunto</th>
+          <th data-s="plano">Categoria</th><th data-s="tipo">Tipo</th>
+          <th data-s="valor" class="num">Valor</th><th data-s="status">Status</th><th data-s="revisar">Rev.</th>
+        </tr></thead><tbody></tbody>
+      </table></div>
+      <p class="note" id="tx-count"></p>
+    </div>
+    <footer class="insight-footer"><p class="insight-text" id="ins-tx"></p><p class="insight-meta">n4flow finance insights</p></footer>
+  </div>
+
+  <div id="panel-mvm" class="panel">
+    <div class="card"><h2>Renda vs Gastos</h2><div style="position:relative;height:320px"><canvas id="bars"></canvas></div></div>
+    <div class="card"><h2>Saldo por m&ecirc;s &mdash; Ana, Manuela e NuNa</h2>
+      <div style="position:relative;height:300px"><canvas id="saldos"></canvas></div>
+      <p class="note">Saldo = receitas &minus; despesas individuais &minus; contribui&ccedil;&atilde;o registrada para as contas conjuntas. Pode ficar negativo &mdash; a linha do NuNa mostra o custo da vida em comum, sem receita pr&oacute;pria.</p>
+    </div>
+    <div class="card" id="contrib-card" hidden><h2>Quem contribuiu com as contas conjuntas</h2>
+      <div style="position:relative;height:320px"><canvas id="contrib"></canvas></div>
+      <div class="scroll" style="margin-top:14px"><table id="contrib-table"><thead></thead><tbody></tbody></table></div>
+      <p class="note">Contribui&ccedil;&atilde;o = o valor que cada uma registrou no bot&atilde;o CONTRIBUI&Ccedil;&Atilde;O para pagar as contas conjuntas do m&ecirc;s. A soma das duas deve fechar com o total das contas conjuntas &mdash; que por si s&oacute; &eacute; informativo e n&atilde;o entra como despesa de nenhuma delas.</p>
+    </div>
+    <div class="card"><h2>Tend&ecirc;ncia por Categoria</h2><div class="pills" id="trend-cats"></div><div style="position:relative;height:300px"><canvas id="trend"></canvas></div></div>
+    <footer class="insight-footer"><p class="insight-text" id="ins-mvm"></p><p class="insight-meta">n4flow finance insights</p></footer>
+  </div>
+
+  <div id="panel-budget" class="panel">
+    <div class="grid3" id="bd-cards" style="margin-bottom:16px"></div>
+    <div class="card"><h2>Or&ccedil;amento vs Real</h2>
+      <div class="scroll"><table id="bd-table"><thead></thead><tbody></tbody></table></div>
+      <p class="note">O or&ccedil;amento come&ccedil;a na mediana dos meses fechados (mar&ndash;ago). Edite qualquer valor da coluna Or&ccedil;amento &mdash; o status recalcula na hora.</p>
+    </div>
+    <footer class="insight-footer"><p class="insight-text" id="ins-bd"></p><p class="insight-meta">n4flow finance insights</p></footer>
+  </div>
+
+  <div id="panel-review" class="panel">
+    <div class="card">
+      <h2>Lan&ccedil;amentos a revisar</h2>
+      <p class="note" style="margin:0 0 14px" id="rev-head"></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <input type="search" id="rev-search" placeholder="Buscar descri&ccedil;&atilde;o..." style="flex:1 1 220px">
+        <select id="rev-perfil"><option value="">Todos os perfis</option><option value="Ana">Ana</option><option value="Manuela">Manuela</option></select>
+        <button class="btn" id="rev-all">Confirmar todos os vis&iacute;veis</button>
+      </div>
+      <div class="scroll"><table id="rev-table">
+        <thead><tr><th>Data</th><th>Descri&ccedil;&atilde;o</th><th>Fonte</th><th>Perfil</th><th>Divis&atilde;o</th><th>Conjunto</th><th>Categoria</th><th>Tipo</th><th class="num">Valor</th><th>Conferido</th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="note" id="rev-count"></p>
+    </div>
+    <footer class="insight-footer"><p class="insight-text" id="ins-rev"></p><p class="insight-meta">n4flow finance insights</p></footer>
+  </div>
+
+  <div id="panel-gastei" class="panel">
+    <div class="card">
+      <h2>Registrar gasto</h2>
+      <p class="note" style="margin:0 0 14px" id="ag-status-db"></p>
+      <div class="agform">
+        <label>Data<input type="date" id="ag-data"></label>
+        <label>Descri&ccedil;&atilde;o<input type="text" id="ag-desc" placeholder="Supermercado, gasolina, farm&aacute;cia..."></label>
+        <label>Valor (R$)<input type="text" id="ag-valor" inputmode="decimal" placeholder="0,00"></label>
+        <label>Fonte<select id="ag-fonte"></select></label>
+        <label>Perfil<select id="ag-perfil"><option value="Ana">Ana</option><option value="Manuela">Manuela</option></select></label>
+        <label>Categoria<select id="ag-cat"></select></label>
+        <label>Divis&atilde;o<select id="ag-div"><option value="INDIVIDUAL">INDIVIDUAL</option><option value="CONJUNTA">CONJUNTA</option></select></label>
+        <label>Grupo conjunto<select id="ag-grupo" disabled></select></label>
+      </div>
+      <p class="note" id="ag-sugestao"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn" id="ag-save">Salvar gasto</button>
+        <button class="pill" id="ag-clear">Limpar</button>
+      </div>
+    </div>
+
+    <div class="kpis" id="ag-kpis"></div>
+
+    <div class="card">
+      <h2>Hoje</h2>
+      <div class="scroll"><table id="ag-hoje"><thead><tr><th>Descri&ccedil;&atilde;o</th><th>Fonte</th><th>Perfil</th><th>Categoria</th><th>Divis&atilde;o</th><th class="num">Valor</th><th>Status</th><th></th></tr></thead><tbody></tbody></table></div>
+      <p class="note" id="ag-hoje-vazio"></p>
+    </div>
+
+    <div class="card">
+      <h2>Dias anteriores deste m&ecirc;s</h2>
+      <div class="scroll"><table id="ag-dias"><thead><tr><th>Data</th><th class="num">Lan&ccedil;amentos</th><th class="num">Total gasto</th><th class="num">Individual</th><th class="num">Conjunto</th><th class="num">J&aacute; na fatura</th></tr></thead><tbody></tbody></table></div>
+      <p class="note">Dias encerrados mostram s&oacute; o total. O detalhe item a item de cada gasto continua na aba <b>Transa&ccedil;&otilde;es</b>.</p>
+    </div>
+
+    <div class="card">
+      <h2>Relat&oacute;rio do Agente Financeiro</h2>
+      <div id="ag-relatorio"></div>
+    </div>
+
+    <div class="card">
+      <h2>Hist&oacute;rico por m&ecirc;s</h2>
+      <div class="scroll"><table id="ag-hist"><thead><tr><th>M&ecirc;s</th><th class="num">Lan&ccedil;amentos</th><th class="num">Total registrado</th><th class="num">vs. m&ecirc;s anterior</th><th>Opini&atilde;o do Agente</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <div class="card">
+      <h2>Por forma de pagamento</h2>
+      <div class="scroll"><table id="ag-fontes"><thead><tr><th>Fonte</th><th class="num">Ana</th><th class="num">Manuela</th><th class="num">Individual</th><th class="num">Conjunto</th><th class="num">Total</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <footer class="insight-footer"><p class="insight-text" id="ins-ag"></p><p class="insight-meta">n4flow finance insights</p></footer>
+  </div>
+
+  <div id="panel-dados" class="panel">
+    <div class="card">
+      <h2>Importar fatura ou extrato (CSV)</h2>
+      <p class="note" style="margin:0 0 14px">O arquivo precisa ter colunas de <b>Data</b>, <b>Descri&ccedil;&atilde;o</b> e <b>Valor</b> (ou Cr&eacute;dito/D&eacute;bito). Reconhe&ccedil;o separador <code>;</code>, <code>,</code> ou tabula&ccedil;&atilde;o. Linhas que j&aacute; existem na base s&atilde;o ignoradas &mdash; importar o mesmo arquivo duas vezes n&atilde;o duplica nada.<br>
+      <b>Fatura de cart&atilde;o:</b> escolha o m&ecirc;s da fatura. Uma parcela comprada em mar&ccedil;o pertence &agrave; fatura de setembro, e s&oacute; assim ela casa com o que j&aacute; est&aacute; na base. <b>Extrato de conta:</b> deixe em &ldquo;usar a data de cada linha&rdquo;.</p>
+      <div class="agform">
+        <label>Arquivo CSV<input type="file" id="dd-file" accept=".csv,text/csv"></label>
+        <label>Fonte (quando o arquivo n&atilde;o informa)<select id="dd-fonte"><option value="">Deixar pendente de revis&atilde;o</option><option>Cartao Bradesco 8338 (Ana)</option><option>Cartao Bradesco 6897 (Ana)</option><option>Cartao Bradesco 7087 (Ana)</option><option>Cartao Bradesco 6017 (Manuela)</option><option>Banco Inter 8614 (Ana)</option><option>Banco Inter 4876 (Ana)</option><option>Pix</option><option>Debito</option><option>Boleto</option></select></label>
+        <label>Perfil padr&atilde;o<select id="dd-perfil"><option value="Ana">Ana</option><option value="Manuela">Manuela</option></select></label>
+        <label>M&ecirc;s da fatura<select id="dd-mes"><option value="">Usar a data de cada linha (extrato)</option></select></label>
+      </div>
+      <div id="dd-preview"></div>
+      <button class="btn" id="dd-aplicar" disabled style="margin-top:12px">Importar os novos lan&ccedil;amentos</button>
+    </div>
+
+    <div class="card">
+      <h2>Fechamento mensal</h2>
+      <p class="note" style="margin:0 0 12px">Marcar um m&ecirc;s como fechado sinaliza que ele est&aacute; consolidado. O detalhe de cada transa&ccedil;&atilde;o continua na aba Transa&ccedil;&otilde;es.</p>
+      <div id="dd-fech"></div>
+    </div>
+
+    <div class="card">
+      <h2>Seus dados na nuvem</h2>
+      <p class="note" id="dd-armazenamento" style="margin:0 0 14px"></p>
+      <div class="grid3" id="dd-resumo" style="margin-bottom:16px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn" id="dd-backup">Baixar backup</button>
+        <label class="pill" style="cursor:pointer">Restaurar backup<input type="file" id="dd-restaurar" accept=".json,application/json" hidden></label>
+        <button class="pill" id="dd-limpar">Apagar minhas edi&ccedil;&otilde;es</button>
+        <button class="pill" id="dd-sair" style="margin-left:auto">Sair da conta</button>
+      </div>
+      <p class="note" id="dd-sessao" style="margin-top:12px"></p>
+    </div>
+    <footer class="insight-footer"><p class="insight-text">"Os dados ficam no Supabase: as duas veem o mesmo NuNa, de qualquer aparelho. O backup continua sendo a copia que voce guarda."</p><p class="insight-meta">n4flow finance insights</p></footer>
+  </div>
+
+  <div id="panel-insights" class="panel">
+    <div class="grid3" id="in-cards" style="margin-bottom:16px"></div>
+    <div class="row">
+      <div class="card"><h2>Anomalias</h2><ul class="mini" id="in-anom"></ul></div>
+      <div class="card"><h2>Linhas est&aacute;veis</h2><ul class="mini" id="in-stable"></ul></div>
+    </div>
+    <div class="card"><h2>Onde d&aacute; pra ganhar</h2><ul class="mini" id="in-wins"></ul></div>
+    <div class="card"><h2>Controle de duplicidade</h2><ul class="mini" id="in-dup"></ul></div>
+    <div class="card"><h2>Limita&ccedil;&otilde;es dos dados</h2><ul class="mini" id="in-limit"></ul></div>
+    <div class="card"><h2>Premissas e decis&otilde;es deste dashboard</h2><ul class="mini" id="in-assum"></ul></div>
+    <footer class="insight-footer"><p class="insight-text" id="ins-in"></p><p class="insight-meta">n4flow finance insights</p></footer>
+  </div>
+</div>
+
+</div>
+
+<!-- a base vive no Supabase (tabela base_documento); data/exemplo.json e so fallback ficticio -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/store.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/core.js"></script>
+<script src="js/chart-loader.js"></script>
+<script src="js/overview.js"></script>
+<script src="js/transactions.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/csv.js"></script>
+<script src="js/dados-ui.js"></script>
+<script src="js/gastei-store.js"></script>
+<script src="js/gastei-ui.js"></script>
+<script src="js/agente.js"></script>
+<script src="js/app.js"></script>
+<script src="js/sessao-ui.js"></script>
+<script src="js/importar-base.js"></script>
+</body>
+</html>
