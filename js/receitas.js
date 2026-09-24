@@ -3,6 +3,7 @@
    - Ana: anexa o PDF do contracheque; o site le vantagens,
      descontos e compensacoes, mostra para conferir e so grava
      depois da confirmacao. O mesmo contracheque nunca entra 2x.
+   - Ana tambem lanca extras (Uber, 99, hora extra), que somam ao contracheque.
    - Manuela: informa valor + descricao; pode haver mais de uma
      receita no mes (o total do mes e a soma).
    - Meses novos (nov/2026 em diante) sao criados sozinhos.
@@ -48,6 +49,13 @@ function rcGarantirMes(b, label){
   b.monthOrder.sort(function(x, y){ return mesOrdem(x) - mesOrdem(y); });
   return true;
 }
+/* receita do mes = contracheques (Ana) + receitas informadas (extras / valores da Manuela) */
+function rcRecalcular(mm, perfil){
+  var itens = (mm.receitaItens || []).filter(function(i){ return i.perfil === perfil; });
+  var soma = itens.reduce(function(s, i){ return s + i.valor; }, 0);
+  var cc = perfil === 'Ana' ? (mm.contracheques || []).reduce(function(s, c){ return s + (c.receita != null ? c.receita : (c.vantagens - (c.compensacoes || 0))); }, 0) : 0;
+  mm.receita[perfil] = rcArred(cc + soma);
+}
 function rcMesesDisponiveis(){
   var l = MONTHS.slice(), h = new Date(), cur = h.getFullYear() * 12 + h.getMonth();
   var ult = mesOrdem(l[l.length - 1]);
@@ -71,37 +79,35 @@ function rcRender(){
   var eu = rcEu(), pad = rcMesPadrao();
   var opt = rcMesesDisponiveis().map(function(m){ return '<option value="' + m + '"' + (m === pad ? ' selected' : '') + '>' + mesNome(m) + '</option>'; }).join('');
   var h = '<h3>Receitas do m&ecirc;s &mdash; ' + esc(eu) + '</h3>';
-  if (eu === 'Ana') {
-    h += '<p class="note">Anexe o PDF do contracheque. O site l&ecirc; as vantagens, os descontos e as compensa&ccedil;&otilde;es, mostra tudo para voc&ecirc; conferir e s&oacute; grava quando voc&ecirc; confirmar. O mesmo contracheque nunca entra duas vezes. M&ecirc;s novo &eacute; criado sozinho.</p>' +
-      '<input type="file" id="rc-pdf" accept="application/pdf,.pdf"><div id="rc-prev" style="margin-top:10px"></div>';
-  } else {
-    h += '<p class="note">Informe quanto voc&ecirc; recebeu. D&aacute; para lan&ccedil;ar mais de uma receita no mesmo m&ecirc;s (sal&aacute;rio, dividendos&hellip;): o total do m&ecirc;s &eacute; a soma. M&ecirc;s novo &eacute; criado sozinho.</p>' +
-      '<div class="agform">' +
+  var form = '<div class="agform">' +
       '<label>M&ecirc;s<select id="rc-mes">' + opt + '</select></label>' +
       '<label>Valor (R$)<input id="rc-valor" type="text" inputmode="decimal" placeholder="0,00"></label>' +
-      '<label>Descri&ccedil;&atilde;o<input id="rc-desc" type="text" placeholder="Sal&aacute;rio, dividendos&hellip;"></label>' +
+      '<label>Descri&ccedil;&atilde;o<input id="rc-desc" type="text" placeholder="' + (eu === 'Ana' ? 'Uber, 99, hora extra&hellip;' : 'Sal&aacute;rio, dividendos&hellip;') + '"></label>' +
       '</div><button class="pill" id="rc-add" style="margin-top:10px">Adicionar receita</button>';
+  if (eu === 'Ana') {
+    h += '<p class="note"><b>Contracheque:</b> anexe o PDF. O site l&ecirc; as vantagens, os descontos e as compensa&ccedil;&otilde;es, mostra tudo para voc&ecirc; conferir e s&oacute; grava quando voc&ecirc; confirmar. O mesmo contracheque nunca entra duas vezes.</p>' +
+      '<input type="file" id="rc-pdf" accept="application/pdf,.pdf"><div id="rc-prev" style="margin-top:10px"></div>' +
+      '<p class="note" style="margin-top:16px"><b>Extras:</b> Uber, 99, hora extra e qualquer outro valor fora do contracheque. Cada lan&ccedil;amento soma na receita do m&ecirc;s.</p>' + form;
+  } else {
+    h += '<p class="note">Informe quanto voc&ecirc; recebeu. D&aacute; para lan&ccedil;ar mais de uma receita no mesmo m&ecirc;s (sal&aacute;rio, dividendos&hellip;): o total do m&ecirc;s &eacute; a soma. M&ecirc;s novo &eacute; criado sozinho.</p>' + form;
   }
   h += '<div id="rc-lista" style="margin-top:14px"></div>';
   host.innerHTML = h;
   rcRenderLista(eu);
   if (eu === 'Ana') el('rc-pdf').addEventListener('change', rcLerPDF);
-  else el('rc-add').addEventListener('click', rcAdicionarManual);
+  el('rc-add').addEventListener('click', rcAdicionarManual);
 }
 function rcRenderLista(eu){
   var b = Store.base();
   var rows = b.monthOrder.slice().reverse().map(function(m){
     var mm = b.months[m], rec = (mm.receita || {})[eu] || 0;
     var itens = (mm.receitaItens || []).filter(function(i){ return i.perfil === eu; });
-    var det;
-    if (eu === 'Ana') {
-      var cc = mm.contracheques || [];
-      det = cc.length ? cc.map(function(c){ return 'contracheque ' + esc(c.competencia) + ' &middot; l&iacute;quido ' + brl(c.liquido) + (c.compensacoes ? ' &middot; compensa&ccedil;&otilde;es ' + brl(c.compensacoes) : ''); }).join('<br>')
-        : (mm.receitaNota ? esc(mm.receitaNota) : (rec ? 'lan&ccedil;ado antes desta tela' : '&mdash;'));
-    } else {
-      det = itens.length ? itens.map(function(i){ return esc(i.desc) + ' &middot; ' + brl(i.valor) + ' <button class="link" data-rm="' + esc(m) + '|' + esc(i.id) + '">remover</button>'; }).join('<br>')
-        : (rec ? 'lan&ccedil;ado antes desta tela' : '&mdash;');
-    }
+    var partes = [];
+    if (eu === 'Ana') (mm.contracheques || []).forEach(function(c){
+      partes.push('contracheque ' + esc(c.competencia) + ' &middot; ' + brl(c.receita != null ? c.receita : (c.vantagens - (c.compensacoes || 0))) + (c.compensacoes ? ' (vantagens ' + brl(c.vantagens) + ' &minus; compensa&ccedil;&otilde;es ' + brl(c.compensacoes) + ')' : ''));
+    });
+    itens.forEach(function(i){ partes.push(esc(i.desc) + ' &middot; ' + brl(i.valor) + ' <button class="link" data-rm="' + esc(m) + '|' + esc(i.id) + '">remover</button>'); });
+    var det = partes.length ? partes.join('<br>') : (rec ? 'lan&ccedil;ado antes desta tela' : '&mdash;');
     return '<tr><td>' + mesNome(m) + '</td><td class="num"><b>' + brl(rec) + '</b></td><td>' + det + '</td></tr>';
   }).join('');
   el('rc-lista').innerHTML = '<div class="scroll"><table><thead><tr><th>M&ecirc;s</th><th class="num">Receita</th><th>Detalhe</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
@@ -118,21 +124,21 @@ function rcAdicionarManual(){
   var b = rcBaseClone(); rcGarantirMes(b, m);
   var mm = b.months[m]; mm.receitaItens = mm.receitaItens || [];
   var temItens = mm.receitaItens.some(function(i){ return i.perfil === eu; });
+  var temCC = eu === 'Ana' && (mm.contracheques || []).length > 0;
   var antigo = (mm.receita || {})[eu] || 0;
-  if (!temItens && antigo > 0) {
+  if (!temItens && !temCC && antigo > 0) {
     var substituir = confirm(mesNome(m) + ' já tem ' + brl(antigo) + ' registrado.\n\nOK = SUBSTITUIR esse valor por ' + brl(v) + '\nCancelar = SOMAR ' + brl(v) + ' ao que já existe');
     if (!substituir) mm.receitaItens.push({ id: 'r' + Date.now().toString(36) + 'a', perfil: eu, valor: antigo, desc: 'Valor já registrado antes', origem: 'anterior', criadoEm: new Date().toISOString() });
   }
   mm.receitaItens.push({ id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), perfil: eu, valor: rcArred(v), desc: d, origem: 'informado', criadoEm: new Date().toISOString() });
-  mm.receita[eu] = rcArred(mm.receitaItens.filter(function(i){ return i.perfil === eu; }).reduce(function(s, i){ return s + i.valor; }, 0));
+  rcRecalcular(mm, eu);
   rcGravar(b, 'Receita de ' + brl(v) + ' lançada em ' + mesNome(m) + '. Total do mês: ' + brl(mm.receita[eu]) + '.');
 }
 function rcRemoverItem(m, id){
   if (!confirm('Remover esta receita?')) return;
   var eu = rcEu(), b = rcBaseClone(), mm = b.months[m];
   mm.receitaItens = (mm.receitaItens || []).filter(function(i){ return i.id !== id; });
-  var resto = mm.receitaItens.filter(function(i){ return i.perfil === eu; });
-  mm.receita[eu] = rcArred(resto.reduce(function(s, i){ return s + i.valor; }, 0));
+  rcRecalcular(mm, eu);
   rcGravar(b, 'Receita removida. Total de ' + mesNome(m) + ': ' + brl(mm.receita[eu]) + '.');
 }
 
@@ -221,7 +227,7 @@ function rcMontarPendente(r){
   var imp = Store.get(K.IMPORTADOS, []);
   var temDescontos = !!(mm && mm.transactions.concat(imp.filter(function(t){ return t.mes === label; })).some(function(t){ return t.fonteLabel === RC_FONTE_CC; }));
   return { r: r, label: label, compens: rcArred(compens), receita: receita, lanc: lanc, ja: ja, temDescontos: temDescontos,
-    receitaAtual: mm ? ((mm.receita || {}).Ana || 0) : 0, mesNovo: !mm };
+    receitaAtual: mm ? rcArred(((mm.receita || {}).Ana || 0) - (mm.receitaItens || []).filter(function(i){ return i.perfil === 'Ana' && i.origem !== 'anterior'; }).reduce(function(s, i){ return s + i.valor; }, 0)) : 0, mesNovo: !mm };
 }
 function rcLerPDF(e){
   var f = e.target.files && e.target.files[0]; if (!f) return;
@@ -263,8 +269,10 @@ function rcConfirmar(){
   var b = rcBaseClone(); rcGarantirMes(b, P.label);
   var mm = b.months[P.label];
   mm.contracheques = (mm.contracheques || []).concat([{ competencia: P.r.competencia, codigo: P.r.codigo, vantagens: P.r.vantagens,
-    descontos: P.r.descontos, liquido: P.r.liquido, compensacoes: P.compens, lidoEm: new Date().toISOString() }]);
-  mm.receita.Ana = P.receita;
+    descontos: P.r.descontos, liquido: P.r.liquido, compensacoes: P.compens, receita: P.receita, lidoEm: new Date().toISOString() }]);
+  /* o contracheque substitui valor antigo lancado a mao; extras continuam somando */
+  mm.receitaItens = (mm.receitaItens || []).filter(function(i){ return !(i.perfil === 'Ana' && i.origem === 'anterior'); });
+  rcRecalcular(mm, 'Ana');
   if (P.compens > 0) mm.receitaNota = 'Contracheque ' + P.r.competencia + ': vantagens ' + brl(P.r.vantagens) + ' menos ' + brl(P.compens) + ' de compensações.';
   var novos = P.temDescontos ? [] : P.lanc;
   Promise.resolve(Store.definirBase(b)).then(function(){
