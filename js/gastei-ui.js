@@ -5,13 +5,15 @@ function agFillSelect(sel, arr, val){
   sel.innerHTML=arr.map(function(o){return '<option value="'+esc(o)+'"'+(o===val?' selected':'')+'>'+o+'</option>'}).join('');
 }
 /* fonte padrao: o primeiro cartao/conta da propria pessoa */
-function agFontePadrao(p){ var f=AG_FONTES.filter(function(x){return x.indexOf('('+p+')')>=0}); return f[0]||AG_FONTES[0]; }
+function agFontePadrao(p){ var f=fontesParaGasto().filter(function(x){return x.indexOf('('+p+')')>=0}); return f[0]||fontesParaGasto()[0]; }
+/* atualiza a lista de cartoes do formulario depois de importar um cartao novo */
+function agAtualizarFontes(){ var s=el('ag-fonte'); if(!s) return; var v=s.value; agFillSelect(s, fontesParaGasto(), v); }
 function agWire(){
   el('ag-data').value=agHojeISO();
   /* o formulario comeca no perfil de quem esta usando o dashboard */
   var perfilInicial = (state.perfil==='NuNa') ? ((Auth.sessao()||{}).perfil || 'Ana') : state.perfil;
   el('ag-perfil').value = perfilInicial;
-  agFillSelect(el('ag-fonte'), AG_FONTES, agFontePadrao(perfilInicial));
+  agFillSelect(el('ag-fonte'), fontesParaGasto(), agFontePadrao(perfilInicial));
   agFillSelect(el('ag-grupo'), GRUPOS, GRUPOS[0]);
   agFillSelect(el('ag-cat'), agCats(perfilInicial));
   el('ag-perfil').addEventListener('change',function(){
@@ -43,7 +45,7 @@ function agAutoSugerir(){
     else el('ag-sugestao').innerHTML='';
     return; }
   agFillSelect(el('ag-cat'), agCats(p), s.plano);
-  if(AG_FONTES.indexOf(s.fonte)>=0) el('ag-fonte').value=s.fonte;
+  if(fontesParaGasto().indexOf(s.fonte)>=0) el('ag-fonte').value=s.fonte;
   el('ag-div').value = s.grupo ? 'CONJUNTA' : 'INDIVIDUAL';
   el('ag-grupo').disabled = !s.grupo;
   if(s.grupo) el('ag-grupo').value=s.grupo;
@@ -131,7 +133,7 @@ function agRenderHoje(){
     return '<tr data-id="'+i.id+'">'+
       '<td>'+esc(i.desc)+(i.conciliadoCom?'<br><span style="font-size:11px;color:var(--tx3)">conciliado com: '+esc(i.conciliadoCom)+'</span>':'')+
         (i.possivelMatch?'<br><span style="font-size:11px;color:var(--neg)">parecido com: '+esc(i.possivelMatch)+'</span>':'')+'</td>'+
-      '<td><select class="ag-c-fonte">'+AG_FONTES.map(function(f){return '<option'+(f===i.fonte?' selected':'')+'>'+f+'</option>'}).join('')+'</select></td>'+
+      '<td><select class="ag-c-fonte">'+fontesParaGasto().map(function(f){return '<option'+(f===i.fonte?' selected':'')+'>'+f+'</option>'}).join('')+'</select></td>'+
       '<td><span class="badge b-ind">'+i.perfil+'</span></td>'+
       '<td><select class="ag-c-cat">'+agCats(i.perfil).map(function(c){return '<option'+(c===i.categoria?' selected':'')+'>'+c+'</option>'}).join('')+'</select></td>'+
       '<td><select class="ag-c-div"><option'+(i.divisao==='INDIVIDUAL'?' selected':'')+'>INDIVIDUAL</option><option'+(i.divisao==='CONJUNTA'?' selected':'')+'>CONJUNTA</option></select>'+
