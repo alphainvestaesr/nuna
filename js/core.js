@@ -63,7 +63,8 @@ function mesEstaFechado(m){ return mesesFechados().indexOf(m)>=0; }
 function brl(v){return 'R$ '+(v<0?'-':'')+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function el(id){return document.getElementById(id);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
-function inView(t,p){return p==='NuNa' ? !!t.grupo : t.perfil===p;}
+/* contribuicao importada (t.contrib) nao e despesa: o valor conta so pelo botao CONTRIBUICAO, senao sai duas vezes do saldo */
+function inView(t,p){if(t.contrib) return false; return p==='NuNa' ? !!t.grupo : t.perfil===p;}
 /* lancamentos do ACABEI DE GASTAR entram como transacao; os CONCILIADOS nao,
    porque a versao oficial deles ja esta na base importada (regra anti-duplicidade) */
 function agComoTx(mes){
