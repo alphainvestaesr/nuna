@@ -21,7 +21,7 @@ function renderFechamentos(){ try{ ddRenderPendentes(); }catch(e){}
   el('dd-fech').innerHTML = MONTHS.map(function(m){
     var fechado = f.indexOf(m)>=0;
     return '<label class="chk"><input type="checkbox" data-m="'+m+'"'+(fechado?' checked':'')+'>'+
-      '<span class="n">'+m+'/2026'+(fechado?' <span class="badge b-ok">fechado</span>':'')+'</span>'+
+      '<span class="n">'+(typeof mesNome==='function'?mesNome(m):m+'/2026')+(fechado?' <span class="badge b-ok">fechado</span>':'')+'</span>'+
       '<span class="v">'+brl(MONTHS.indexOf(m)>=0? mesTx(m).reduce(function(s,t){return s+t.valor},0):0)+'</span></label>';
   }).join('');
   [].forEach.call(el('dd-fech').querySelectorAll('input'),function(c){
@@ -62,7 +62,7 @@ function reprocessarCSV(){
 function wireDados(){
   var sm=el('dd-mes');
 ddMontarNovo(); ddMontarFontes();
-  MONTHS.forEach(function(m){ var o=document.createElement('option'); o.value=m; o.textContent='Fatura de '+m+'/2026'; sm.appendChild(o); });
+  MONTHS.forEach(function(m){ var o=document.createElement('option'); o.value=m; o.textContent='Fatura de '+(typeof mesNome==='function'?mesNome(m):m+'/2026'); sm.appendChild(o); });
   ['dd-fonte','dd-perfil','dd-mes'].forEach(function(id){ el(id).addEventListener('change', reprocessarCSV); });
   el('dd-file').addEventListener('change', lerArquivoCSV);
   el('dd-aplicar').addEventListener('click', function(){
