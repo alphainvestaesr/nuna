@@ -87,11 +87,12 @@ var CSV = (function () {
     opcoes = opcoes || {};
     var fontePadrao = opcoes.fonte || 'Fonte nao identificada';
     var perfilPadrao = opcoes.perfil || 'Ana';
-    var existentes = {}, ordinais = {};
+    var existentes = {}, ordinais = {}, semFonte = {};
     MONTHS.forEach(function (m) {
       DATA.months[m].transactions.forEach(function (t) {
         existentes[t.dedupKey] = (existentes[t.dedupKey] || 0) + 1;
         ordinais[t.dedupKey] = Math.max(ordinais[t.dedupKey] || 0, t.ordinal || 1);
+        semFonte[chaveSemFonte(m, t.data, t.raw || t.desc, t.valor)] = t.fonteLabel;
       });
     });
     var novos = [], duplicados = [], foraDoPeriodo = [], porChave = {};
@@ -118,12 +119,46 @@ var CSV = (function () {
         valor: Math.round(r.valor * 100) / 100, fonte: fonte, cartao: '-',
         fonteLabel: fonte, fontePendente: !r.fonte && !opcoes.fonte,
         revisar: true, status: '', divisao: 'INDIVIDUAL', contrib: false,
-        possivelDup: (existentes[chave] || 0) > 0 || porChave[chave] > 1,
+        /* mesma compra ja lancada com OUTRO nome de cartao: nao descarta, marca para revisar */
+        possivelDup: (existentes[chave] || 0) > 0 || porChave[chave] > 1 ||
+          (!!semFonte[chaveSemFonte(mes, dataBR(r.iso), r.desc, r.valor)] && semFonte[chaveSemFonte(mes, dataBR(r.iso), r.desc, r.valor)] !== fonte),
         id: uid, uid: uid, dedupKey: chave, ordinal: ord,
         idOriginal: r.idOriginal || null, importadoEm: new Date().toISOString()
       });
     });
     return { novos: novos, duplicados: duplicados, foraDoPeriodo: foraDoPeriodo };
+  }
+  /* chave da compra sem o cartao: mes|data|descricao|valor */
+  function chaveSemFonte(mes, data, desc, valor) {
+    return [mes, data, String(desc || '').replace(/\s+/g, ' ').trim().toUpperCase(), Number(valor).toFixed(2)].join('|');
+  }
+  /* tenta descobrir banco e final do cartao pelo nome do arquivo e pela coluna de cartao */
+  function sugerirFonte(nomeArq, cruas) {
+    var txt = String(nomeArq || '') + ' ' + (cruas || []).slice(0, 50).map(function (r) { return r.fonte || ''; }).join(' ');
+    var low = ' ' + txt.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[_\-.]/g, ' ') + ' ';
+    var BANCOS = [['nubank','Nubank'],['nu','Nubank'],['inter','Inter'],['bradesco','Bradesco'],['itau','Itau'],['santander','Santander'],
+      ['c6','C6'],['caixa','Caixa'],['banco do brasil','Banco do Brasil'],['bb','Banco do Brasil'],['neon','Neon'],['picpay','PicPay'],
+      ['mercado pago','Mercado Pago'],['xp','XP'],['btg','BTG'],['porto','Porto'],['sicredi','Sicredi'],['sicoob','Sicoob'],
+      ['will','Will Bank'],['riachuelo','Riachuelo'],['midway','Midway'],['renner','Renner'],['pan','Pan'],['next','Next'],['ourocard','Ourocard']];
+    var banco = '';
+    for (var i = 0; i < BANCOS.length && !banco; i++) if (new RegExp('[^a-z0-9]' + BANCOS[i][0] + '[^a-z0-9]').test(low)) banco = BANCOS[i][1];
+    var fins = (txt.match(/\d{4}(?!\d)/g) || []).filter(function (x) { return !/^(19|20)\d\d$/.test(x); });
+    var fim = fins[0] || '', conhecida = null;
+    if (fim) fontesConhecidas().forEach(function (f) { if (!conhecida && f.indexOf(fim) >= 0) conhecida = f; });
+    return { banco: banco, fim: fim, conhecida: conhecida };
+  }
+  /* liga lancamentos importados sem cartao a um cartao, recalculando a chave anti-duplicidade */
+  function religar(uids, nome) {
+    var set = {}; uids.forEach(function (u) { set[u] = 1; });
+    var guardados = Store.get(K.IMPORTADOS, []), n = 0;
+    function ajusta(t) {
+      t.fonte = nome; t.fonteLabel = nome; t.fontePendente = false;
+      t.dedupKey = [t.mes, nome, t.data, String(t.raw || t.desc).replace(/\s+/g, ' ').trim().toUpperCase(), Number(t.valor).toFixed(2)].join('|');
+    }
+    guardados.forEach(function (t) { if (set[t.uid]) { ajusta(t); n++; } });
+    MONTHS.forEach(function (m) { DATA.months[m].transactions.forEach(function (t) { if (set[t.uid]) ajusta(t); }); });
+    Store.set(K.IMPORTADOS, guardados);
+    return n;
   }
   function hashCurto(s) {
     var h = 0x811c9dc5;
@@ -141,5 +176,31 @@ var CSV = (function () {
     Store.set(K.IMPORTADOS, guardados);
     return guardados.length;
   }
-  return { ler: ler, preparar: preparar, aplicar: aplicar };
+  return { ler: ler, preparar: preparar, aplicar: aplicar, sugerirFonte: sugerirFonte, religar: religar };
 })();
+
+/* ---------- cartoes e contas: lista viva ----------
+   Lista fixa + todo cartao que ja apareceu num lancamento importado.
+   Um cartao novo passa a existir quando a primeira fatura dele e importada
+   (fica gravado nos proprios lancamentos, no banco), e aparece para as duas. */
+var FONTES_AVULSAS = ['Pix', 'Dinheiro', 'Debito', 'Boleto', 'Outra'];
+function fontesConhecidas() {
+  var vistos = {}, out = [];
+  function add(f) {
+    if (!f || vistos[f] || FONTES_AVULSAS.indexOf(f) >= 0) return;
+    if (f === 'Fonte nao identificada' || f === 'Informado manualmente' || /^Contracheque/i.test(f)) return;
+    vistos[f] = 1; out.push(f);
+  }
+  if (typeof AG_FONTES !== 'undefined') AG_FONTES.forEach(add);
+  if (typeof FONTES !== 'undefined' && FONTES) FONTES.forEach(add);
+  if (typeof DATA !== 'undefined' && DATA && DATA.months) MONTHS.forEach(function (m) {
+    DATA.months[m].transactions.forEach(function (t) { add(t.fonteLabel); });
+  });
+  return out;
+}
+function fontesParaGasto() { return fontesConhecidas().concat(FONTES_AVULSAS); }
+function nomeNovaFonte(tipo, banco, fim, perfil) {
+  banco = String(banco || '').trim(); fim = String(fim || '').replace(/\D/g, '').slice(-4);
+  if (!banco) return '';
+  return (tipo === 'Conta' ? 'Conta ' : 'Cartao ') + banco + (fim ? ' ' + fim : '') + ' (' + (perfil || 'Ana') + ')';
+}
