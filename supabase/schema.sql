@@ -328,8 +328,8 @@ declare
   v_household uuid;
   v_ana       uuid;
   v_manuela   uuid;
-  email_ana     text := 'alphainvest.aesr@gmail.com';     
-  email_manuela text := 'manuelajessica17@gmail.com';  
+  email_ana     text := 'ana@exemplo.com';        -- troque pelo e-mail real ao rodar
+  email_manuela text := 'manuela@exemplo.com';     -- troque pelo e-mail real ao rodar
 begin
   select id into v_household from public.households where nome = 'NuNa';
   if v_household is null then
