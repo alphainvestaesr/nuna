@@ -36,7 +36,7 @@ function renderTxTable(){
     return '<tr data-id="'+t._m+'|'+t.id+'">'+
       '<td style="white-space:nowrap">'+t.data+'</td>'+
       '<td title="'+esc(t.raw)+'">'+esc(t.desc)+(t.possivelDup?' <span class="badge b-warn" title="Mesma fonte, data, descricao e valor aparecem mais de uma vez neste mes. Confira se sao compras distintas.">poss. dup.</span>':'')+
-        (t.manual?' <span class="badge b-cj" title="Lancado no ACABEI DE GASTAR - edite por la">ao vivo</span>':'')+'</td>'+
+        (t.manual?' <span class="badge b-cj" title="Lancado no ACABEI DE GASTAR - edite por la">ao vivo</span>':'')+(typeof ehLoja==='function'&&ehLoja(t)?' <span class="badge b-cj" title="Cravo & Canela: fica fora dos gastos individuais, dos conjuntos e do saldo">&agrave; parte &middot; loja</span>':'')+'</td>'+
       '<td><span class="badge '+(t.fontePendente?'b-warn':'b-ind')+'">'+esc(t.fonteLabel)+'</span></td>'+
       '<td><span class="badge b-ind">'+t.perfil+'</span></td>'+
       '<td><select class="c-dv"'+(t.manual?' disabled':'')+'><option value="INDIVIDUAL"'+(t.divisao==='INDIVIDUAL'?' selected':'')+'>INDIVIDUAL</option><option value="CONJUNTA"'+(t.divisao==='CONJUNTA'?' selected':'')+'>CONJUNTA</option></select></td>'+
@@ -54,7 +54,7 @@ function findTx(key){var p=key.split('|');return DATA.months[p[0]].transactions.
 function ehManual(key){var p=key.split('|');return !findTx(key) && AG.itens.some(function(i){return i.id===p[1]});}
 function applyEdit(tr,target){
   var t=findTx(tr.dataset.id); if(!t)return;
-  if(target.classList.contains('c-plano'))t.plano=target.value;
+  if(target.classList.contains('c-plano')){t.plano=target.value; if(typeof ehLoja==='function'&&ehLoja(t)){t.grupo=null;t.divisao='INDIVIDUAL';}}
   if(target.classList.contains('c-tipo'))t.tipo=target.value;
   if(target.classList.contains('c-grupo')){t.grupo=target.value||null; t.divisao=t.grupo?'CONJUNTA':'INDIVIDUAL';}
   if(target.classList.contains('c-st'))t.status=target.value;
