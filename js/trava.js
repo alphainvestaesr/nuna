@@ -164,7 +164,12 @@ var Trava = (function () {
       var _iniIdx = Auth.iniciar;
       Auth.iniciar = function () {
         return _iniIdx.apply(Auth, arguments).then(function (s) {
-          if (!s || destravado() || chaveDe(s.userId)) return s;
+          if (!s) return s;
+          /* freio de seguranca: se ja foi mandada para o app 3 vezes em 20 s, para e mostra o login */
+          var agora = Date.now(), idas = [];
+          try { idas = JSON.parse(ler(ss(), 'nuna.v1.idas') || '[]').filter(function (t) { return agora - t < 20000; }); } catch (e) {}
+          if (idas.length >= 3) { gravar(ss(), 'nuna.v1.idas', '[]'); desmarcar(); limparTokens(); return null; }
+          if (destravado() || chaveDe(s.userId)) { idas.push(agora); gravar(ss(), 'nuna.v1.idas', JSON.stringify(idas)); return s; }
           limparTokens(); return null;
         }, function () { limparTokens(); return null; });
       };
