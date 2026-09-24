@@ -88,10 +88,13 @@ function renderTxInsight(){
 }
 
 /* ---------- REVISAR ---------- */
+/* cada uma revisa so os proprios lancamentos e os conjuntos */
+function revVisivel(t){var lg=(typeof Auth!=='undefined'&&Auth.sessao()||{}).perfil; return !lg || t.perfil===lg || !!t.grupo;}
 function revList(){
   var q=(el('rev-search').value||'').toLowerCase(), pf=el('rev-perfil').value, out=[];
   MONTHS.forEach(function(m){DATA.months[m].transactions.forEach(function(t){
     if(!t.revisar)return;
+if(!revVisivel(t))return;
     if(pf&&t.perfil!==pf)return;
     if(q&&(t.desc+' '+t.raw).toLowerCase().indexOf(q)<0)return;
     t._m=m; out.push(t);});});
@@ -100,9 +103,9 @@ function revList(){
 }
 function renderReview(){
   var list=revList(), tb=el('rev-table').querySelector('tbody');
-  var total=allTx().length, pend=allTx().filter(function(t){return t.revisar}).length;
+  var total=allTx().filter(revVisivel).length, pend=allTx().filter(function(t){return t.revisar&&revVisivel(t)}).length;
   el('rev-pin').textContent=pend; el('rev-pin').dataset.zero = pend===0?'1':'0';
-  el('rev-head').innerHTML='Cerca de <b>'+Math.round(pend/total*100)+'%</b> dos lan&ccedil;amentos ('+pend+' de '+total+') foram categorizados automaticamente e ainda esperam sua confer&ecirc;ncia. Corrija a categoria se estiver errada e marque <b>Conferido</b> &mdash; a marca&ccedil;&atilde;o vai junto no <code>overrides.json</code> e os pr&oacute;ximos meses j&aacute; aprendem com ela.';
+  el('rev-head').innerHTML='Cerca de <b>'+Math.round(pend/total*100)+'%</b> dos lan&ccedil;amentos ('+pend+' de '+total+') foram categorizados automaticamente e ainda esperam sua confer&ecirc;ncia. Corrija a categoria se estiver errada e marque <b>Conferido</b> &mdash; a marca&ccedil;&atilde;o &eacute; salva automaticamente e os pr&oacute;ximos meses j&aacute; aprendem com ela. Aqui aparecem s&oacute; os seus lan&ccedil;amentos e os conjuntos.';
   tb.innerHTML=list.slice(0,400).map(function(t){
     return '<tr data-id="'+t._m+'|'+t.id+'">'+
       '<td style="white-space:nowrap">'+t.data+'</td>'+
