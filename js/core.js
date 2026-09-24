@@ -88,7 +88,12 @@ function contribManualOf(mes,perfil){
   return contribDoMes(mes,perfil).reduce(function(s,c){return s+c.valor},0);
 }
 function mesTx(mes){ return DATA.months[mes].transactions.concat(agComoTx(mes)); }
-function txOf(mes,p){return mesTx(mes).filter(function(t){return inView(t,p)});}
+/* CRAVO & CANELA: lancamento da loja fica a parte - fora dos gastos individuais,
+   dos conjuntos, dos graficos e do saldo. Continua visivel na aba Transacoes. */
+var CAT_LOJA='Cravo & Canela';
+function ehLoja(t){ return !!t && (t.plano===CAT_LOJA || t.categoria===CAT_LOJA); }
+function lojaOf(mes,p){ return mesTx(mes).filter(function(t){return !t.contrib && ehLoja(t) && (p==='NuNa'||t.perfil===p)}).reduce(function(s,t){return s+t.valor},0); }
+function txOf(mes,p){return mesTx(mes).filter(function(t){return inView(t,p) && !ehLoja(t)});}
 function allTx(){var a=[];MONTHS.forEach(function(m){DATA.months[m].transactions.forEach(function(t){t._m=m;a.push(t)})});return a;}
 function catKey(t){ return state.perfil==='NuNa' && state.axis==='plano' ? t.grupo : t[state.axis]; }
 function rendaOf(mes,p){var r=DATA.months[mes].receita;
