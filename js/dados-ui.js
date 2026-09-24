@@ -128,6 +128,8 @@ function ddMontarFontes(selecionar){
 function ddMontarNovo(){
   if(el('dd-novo')) return;
   var s=el('dd-fonte'); if(!s) return;
+  /* o perfil da importacao comeca em quem esta logada */
+  var lg=(Auth.sessao()||{}).perfil; if(lg && el('dd-perfil')) el('dd-perfil').value=lg;
   var ancora=s.closest('.agform')||s.closest('label')||s;
   var box=document.createElement('div'); box.id='dd-novo'; box.hidden=true;
   box.style.cssText='margin:10px 0;padding:10px 12px;border:1px dashed var(--border);border-radius:10px';
