@@ -31,6 +31,18 @@ var Trava = (function () {
   function b64(buf) { var s = '', b = new Uint8Array(buf); for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
   function deb64(str) { str = str.replace(/-/g, '+').replace(/_/g, '/'); while (str.length % 4) str += '='; var s = atob(str), b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
   function aleatorio(n) { var b = new Uint8Array(n); crypto.getRandomValues(b); return b; }
+  /* apaga o login guardado neste aparelho (sem derrubar os outros aparelhos) */
+  function limparTokens() {
+    var l = ls();
+    try { Object.keys(l).forEach(function (k) { if (/^sb-.*-auth-token/.test(k)) l.removeItem(k); }); } catch (e) {}
+    try { Auth.cliente().auth.stopAutoRefresh(); } catch (e) {}
+  }
+  function sairLocal() {
+    desmarcar();
+    var c = null; try { c = Auth.cliente(); } catch (e) {}
+    var p = c ? Promise.race([c.auth.signOut({ scope: 'local' }).catch(function () {}), new Promise(function (r) { setTimeout(r, 2500); })]) : Promise.resolve();
+    return p.then(limparTokens);
+  }
 
   /* registra o Face ID / digital / codigo deste aparelho para esta usuaria */
   function ativar(sessao) {
@@ -77,7 +89,7 @@ var Trava = (function () {
         verificar(sessao.userId).then(function () { marcar(); d.remove(); ok(sessao); })
           .catch(function () { msg.textContent = 'Não foi possível desbloquear. Tente de novo ou entre com a senha.'; });
       };
-      d.querySelector('#trava-senha').onclick = function () { desmarcar(); Auth.sair(); };
+      d.querySelector('#trava-senha').onclick = function () { sairLocal().then(function () { location.replace(Auth.porta); }); };
     });
   }
 
@@ -85,7 +97,7 @@ var Trava = (function () {
   function garantir(sessao) {
     if (!sessao || destravado()) return Promise.resolve(sessao);
     if (chaveDe(sessao.userId) && suporta()) return tela(sessao);
-    return Promise.resolve(Auth.sair()).then(function () {
+    return sairLocal().then(function () {
       location.replace(Auth.porta);
       return new Promise(function () {});
     });
@@ -144,8 +156,19 @@ var Trava = (function () {
   if (typeof Auth !== 'undefined') {
     var _entrar = Auth.entrar;
     Auth.entrar = function () { return _entrar.apply(Auth, arguments).then(function (s) { marcar(); return s; }); };
-    var _sair = Auth.sair;
-    Auth.sair = function () { desmarcar(); return _sair.apply(Auth, arguments); };
+    /* sair so deste aparelho (nao derruba o login dos outros aparelhos) */
+    Auth.sair = function () { return sairLocal(); };
+    if (!ehApp()) {
+      /* tela de acesso: so segue direto para o app se este aparelho ja estiver liberado
+         ou tiver o desbloqueio ativado; senao mostra o login (evita o vai-e-volta) */
+      var _iniIdx = Auth.iniciar;
+      Auth.iniciar = function () {
+        return _iniIdx.apply(Auth, arguments).then(function (s) {
+          if (!s || destravado() || chaveDe(s.userId)) return s;
+          limparTokens(); return null;
+        }, function () { limparTokens(); return null; });
+      };
+    }
     if (ehApp()) {
       var _iniciar = Auth.iniciar, memo = null;
       Auth.iniciar = function () {
