@@ -49,7 +49,9 @@ var Auth = (function () {
       return carregarMembro(s.user);
     });
     c.auth.onAuthStateChange(function (evt) {
-      if (evt === 'SIGNED_OUT') { _sessao = null; location.replace(PORTA); }
+      /* so volta para o acesso se estiver DENTRO do app; na propria tela de acesso
+       recarregar causaria um vai-e-volta (principalmente no iPhone) */
+    if (evt === 'SIGNED_OUT') { _sessao = null; if (/app\.html/.test(location.pathname)) location.replace(PORTA); }
     });
     return _iniciado;
   }
