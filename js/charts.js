@@ -38,7 +38,7 @@ function renderContrib(){
   var row=function(nm,arr,tot,cls){return '<tr'+(cls||'')+'><td>'+nm+'</td>'+arr.map(function(v){return '<td class="num">'+(v?brl(v).replace('R$ ',''):'&mdash;')+'</td>'}).join('')+
     '<td class="num"><b>'+brl(tot).replace('R$ ','')+'</b></td><td class="num">'+(tt?Math.round(tot/tt*100):0)+'%</td></tr>';};
   tb.innerHTML=row('Ana',ana,ta)+row('Manuela',man,tm)+
-    (tr.some(function(v){return v>0})?'<tr style="color:var(--tx3)"><td>&nbsp;&nbsp;<i>dos quais, contribui&ccedil;&otilde;es pontuais da Manuela</i></td>'+
+    (tr.some(function(v){return v>0})?'<tr style="color:var(--tx3)"><td>&nbsp;&nbsp;<i>hist&oacute;rico importado da Manuela &mdash; n&atilde;o entra no c&aacute;lculo (registre no bot&atilde;o CONTRIBUI&Ccedil;&Atilde;O para contar)</i></td>'+
       tr.map(function(v){return '<td class="num">'+(v?brl(v).replace('R$ ',''):'&mdash;')+'</td>'}).join('')+
       '<td class="num">'+brl(tr.reduce(function(a,b){return a+b},0)).replace('R$ ','')+'</td><td></td></tr>':'')+
     '<tr class="tot"><td>Total NuNa</td>'+MONTHS.map(function(m,i){return '<td class="num">'+brl(ana[i]+man[i]).replace('R$ ','')+'</td>'}).join('')+
@@ -74,7 +74,8 @@ function renderCategoryTrend(){
 function renderMvMInsight(){
   var l=CLOSED.map(function(m){return [m,saldoOf(m,state.perfil)]}).sort(function(a,b){return a[1]-b[1]});
   var mag=l[0],gor=l[l.length-1];
-  el('ins-mvm').textContent='"Seu mes mais magro foi '+mag[0]+' ('+brl(mag[1])+'). O mais gordo, '+gor[0]+' ('+brl(gor[1])+'). Diferenca: '+brl(gor[1]-mag[1])+'."';
+  if(state.perfil==='NuNa'){el('ins-mvm').textContent='"O mes mais caro da vida em comum foi '+mag[0]+' ('+brl(-mag[1])+'). O mais barato, '+gor[0]+' ('+brl(-gor[1])+'). Diferenca: '+brl(gor[1]-mag[1])+'."';return;}
+el('ins-mvm').textContent='"Seu mes mais magro foi '+mag[0]+' ('+brl(mag[1])+'). O mais gordo, '+gor[0]+' ('+brl(gor[1])+'). Diferenca: '+brl(gor[1]-mag[1])+'."';
 }
 
 /* ---------- ORCAMENTO ---------- */
