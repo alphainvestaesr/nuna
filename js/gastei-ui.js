@@ -4,16 +4,18 @@ function agCats(perfil){ return (perfil==='Manuela'?CATS.Manuela:CATS.Ana); }
 function agFillSelect(sel, arr, val){
   sel.innerHTML=arr.map(function(o){return '<option value="'+esc(o)+'"'+(o===val?' selected':'')+'>'+o+'</option>'}).join('');
 }
+/* fonte padrao: o primeiro cartao/conta da propria pessoa */
+function agFontePadrao(p){ var f=AG_FONTES.filter(function(x){return x.indexOf('('+p+')')>=0}); return f[0]||AG_FONTES[0]; }
 function agWire(){
   el('ag-data').value=agHojeISO();
   /* o formulario comeca no perfil de quem esta usando o dashboard */
   var perfilInicial = (state.perfil==='NuNa') ? ((Auth.sessao()||{}).perfil || 'Ana') : state.perfil;
   el('ag-perfil').value = perfilInicial;
-  agFillSelect(el('ag-fonte'), AG_FONTES, AG_FONTES[0]);
+  agFillSelect(el('ag-fonte'), AG_FONTES, agFontePadrao(perfilInicial));
   agFillSelect(el('ag-grupo'), GRUPOS, GRUPOS[0]);
   agFillSelect(el('ag-cat'), agCats(perfilInicial));
   el('ag-perfil').addEventListener('change',function(){
-    agFillSelect(el('ag-cat'), agCats(el('ag-perfil').value)); agAutoSugerir();
+    el('ag-fonte').value=agFontePadrao(el('ag-perfil').value); agFillSelect(el('ag-cat'), agCats(el('ag-perfil').value)); agAutoSugerir();
   });
   el('ag-div').addEventListener('change',function(){
     el('ag-grupo').disabled = el('ag-div').value!=='CONJUNTA';
@@ -95,7 +97,7 @@ function agStatusBadge(s){
 function agRenderCTA(){
   var ind=state.perfil!=='NuNa';
   if(ind && el('ag-perfil') && el('ag-perfil').value!==state.perfil && !el('ag-desc').value){
-    el('ag-perfil').value=state.perfil; agFillSelect(el('ag-cat'), agCats(state.perfil));
+    el('ag-perfil').value=state.perfil; el('ag-fonte').value=agFontePadrao(state.perfil); agFillSelect(el('ag-cat'), agCats(state.perfil));
   }
   el('ag-cta').hidden=!ind; el('tab-gastei').hidden=!ind;
   if(!ind && el('panel-gastei').classList.contains('active')){
@@ -118,7 +120,7 @@ function agRenderKPIs(){
     kpiCard('Ana', brl(soma(cont.filter(function(i){return i.perfil==='Ana'}))), 'no m&ecirc;s','')+
     kpiCard('Manuela', brl(soma(cont.filter(function(i){return i.perfil==='Manuela'}))), 'no m&ecirc;s','');
   el('ag-status-db').innerHTML = AG.modo==='local'
-    ? '&#10003; Salvo neste navegador. Os lan&ccedil;amentos ficam gravados mesmo se voc&ecirc; fechar a aba ou o navegador. Use <b>Backup</b> no rodap&eacute; para levar os dados para outro aparelho.'
+    ? '&#10003; Salvo na nuvem. Os lan&ccedil;amentos aparecem em todos os aparelhos de voc&ecirc;s (celular, iPad e notebook) assim que s&atilde;o registrados.'
     : '<b>Aten&ccedil;&atilde;o:</b> o armazenamento do navegador est&aacute; bloqueado. Os lan&ccedil;amentos valem s&oacute; enquanto esta aba estiver aberta.';
 }
 function agRenderHoje(){
