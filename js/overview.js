@@ -16,11 +16,12 @@ function renderKPI(){
       kpiCard('Renda do casal', brl(renda), 'Ana + Manuela'+(aberto&&DATA.months[state.mes].receita.Ana===0?' &mdash; sem contracheque da Ana':''),'green');
   } else {
     el('ov-kpis').innerHTML=
-      kpiCard('Receitas', brl(renda), p==='Ana'?'vantagens do contracheque':'sal&aacute;rio + dividendos informados','green')+
+      kpiCard('Receitas', brl(renda), p==='Ana'?'contracheque + extras':'sal&aacute;rio + dividendos informados','green')+
       kpiCard('Despesas individuais', brl(sp.ind), 'consumo s&oacute; dela','red')+
       kpiCard('Conjuntas pagas por ela', brl(contribManualOf(state.mes,p)), 'contribui&ccedil;&atilde;o registrada no m&ecirc;s','orange')+
       kpiCard('Conjuntas geradas por ela', brl(sp.conj), 'informativo &mdash; n&atilde;o entra no saldo','')+
-      kpiCard('Saldo', brl(saldo), 'receitas &minus; (individuais + contribui&ccedil;&atilde;o)', saldo>=0?'green':'red');
+      kpiCard('Saldo', brl(saldo), 'receitas &minus; (individuais + contribui&ccedil;&atilde;o)', saldo>=0?'green':'red')+
+(p==='Ana' ? kpiCard('Cravo &amp; Canela', brl(lojaOf(state.mes,p)), '&agrave; parte &mdash; loja, fora dos seus gastos e do saldo','') : '');
   }
   renderCollab(); renderContribBox();
 }
