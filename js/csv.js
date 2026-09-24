@@ -101,7 +101,7 @@ var CSV = (function () {
       /* Em fatura de cartao o lancamento pertence ao mes da FATURA, nao ao mes
          da compra (uma parcela de marco entra na fatura de setembro). Por isso
          opcoes.mesFatura tem prioridade sobre a data da linha. */
-      var mes = opcoes.mesFatura || MES_LABEL[+r.iso.split('-')[1] - 1];
+      var mes = opcoes.mesFatura || (typeof mesLabelDeISO === 'function' ? mesLabelDeISO(r.iso) : MES_LABEL[+r.iso.split('-')[1] - 1]);
       if (MONTHS.indexOf(mes) < 0) { foraDoPeriodo.push(r); return; }
       var fonte = r.fonte || fontePadrao;
       var perfil = /manuela/i.test(r.perfil) ? 'Manuela' : (r.perfil ? 'Ana' : perfilPadrao);
