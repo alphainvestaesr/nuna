@@ -66,7 +66,7 @@ function applyEdit(tr,target){
   salvarOverride(t);
 }
 function wireTxControls(){
-  var fs=el('tx-fonte'); FONTES.forEach(function(f){var o=document.createElement('option');o.value=f;o.textContent=f;fs.appendChild(o)});
+  var fs=el('tx-fonte'); var listaF=FONTES.slice(); fontesConhecidas().forEach(function(f){ if(listaF.indexOf(f)<0) listaF.push(f); }); listaF.forEach(function(f){var o=document.createElement('option');o.value=f;o.textContent=f;fs.appendChild(o)});
   ['tx-search','tx-status','tx-tipo','tx-rev','tx-fonte'].forEach(function(id){
     el(id).addEventListener('input',function(){renderTxTable()});
     el(id).addEventListener('change',function(){renderTxTable()});});
