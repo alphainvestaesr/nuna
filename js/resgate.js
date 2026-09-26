@@ -36,6 +36,7 @@ function rgCss(){
     '.rg .tend{margin:10px 0 4px;padding:8px 12px;border-radius:8px;background:var(--card);border:1px solid var(--border);font-size:13px;color:var(--tx2)}' +
     '.rg .tend b{color:var(--tx)}.rg .tend .r{color:var(--neg);font-weight:700}.rg .tend .g{color:var(--pos);font-weight:700}' +
     '.rg .aviso{font-size:12.5px;color:var(--tx2);margin:0 0 8px}' +
+    '.rg.and{border-color:var(--amb);background:var(--card)}.rg.and .flag{background:var(--amb)}' +
     '@media (max-width:520px){.rg .ac{grid-template-columns:24px 1fr}.rg .imp{grid-column:2}}';
   document.head.appendChild(st);
 }
@@ -144,18 +145,34 @@ function renderResgate(){
   var avisoAberto = function(pessoas){
     var est = pessoas.filter(function(x){ return x.o.rendaEstimada; });
     return (b.aberto ? '<p class="aviso">' + N + ' ainda est&aacute; em aberto: os gastos podem crescer at&eacute; o fechamento.' +
-      (est.length ? ' Renda ' + (est.length === 1 && pessoas.length > 1 ? 'da ' + est[0].nome : '') + ' ainda n&atilde;o lan&ccedil;ada: usei a de ' + est[0].o.rendaRefMes + ' como refer&ecirc;ncia.' : '') + '</p>'
-      : (est.length ? '<p class="aviso">Renda ' + (pessoas.length > 1 ? 'da ' + est[0].nome + ' ' : '') + 'n&atilde;o lan&ccedil;ada em ' + N + ': usei a de ' + est[0].o.rendaRefMes + '.</p>' : ''));
+      (est.length ? ' ' + (pessoas.length > 1 ? 'Renda da ' + est[0].nome : 'Sua renda') + ' ainda n&atilde;o lan&ccedil;ada: usei a de ' + est[0].o.rendaRefMes + ' como refer&ecirc;ncia.' : '') + '</p>'
+      : (est.length ? '<p class="aviso">' + (pessoas.length > 1 ? 'Renda da ' + est[0].nome + ' ' : 'Sua renda ') + 'n&atilde;o lan&ccedil;ada em ' + N + ': usei a de ' + est[0].o.rendaRefMes + '.</p>' : ''));
   };
   var montar = function(cls, flag, corpo){
     box.innerHTML = '<div class="rg' + cls + '"><div class="rgm" id="rg-meses"></div><span class="flag">' + flag + '</span>' + corpo + '</div>';
     monthPills(el('rg-meses'), m, function(x){ state.rgMes = x; renderResgate(); }, false);
   };
 
+  /* mes em aberto que ainda nao estourou: nada de "fechou no azul" - e parcial */
+  var andamento = function(aviso, tend, quem){
+    var itens = [];
+    var regA = A.contr, regM = M.contr;
+    if (b.conj > 0) itens.push('<b>Contas da casa at&eacute; agora: ' + rgR(b.conj) + '.</b> Pela ' + justa + ', a parte da Ana &eacute; ~' + rgR(b.parte.Ana) + ' e a da Manuela ~' + rgR(b.parte.Manuela) + '. ' +
+      'Registrado no bot&atilde;o CONTRIBUI&Ccedil;&Atilde;O: Ana ' + rgR(regA) + ', Manuela ' + rgR(regM) + '.' + (regA + regM < b.conj * 0.5 ? ' <b>Registrem as contribui&ccedil;&otilde;es do m&ecirc;s</b> para o NuNa mostrar a situa&ccedil;&atilde;o real.' : ''));
+    if (b.acima.length) itens.push('<b>' + b.acima.length + ' grupo' + (b.acima.length === 1 ? '' : 's') + ' da casa j&aacute; acima do or&ccedil;amento:</b> ' +
+      b.acima.map(function(g){ return esc(g[0]) + ' ' + rgR(g[1]) + ' (or&ccedil;amento ' + rgR(g[2]) + ')'; }).join(' &middot; ') + '.');
+    if (b.corteMerc > 0) itens.push('<b>Supermercado j&aacute; em ' + rgR(b.merc) + '</b>' + (b.orcMerc ? ', or&ccedil;amento de ' + rgR(b.orcMerc) : '') + '. Segurar o teto de ' + rgR(b.tetoMerc) + ' at&eacute; o fim do m&ecirc;s.');
+    if (b.parcelas > 2000) itens.push('<b>~' + rgR(b.parcelas) + ' em parcelas</b> j&aacute; comprometidas nas faturas seguintes: nenhuma compra parcelada nova.');
+    montar(' and', 'M&Ecirc;S EM ANDAMENTO &middot; ' + N, '<div class="big">' + N + ' ainda est&aacute; aberto: ' + quem + '</div>' + aviso + tend +
+      (itens.length ? '<h3>O que j&aacute; d&aacute; para ver</h3><ul>' + itens.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>' : '') +
+      '<p class="lead" style="margin-top:10px">O diagn&oacute;stico completo sai quando o m&ecirc;s fechar. At&eacute; l&aacute;, os tetos valem desde j&aacute;.</p>');
+  };
+
   if (p === 'Ana' || p === 'Manuela') {
     var eu = b[p], outra = p === 'Ana' ? M : A, nomeOutra = p === 'Ana' ? 'Manuela' : 'Ana';
     var vermelho = eu.saldo < 0, casaVermelha = b.casalSaldo < 0;
     var aviso = avisoAberto([{ o: eu, nome: p }]), tend = rgTendencia(m, p);
+    if (b.aberto && !vermelho) { andamento(aviso, tend, 'voc&ecirc; j&aacute; gastou ' + rgR(eu.ind) + ' em gastos individuais' + (eu.contr ? ' e registrou ' + rgR(eu.contr) + ' de contribui&ccedil;&atilde;o' : '') + '.'); return; }
     if (!vermelho && !casaVermelha) {
       montar(' ok', 'MANTER O RUMO &middot; ' + N, '<div class="big">Em ' + N + ' voc&ecirc; gastou <span class="g">' + rgCents(eu.razao) +
         '</span> para cada R$ 1 que recebeu.</div>' + aviso + tend + '<p class="lead">O m&ecirc;s fechou no azul, e a casa tamb&eacute;m. Segure os tetos e continue lan&ccedil;ando tudo no NuNa.</p>');
@@ -165,7 +182,7 @@ function renderResgate(){
     if (p === 'Ana' || vermelho) {
       html += '<div class="big">Em ' + N + ' voc&ecirc; gastou <span class="' + (vermelho ? 'r' : 'g') + '">' + rgCents(eu.razao) + '</span> para cada R$ 1 que recebeu.</div>' + aviso + tend;
       html += '<p class="lead">' + (vermelho
-        ? 'Em ' + N + ' faltaram <b>' + rgR(-eu.saldo) + '</b>. Esse dinheiro n&atilde;o existe: sai do cart&atilde;o, e o cart&atilde;o cobra de volta com juros. Do jeito que est&aacute;, n&atilde;o fecha. N&atilde;o &eacute; quest&atilde;o de apertar um pouco, &eacute; mudar a estrutura.'
+        ? (b.aberto ? 'At&eacute; agora, em ' + N + ', j&aacute; faltam <b>' : 'Em ' + N + ' faltaram <b>') + rgR(-eu.saldo) + '</b>. Esse dinheiro n&atilde;o existe: sai do cart&atilde;o, e o cart&atilde;o cobra de volta com juros. Do jeito que est&aacute;, n&atilde;o fecha. N&atilde;o &eacute; quest&atilde;o de apertar um pouco, &eacute; mudar a estrutura.'
         : 'Voc&ecirc; fechou ' + N + ' no azul, mas a casa ficou no vermelho.') + '</p>';
     } else {
       html += '<div class="big">Em ' + N + ' voc&ecirc; fechou no azul (<span class="g">+' + rgR(eu.saldo) + '</span>), mas a casa ficou no vermelho.</div>' + aviso + tend;
@@ -216,6 +233,7 @@ function renderResgate(){
 
   /* ---------- perfil conjunto: fala com "voces" ---------- */
   var avisoC = avisoAberto([{ o: A, nome: 'Ana' }, { o: M, nome: 'Manuela' }]), tendC = rgTendencia(m, 'NuNa');
+  if (b.aberto && b.casalSaldo >= 0) { andamento(avisoC, tendC, 'a casa j&aacute; custou ' + rgR(b.conj) + ' e os gastos individuais somam ' + rgR(A.ind + M.ind) + '.'); return; }
   if (b.casalSaldo >= 0) {
     montar(' ok', 'MANTER O RUMO &middot; ' + N, '<div class="big">Em ' + N + ' voc&ecirc;s gastaram <span class="g">' + rgCents(b.casalRenda ? b.casalGasto / b.casalRenda : 0) +
       '</span> para cada R$ 1 que receberam.</div>' + avisoC + tendC + '<p class="lead">A casa fechou o m&ecirc;s no azul. Mantenham a ' + justa + ', os tetos e o registro de tudo no NuNa.</p>');
