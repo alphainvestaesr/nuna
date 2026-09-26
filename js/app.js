@@ -94,9 +94,9 @@ function renderInsights(){
   var marc=allTx().filter(function(t){return inView(t,state.perfil)&&t.status==='pode cancelar'});
   if(marc.length)wins.push('Voc&ecirc; marcou '+marc.length+' lan&ccedil;amentos como &ldquo;pode cancelar&rdquo; &mdash; somam '+brl(marc.reduce(function(s,t){return s+t.valor},0))+' no per&iacute;odo.');
   if(state.perfil==='NuNa'){
-    var ta=0,tm=0;CLOSED.forEach(function(m){var c=contribOf(m);ta+=c.ana;tm+=c.manu});
-    var tt=ta+tm, dv=ta-(tt*SPLIT.Ana), d=Math.abs(dv);
-    wins.push('Nos meses fechados, a propor&ccedil;&atilde;o acordada ('+SPLIT_LAB+') daria '+brl(tt*SPLIT.Ana)+' para Ana e '+brl(tt*SPLIT.Manuela)+' para Manuela. <b>'+(dv>0?'Ana':'Manuela')+'</b> contribuiu '+brl(d)+' acima da parte dela no acumulado.');
+    var ta=0,tm=0,alA=0,alM=0;CLOSED.forEach(function(m){var c=contribOf(m),S=splitDoMes(m);ta+=c.ana;tm+=c.manu;alA+=(c.ana+c.manu)*S.Ana;alM+=(c.ana+c.manu)*S.Manuela;});
+    var tt=ta+tm, dv=ta-alA, d=Math.abs(dv);
+    wins.push('Nos meses fechados, a divis&atilde;o justa pela renda l&iacute;quida de cada m&ecirc;s daria '+brl(alA)+' para Ana e '+brl(alM)+' para Manuela. <b>'+(dv>0?'Ana':'Manuela')+'</b> contribuiu '+brl(d)+' acima da parte dela no acumulado.');
   }
   var varr=Object.keys(seen).map(function(c){
     var v=CLOSED.map(function(m){return txOf(m,state.perfil).filter(function(t){return catKey(t)===c}).reduce(function(s,t){return s+t.valor},0)});

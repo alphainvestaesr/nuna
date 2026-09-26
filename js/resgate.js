@@ -70,7 +70,14 @@ function rgBase(){
   b.casalRenda = b.Ana.renda + b.Manuela.renda;
   b.casalSaldo = av(function(m){ return caixaCasal(m); });
   b.casalGasto = b.casalRenda - b.casalSaldo;
-  b.parte = { Ana: SPLIT.Ana * b.conj, Manuela: SPLIT.Manuela * b.conj };
+  /* divisao justa pela renda liquida: o que cada uma deveria ter colocado (media dos
+     meses analisados) e a parte de hoje (proporcao do mes mais recente com renda das duas) */
+  b.parte = {
+    Ana: av(function(m){ return gastoOf(m, 'NuNa') * splitDoMes(m).Ana; }),
+    Manuela: av(function(m){ return gastoOf(m, 'NuNa') * splitDoMes(m).Manuela; })
+  };
+  b.S = splitDoMes(MONTHS[MONTHS.length - 1]);
+  b.parteAtual = { Ana: b.S.Ana * b.conj, Manuela: b.S.Manuela * b.conj };
   /* parcelas ainda por vir, estimadas pelas faturas importadas do ultimo mes */
   var ult = MONTHS[MONTHS.length - 1], parc = 0;
   (DATA.months[ult].transactions || []).forEach(function(t){
@@ -109,8 +116,10 @@ function renderResgate(){
   var A = b.Ana, M = b.Manuela;
   var pctAna = b.conj ? Math.round(A.contr / b.conj * 100) : 0, pctManu = b.conj ? Math.round(M.contr / b.conj * 100) : 0;
   var splitFora = M.contr < b.parte.Manuela * 0.8 && b.conj > 0;
-  var ganhoSplit = Math.max(0, b.parte.Manuela - M.contr);
-  var labSplit = Math.round(SPLIT.Ana * 100) + '/' + Math.round(SPLIT.Manuela * 100);
+  var ganhoSplit = Math.max(0, b.parteAtual.Manuela - M.contr);
+  var labSplit = splitCurto(b.S);
+  var justa = 'divis&atilde;o justa pela renda l&iacute;quida (' + labSplit + ')';
+  var sobraManu = M.rendaUlt - M.ind - b.parteAtual.Manuela;
 
   if (p === 'Ana' || p === 'Manuela') {
     var eu = b[p], outra = p === 'Ana' ? M : A, nomeOutra = p === 'Ana' ? 'Manuela' : 'Ana';
@@ -139,9 +148,10 @@ function renderResgate(){
         pq.push('<b>Voc&ecirc; banca a casa praticamente sozinha.</b> Coloca ' + rgR(A.contr) + '/m&ecirc;s nas contas conjuntas (' + pctAna + '%).' +
           (A.folha > 0 ? ' Depois dos descontos em folha (' + rgR(A.folha) + '), sobram cerca de ' + rgR(A.renda - A.folha) + ' da sua renda' +
             (A.renda - A.folha < A.contr ? ', <b>menos do que voc&ecirc; p&otilde;e s&oacute; na casa</b>' : '') + '.' : ''));
-        pq.push('<b>O acordo ' + labSplit + ' n&atilde;o est&aacute; sendo cumprido.</b> A parte da Manuela seria ~' + rgR(b.parte.Manuela) + '/m&ecirc;s. Entraram ' + rgR(M.contr) + '/m&ecirc;s.');
+        pq.push('<b>A ' + justa + ' n&atilde;o est&aacute; sendo cumprida.</b> Pela renda l&iacute;quida de hoje, a parte da Manuela &eacute; ~' + rgR(b.parteAtual.Manuela) + '/m&ecirc;s. Entraram ' + rgR(M.contr) + '/m&ecirc;s.');
       } else {
-        pq.push('<b>O acordo ' + labSplit + ' n&atilde;o est&aacute; sendo cumprido.</b> Sua parte das contas conjuntas seria ~' + rgR(b.parte.Manuela) + '/m&ecirc;s. Entraram ' + rgR(M.contr) + '/m&ecirc;s. A Ana cobre ' + pctAna + '%.');
+        pq.push('<b>A ' + justa + ' n&atilde;o est&aacute; sendo cumprida.</b> Pela sua renda l&iacute;quida, sua parte das contas conjuntas &eacute; ~' + rgR(b.parteAtual.Manuela) + '/m&ecirc;s. Entraram ' + rgR(M.contr) + '/m&ecirc;s. A Ana cobre ' + pctAna + '%.');
+        if (sobraManu < 0) pq.push('<b>Mesmo pagando a sua parte justa, voc&ecirc; fecharia o m&ecirc;s com &minus;' + rgR(-sobraManu) + '.</b> A casa custa mais do que as duas rendas l&iacute;quidas aguentam: cortar nas contas da casa n&atilde;o &eacute; opcional.');
         if (M.rendaUlt > M.renda * 1.1) pq.push('<b>Sua renda subiu para ' + rgR(M.rendaUlt) + '</b> no &uacute;ltimo m&ecirc;s fechado, e a contribui&ccedil;&atilde;o n&atilde;o acompanhou.');
       }
     }
@@ -152,13 +162,13 @@ function renderResgate(){
       (eu.juros > 50 && b.parcelas > 2000 ? ', e ' : '') + (b.parcelas > 2000 ? (eu.juros > 50 ? 'as' : 'As') + ' pr&oacute;ximas faturas j&aacute; t&ecirc;m <b>~' + rgR(b.parcelas) + ' em parcelas</b> comprometidas' : '') + '.');
     /* o que fazer */
     if (splitFora) {
-      if (p === 'Ana') { ac.push(['<b>Cobrar o ' + labSplit + ' a partir deste m&ecirc;s.</b> A parte da Manuela &eacute; ~' + rgR(b.parte.Manuela) + '.', '+' + rgR(ganhoSplit) + '/m&ecirc;s']); proj += ganhoSplit; }
-      else ac.push(['<b>Contribuir com ~' + rgR(b.parte.Manuela) + ' todo m&ecirc;s</b> e registrar no bot&atilde;o CONTRIBUI&Ccedil;&Atilde;O. &Eacute; a a&ccedil;&atilde;o n&uacute;mero 1 do plano da casa.', '+' + rgR(ganhoSplit) + '/m&ecirc;s para a casa']);
+      if (p === 'Ana') { ac.push(['<b>Aplicar a ' + justa + ' a partir deste m&ecirc;s.</b> A parte da Manuela &eacute; ~' + rgR(b.parteAtual.Manuela) + ' e a sua ~' + rgR(b.parteAtual.Ana) + '.', '+' + rgR(ganhoSplit) + '/m&ecirc;s']); proj += ganhoSplit; }
+      else ac.push(['<b>Contribuir com ~' + rgR(b.parteAtual.Manuela) + ' todo m&ecirc;s</b> (' + Math.round(b.S.Manuela * 100) + '% da casa, proporcional &agrave; sua renda l&iacute;quida) e registrar no bot&atilde;o CONTRIBUI&Ccedil;&Atilde;O. &Eacute; a a&ccedil;&atilde;o n&uacute;mero 1 do plano da casa.', '+' + rgR(ganhoSplit) + '/m&ecirc;s para a casa']);
     }
     if (eu.p99 > 100) ac.push(['<b>Parar de pagar boleto com cart&atilde;o pelo 99Pay.</b> Listar o que s&atilde;o esses ' + rgR(eu.p99) + ' e cortar o que n&atilde;o &eacute; essencial.', 'corta taxa e juros']);
     if (eu.sup > RG_TETO_SUPERFLUO) { ac.push(['<b>Teto de ' + rgR(RG_TETO_SUPERFLUO) + ' para compras, comer fora e transfer&ecirc;ncias a pessoas.</b>', '&minus;' + rgR(eu.sup - RG_TETO_SUPERFLUO) + '/m&ecirc;s']); proj += eu.sup - RG_TETO_SUPERFLUO; }
     if (b.corteMerc > 0) {
-      var minha = b.corteMerc * SPLIT[p];
+      var minha = b.corteMerc * b.S[p];
       ac.push(['<b>' + (p === 'Ana' ? 'Teto de ' : 'Ajudar a segurar o teto de ') + rgR(b.tetoMerc) + ' no supermercado da casa.</b> Lista fechada e compra grande quinzenal. A casa economiza ' + rgR(b.corteMerc) + '; a sua parte cai ' + rgR(minha) + '.', '&minus;' + rgR(minha) + '/m&ecirc;s']);
       if (p === 'Ana') proj += minha;
     }
@@ -177,7 +187,7 @@ function renderResgate(){
   /* ---------- perfil conjunto: fala com "voces" ---------- */
   if (b.casalSaldo >= 0) {
     box.innerHTML = '<div class="rg ok"><span class="flag">MANTER O RUMO</span><div class="big">Voc&ecirc;s gastam <span class="g">' + rgCents(b.casalGasto / b.casalRenda) +
-      '</span> para cada R$ 1 que recebem.</div><p class="lead">A casa fechou os &uacute;ltimos meses no azul. Mantenham o ' + labSplit + ', os tetos e o registro de tudo no NuNa.</p></div>';
+      '</span> para cada R$ 1 que recebem.</div><p class="lead">A casa fechou os &uacute;ltimos meses no azul. Mantenham a ' + justa + ', os tetos e o registro de tudo no NuNa.</p></div>';
     return;
   }
   html += '<div class="big">Voc&ecirc;s gastam <span class="r">' + rgCents(b.casalGasto / b.casalRenda) + '</span> para cada R$ 1 que recebem.</div>';
@@ -191,14 +201,16 @@ function renderResgate(){
     (A.folha > 0 || M.folha > 0 ? '<tr><td>Descontos em folha</td>' + c(A.folha > 0 ? rgR(A.folha) : '&mdash;') + c(M.folha > 0 ? rgR(M.folha) : '&mdash;') + c('') + '</tr>' : '') +
     '<tr><td>Gastos individuais</td>' + c(rgR(A.ind)) + c(rgR(M.ind)) + c(rgR(A.ind + M.ind)) + '</tr>' +
     '<tr><td>Contas da casa</td>' + c('') + c('') + c(rgR(b.conj)) + '</tr>' +
-    '<tr><td>Parte pelo acordo ' + labSplit + '</td>' + c(rgR(b.parte.Ana)) + c(rgR(b.parte.Manuela)) + c('') + '</tr>' +
+    '<tr><td>Renda l&iacute;quida (&uacute;ltimo m&ecirc;s com as duas)</td>' + c(rgR(b.S.liqAna)) + c(rgR(b.S.liqManu)) + c(rgR(b.S.liqAna + b.S.liqManu)) + '</tr>' +
+    '<tr><td>Parte justa pelo l&iacute;quido (m&eacute;dia do per&iacute;odo)</td>' + c(rgR(b.parte.Ana)) + c(rgR(b.parte.Manuela)) + c('') + '</tr>' +
+    '<tr><td>Parte justa a partir de agora (' + labSplit + ')</td>' + c(rgR(b.parteAtual.Ana)) + c(rgR(b.parteAtual.Manuela)) + c('') + '</tr>' +
     '<tr><td>Quanto cada uma colocou</td>' + c(rgR(A.contr) + ' (' + pctAna + '%)', splitFora ? 'b' : '') + c(rgR(M.contr) + ' (' + pctManu + '%)', splitFora ? 'b' : '') + c(rgR(A.contr + M.contr)) + '</tr>' +
     '<tr><td>Saldo</td>' + c(sinal(A.saldo), A.saldo < 0 ? 'b' : 'g') + c(sinal(M.saldo), M.saldo < 0 ? 'b' : 'g') + c(sinal(b.casalSaldo), b.casalSaldo < 0 ? 'b' : 'g') + '</tr>' +
     '</tbody></table></div>';
   /* por que */
   var pqc = [], supTot = A.sup + M.sup, p99Tot = A.p99 + M.p99, jurTot = A.juros + M.juros;
-  if (splitFora) pqc.push('<b>Voc&ecirc;s combinaram ' + labSplit + ', mas na pr&aacute;tica est&aacute; ' + pctAna + '/' + pctManu + '.</b> A Ana coloca ' + rgR(Math.max(0, A.contr - b.parte.Ana)) +
-    '/m&ecirc;s a mais do que a parte dela, e a Manuela ' + rgR(ganhoSplit) + '/m&ecirc;s a menos.' + (A.saldo < 0 && M.saldo >= 0 ? ' A Ana paga a diferen&ccedil;a no cart&atilde;o enquanto a Manuela fecha o m&ecirc;s no azul.' : ''));
+  if (splitFora) pqc.push('<b>A divis&atilde;o justa pela renda l&iacute;quida hoje &eacute; ' + labSplit + ', mas na pr&aacute;tica est&aacute; ' + pctAna + '/' + pctManu + '.</b> No per&iacute;odo, a Ana colocou ' + rgR(Math.max(0, A.contr - b.parte.Ana)) +
+    '/m&ecirc;s a mais do que a parte justa dela, e a Manuela ' + rgR(Math.max(0, b.parte.Manuela - M.contr)) + '/m&ecirc;s a menos.' + (A.saldo < 0 && M.saldo >= 0 ? ' A Ana paga a diferen&ccedil;a no cart&atilde;o enquanto a Manuela fecha o m&ecirc;s no azul.' : ''));
   pqc.push('<b>A casa custa ' + rgR(b.conj) + '/m&ecirc;s</b>, ' + Math.round(b.conj / b.casalRenda * 100) + '% de tudo que voc&ecirc;s recebem' +
     (b.conjVar > 5 ? ', e est&aacute; ' + b.conjVar + '% acima da m&eacute;dia do per&iacute;odo' : '') + '.');
   if (b.corteMerc > 0) pqc.push('<b>Supermercado: ' + rgR(b.merc) + '/m&ecirc;s</b>' + (b.orcMerc ? ', contra um or&ccedil;amento de ' + rgR(b.orcMerc) : '') + '.');
@@ -213,7 +225,7 @@ function renderResgate(){
       x.acima.map(function(g){ return esc(g[0]) + ' ' + rgR(g[1]) + ' (or&ccedil;amento ' + rgR(g[2]) + ')'; }).join(' &middot; ') + '</li>'; }).join('') + '</ul>';
   /* o que fazer */
   var acc = [], projC = b.casalSaldo + Math.max(0, M.rendaUlt - M.renda) + Math.max(0, A.rendaUlt - A.renda);
-  if (splitFora) acc.push(['<b>Cumprir o ' + labSplit + ' a partir deste m&ecirc;s.</b> Manuela contribui ~' + rgR(b.parte.Manuela) + ' e registra no bot&atilde;o CONTRIBUI&Ccedil;&Atilde;O.', 'tira ' + rgR(ganhoSplit) + '/m&ecirc;s do cart&atilde;o da Ana']);
+  if (splitFora) acc.push(['<b>Aplicar a ' + justa + ' a partir deste m&ecirc;s.</b> Ana ~' + rgR(b.parteAtual.Ana) + ' e Manuela ~' + rgR(b.parteAtual.Manuela) + ', registradas no bot&atilde;o CONTRIBUI&Ccedil;&Atilde;O.' + (sobraManu < 0 ? ' Mesmo assim a Manuela fecharia com &minus;' + rgR(-sobraManu) + ': por isso os cortes abaixo s&atilde;o obrigat&oacute;rios.' : ''), 'tira ' + rgR(ganhoSplit) + '/m&ecirc;s do cart&atilde;o da Ana']);
   if (p99Tot > 100) acc.push(['<b>Parar de pagar boleto com cart&atilde;o.</b> Sentar juntas, listar o que s&atilde;o esses ' + rgR(p99Tot) + ' e cortar o que n&atilde;o &eacute; essencial. O que for essencial passa a ser pago &agrave; vista.', 'corta taxa e juros']);
   if (b.corteMerc > 0) { acc.push(['<b>Teto de ' + rgR(b.tetoMerc) + ' no supermercado.</b> Lista fechada e compra grande quinzenal, nada de ir ao mercado todo dia.', '&minus;' + rgR(b.corteMerc) + '/m&ecirc;s']); projC += b.corteMerc; }
   var corteSup = Math.max(0, A.sup - RG_TETO_SUPERFLUO) + Math.max(0, M.sup - RG_TETO_SUPERFLUO);

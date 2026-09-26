@@ -94,48 +94,68 @@ function wireContribAdd(){
     renderAll(true); flashToast('Contribuicao removida.');
   });
 }
-/* proporcao acordada de divisao das contas conjuntas */
+/* DIVISAO JUSTA das contas conjuntas: proporcional a RENDA LIQUIDA de cada uma
+   no mes (renda bruta menos descontos em folha: Funaprev, IR, consignado, Sinpol).
+   Mes sem renda de uma delas (ex.: contracheque ainda nao lancado) usa a proporcao
+   do ultimo mes em que as duas tem renda. SPLIT/SPLIT_LAB ficam como padrao antigo. */
 var SPLIT={Ana:0.75,Manuela:0.25};
 var SPLIT_LAB='Ana 75% / Manuela 25%';
+var FOLHA_RE=/Funaprev|Imposto de Renda|consignado|Sinpol/i;
+function rendaLiquidaOf(m,p){
+  var br=rendaOf(m,p)||0; if(br<=0) return 0;
+  var f=txOf(m,p).filter(function(t){return !t.grupo && FOLHA_RE.test(t.tipo||'');}).reduce(function(s,t){return s+t.valor;},0);
+  return Math.max(0,br-f);
+}
+function splitDoMes(m){
+  var i=MONTHS.indexOf(m); if(i<0) i=MONTHS.length-1;
+  for(var k=i;k>=0;k--){
+    var a=rendaLiquidaOf(MONTHS[k],'Ana'), b=rendaLiquidaOf(MONTHS[k],'Manuela');
+    if(a>0&&b>0) return {Ana:a/(a+b), Manuela:b/(a+b), mes:MONTHS[k], liqAna:a, liqManu:b};
+  }
+  return {Ana:SPLIT.Ana, Manuela:SPLIT.Manuela, mes:null, liqAna:0, liqManu:0};
+}
+function splitLab(s){ return 'Ana '+Math.round(s.Ana*100)+'% / Manuela '+Math.round(s.Manuela*100)+'%'; }
+function splitCurto(s){ return Math.round(s.Ana*100)+'/'+Math.round(s.Manuela*100); }
 function renderCollab(){
   var card=el('collab-card'); if(!card) return;
   if(state.perfil!=='NuNa'){card.hidden=true;return;}
   card.hidden=false;
+  var S=splitDoMes(state.mes), LAB=splitLab(S);
   var c=contribOf(state.mes), tot=c.ana+c.manu;
   var pa=tot?c.ana/tot*100:0, pm=tot?c.manu/tot*100:0;
   /* PARTE DE CADA UMA: informativo, calculado sobre o total automatico de
      despesas conjuntas do mes (nao sobre o que foi lancado a mao). */
   var totConj=gastoOf(state.mes,'NuNa');
-  var alvoA=totConj*SPLIT.Ana, alvoM=totConj*SPLIT.Manuela;
-  var desvio=c.ana-tot*SPLIT.Ana, dif=Math.abs(desvio);
+  var alvoA=totConj*S.Ana, alvoM=totConj*S.Manuela;
+  var desvio=c.ana-tot*S.Ana, dif=Math.abs(desvio);
   var quem = desvio>0.005 ? 'Ana' : (desvio<-0.005 ? 'Manuela' : null);
   /* FORA DA PROPORCAO: compara a proporcao real das contribuicoes lancadas
      com a acordada. Dourado quando batem; laranja em qualquer desvio. */
-  var pctAcA=SPLIT.Ana*100, pctAcM=SPLIT.Manuela*100;
+  var pctAcA=S.Ana*100, pctAcM=S.Manuela*100;
   var bate = tot>0 && Math.abs(pa-pctAcA)<0.05 && Math.abs(pm-pctAcM)<0.05;
   var propVal = tot>0
     ? 'Ana '+pa.toFixed(1).replace('.',',')+'% &middot; Manuela '+pm.toFixed(1).replace('.',',')+'%'
     : '&mdash;';
   var propSub = tot>0
-    ? 'acordado: '+SPLIT_LAB+(bate?' &mdash; em linha':' &mdash; fora da propor&ccedil;&atilde;o')
+    ? 'justo pelo l&iacute;quido: '+LAB+(bate?' &mdash; em linha':' &mdash; fora da propor&ccedil;&atilde;o')
     : 'nenhuma contribui&ccedil;&atilde;o lan&ccedil;ada em '+state.mes;
   el('collab-kpis').innerHTML=
     kpiCard('Total conjunto', brl(tot), 'contribui&ccedil;&otilde;es lan&ccedil;adas em '+state.mes,'')+
     kpiCard('Parte de cada uma', brl(alvoA)+' / '+brl(alvoM),
-      SPLIT_LAB+' de '+brl(totConj)+' &mdash; refer&ecirc;ncia informativa','')+
+      LAB+' de '+brl(totConj)+' &mdash; refer&ecirc;ncia informativa','')+
     kpiCard('Propor&ccedil;&atilde;o real', propVal, propSub, (tot>0 && !bate)?'amber':'orange');
   el('collab-bar').innerHTML=
     '<div class="cbar">'+
     '<span style="width:'+pa.toFixed(1)+'%;background:#4A6FA5">'+(pa>=12?'Ana '+Math.round(pa)+'%':'')+'</span>'+
     '<span style="width:'+pm.toFixed(1)+'%;background:#6F4E7C">'+(pm>=12?'Manuela '+Math.round(pm)+'%':'')+'</span>'+
-    '<i style="position:absolute;top:0;bottom:0;left:calc('+(SPLIT.Ana*100)+'% - 1px);width:2px;background:var(--tx);opacity:.65"></i></div>'+
+    '<i style="position:absolute;top:0;bottom:0;left:calc('+(S.Ana*100)+'% - 1px);width:2px;background:var(--tx);opacity:.65"></i></div>'+
     '<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--tx3)"><span>Ana '+brl(c.ana)+' &middot; '+pa.toFixed(1)+'%</span><span>Manuela '+brl(c.manu)+' &middot; '+pm.toFixed(1)+'%</span></div>';
   el('collab-note').innerHTML =
-    '<b>Refer&ecirc;ncia:</b> pela propor&ccedil;&atilde;o '+SPLIT_LAB+', as contas conjuntas de '+esc(state.mes)+' ('+brl(totConj)+') dariam '+brl(alvoA)+' para Ana e '+brl(alvoM)+' para Manuela. '+
+    '<b>Divis&atilde;o justa:</b> pela renda l&iacute;quida'+(S.mes&&S.mes!==state.mes?' de '+S.mes:'')+' ('+LAB+')'+', as contas conjuntas de '+esc(state.mes)+' ('+brl(totConj)+') dariam '+brl(alvoA)+' para Ana e '+brl(alvoM)+' para Manuela. '+
     '<b>Lan&ccedil;ado:</b> Ana '+brl(c.ana)+' e Manuela '+brl(c.manu)+'. '+
     (tot>0
-      ? (bate ? 'A propor&ccedil;&atilde;o das contribui&ccedil;&otilde;es est&aacute; em linha com o acordado.'
-              : 'A propor&ccedil;&atilde;o das contribui&ccedil;&otilde;es est&aacute; fora do acordado &mdash; '+quem+' respondeu por '+brl(dif)+' acima da parte dela no que foi lan&ccedil;ado.')
+      ? (bate ? 'A propor&ccedil;&atilde;o das contribui&ccedil;&otilde;es est&aacute; em linha com a divis&atilde;o justa.'
+              : 'A propor&ccedil;&atilde;o das contribui&ccedil;&otilde;es est&aacute; fora da divis&atilde;o justa &mdash; '+quem+' respondeu por '+brl(dif)+' acima da parte dela no que foi lan&ccedil;ado.')
       : 'Ainda sem contribui&ccedil;&atilde;o lan&ccedil;ada neste m&ecirc;s.')+
     ' Estes indicadores s&atilde;o informativos: n&atilde;o alteram saldo, contribui&ccedil;&atilde;o nem despesas.';
 }
@@ -324,16 +344,16 @@ function collabCompacto(){
   if(det){ orig=det.querySelector(':scope > .collab-orig'); }
   else { orig=document.createElement('div'); orig.className='collab-orig'; orig.style.marginTop='10px'; while(box.firstChild)orig.appendChild(box.firstChild); }
   if(!orig||!orig.textContent.trim())return;
-  var m=state.mes, tot=gastoOf(m,'NuNa'), c=contribOf(m)||{}, ca=+c.ana||0, cm=+c.manuela||0, paid=ca+cm, pa=paid?ca/paid*100:0;
+  var m=state.mes, S=splitDoMes(m), tot=gastoOf(m,'NuNa'), c=contribOf(m)||{}, ca=+c.ana||0, cm=+c.manu||0, paid=ca+cm, pa=paid?ca/paid*100:0;
   box.innerHTML=
     '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px"><h3 style="margin:0">Divis&atilde;o do m&ecirc;s</h3>'+
-    '<span style="font-size:12px;opacity:.7">combinado Ana 75% &middot; Manuela 25%</span></div>'+
+    '<span style="font-size:12px;opacity:.7">justo pelo l&iacute;quido: Ana '+Math.round(S.Ana*100)+'% &middot; Manuela '+Math.round(S.Manuela*100)+'%</span></div>'+
     '<div style="position:relative;height:14px;border-radius:7px;overflow:hidden;background:rgba(127,127,127,.2);margin:12px 0 6px">'+
       '<div style="display:flex;height:100%"><div style="width:'+pa+'%;background:#4A6FA5"></div><div style="width:'+(paid?100-pa:0)+'%;background:#6F4E7C"></div></div>'+
-      '<div style="position:absolute;top:0;bottom:0;left:75%;width:2px;background:#fff;opacity:.85"></div></div>'+
+      '<div style="position:absolute;top:0;bottom:0;left:'+(S.Ana*100).toFixed(1)+'%;width:2px;background:#fff;opacity:.85"></div></div>'+
     '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:13px">'+
-      '<span><b style="color:#7ea3d9">Ana</b> pagou '+brl(ca)+' ('+Math.round(pa)+'%) &middot; parte dela '+brl(tot*.75)+'</span>'+
-      '<span><b style="color:#a57fb3">Manuela</b> pagou '+brl(cm)+' ('+(paid?Math.round(100-pa):0)+'%) &middot; parte dela '+brl(tot*.25)+'</span></div>'+
+      '<span><b style="color:#7ea3d9">Ana</b> pagou '+brl(ca)+' ('+Math.round(pa)+'%) &middot; parte dela '+brl(tot*S.Ana)+'</span>'+
+      '<span><b style="color:#a57fb3">Manuela</b> pagou '+brl(cm)+' ('+(paid?Math.round(100-pa):0)+'%) &middot; parte dela '+brl(tot*S.Manuela)+'</span></div>'+
     '<details class="collab-det" style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;opacity:.75">Ver detalhes</summary></details>';
   box.querySelector('details.collab-det').appendChild(orig);
 }
