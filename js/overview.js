@@ -185,3 +185,111 @@ function renderOverviewInsight(){
     ? '"Em '+CLOSED.length+' meses fechados, a vida em comum custou em media '+brl(-med)+'/mes."'
     : '"Em '+CLOSED.length+' meses fechados, o saldo de '+state.perfil+' ficou em media '+brl(med)+'/mes."';
 }
+
+
+/* ===== Agente NuNa: semaforo do orcamento, alertas e dicas ===== */
+var AGT_MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function agtTotais(mes,p){
+  var o={};
+  txOf(mes,p).forEach(function(t){
+    if(p!=='NuNa'&&t.divisao==='CONJUNTA')return;
+    var k=p==='NuNa'?t.grupo:t.plano; if(!k)return;
+    o[k]=(o[k]||0)+(+t.valor||0);
+  });
+  return o;
+}
+function agtFrac(mes){
+  if(CLOSED.indexOf(mes)>=0)return 1;
+  var h=new Date();
+  if(AGT_MESES[h.getMonth()]!==mes)return null;
+  var dias=new Date(h.getFullYear(),h.getMonth()+1,0).getDate();
+  return h.getDate()/dias;
+}
+function agtMedia(p){
+  var soma={};
+  CLOSED.forEach(function(m){var t=agtTotais(m,p);Object.keys(t).forEach(function(c){soma[c]=(soma[c]||0)+t[c];});});
+  Object.keys(soma).forEach(function(c){soma[c]=soma[c]/(CLOSED.length||1);});
+  return soma;
+}
+function renderAgente(){
+  var host=el('agente-nuna');
+  if(!host){
+    var k=el('ov-kpis'); if(!k)return;
+    host=document.createElement('div'); host.id='agente-nuna';
+    host.style.cssText='border:1px solid rgba(127,127,127,.28);border-radius:14px;padding:16px 18px;margin:0 0 18px';
+    k.parentNode.insertBefore(host,k);
+  }
+  var p=state.perfil, mes=state.mes, B=(DATA.budgets&&DATA.budgets[p])||{};
+  var tot=agtTotais(mes,p), frac=agtFrac(mes), med=agtMedia(p);
+  var COR={red:'#d64545',amber:'#d49a1e',green:'#2e9d5b'};
+  var linhas=[];
+  var cats={}; Object.keys(B).forEach(function(c){cats[c]=1;}); Object.keys(tot).forEach(function(c){cats[c]=1;});
+  Object.keys(cats).forEach(function(c){
+    var b=+B[c]||0, g=tot[c]||0; if(!b&&!g)return;
+    var pct=b?g/b:1.01, cor='green';
+    if(pct>1)cor='red';
+    else if(pct>=0.8||(frac!==null&&frac<1&&pct>frac+0.15))cor='amber';
+    linhas.push({c:c,b:b,g:g,pct:pct,cor:cor});
+  });
+  var ordem={red:0,amber:1,green:2};
+  linhas.sort(function(a,b){return ordem[a.cor]-ordem[b.cor]||b.pct-a.pct;});
+  var alertas=[];
+  if(p!=='NuNa'){
+    var renda=rendaOf(mes,p), saldo=saldoOf(mes,p);
+    if(!renda)alertas.push(['amber','Receitas de '+mes+' ainda n&atilde;o lan&ccedil;adas &mdash; o saldo do m&ecirc;s fica incompleto.']);
+    else if(saldo<0)alertas.push(['red','Saldo de '+mes+' est&aacute; negativo: <b>'+brl(saldo)+'</b>.']);
+    if(renda&&frac&&frac<1){
+      var ind=splitOf(mes,p).ind, proj=renda-ind/frac-contribTotalOf(mes,p);
+      alertas.push([proj<0?'red':'green','No ritmo atual, '+mes+' fecha com saldo de <b>'+brl(proj)+'</b>.']);
+    }
+  }
+  var estour=linhas.filter(function(l){return l.cor==='red';});
+  if(estour.length)alertas.push(['red',estour.length+' categoria'+(estour.length>1?'s':'')+' acima do or&ccedil;amento.']);
+  var dicas=[];
+  estour.slice(0,2).forEach(function(l){
+    dicas.push(l.b?'<b>'+esc(l.c)+'</b> passou '+brl(l.g-l.b)+' do or&ccedil;amento. Segure novos gastos aqui at&eacute; o fim do m&ecirc;s.'
+                 :'<b>'+esc(l.c)+'</b> teve '+brl(l.g)+' sem or&ccedil;amento definido. Defina um valor na aba Or&ccedil;amento.');
+  });
+  Object.keys(tot).map(function(c){return [c,tot[c]-(med[c]||0)];})
+    .filter(function(x){return med[x[0]]>50&&x[1]>med[x[0]]*0.3;})
+    .sort(function(a,b){return b[1]-a[1];})
+    .forEach(function(x){ if(dicas.length<3&&!estour.some(function(l){return l.c===x[0];}))
+      dicas.push('<b>'+esc(x[0])+'</b> est&aacute; '+brl(x[1])+' acima da sua m&eacute;dia de mar a ago ('+brl(med[x[0]])+').'); });
+  if(!dicas.length)dicas.push('Tudo dentro do esperado neste m&ecirc;s. Continue registrando no ACABEI DE GASTAR.');
+  function dot(c){return '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+COR[c]+';margin-right:8px;flex:none"></span>';}
+  var alerta=linhas.filter(function(l){return l.cor!=='green';}), ok=linhas.length-alerta.length;
+  var semaf=alerta.map(function(l){
+    var w=Math.min(100,Math.round(l.pct*100));
+    return '<div style="margin:8px 0"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px">'+
+      '<span style="display:flex;align-items:center;min-width:0">'+dot(l.cor)+'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.c)+'</span></span>'+
+      '<span style="opacity:.8;white-space:nowrap">'+brl(l.g)+(l.b?' de '+brl(l.b)+' &middot; '+Math.round(l.pct*100)+'%':' &middot; sem or&ccedil;amento')+'</span></div>'+
+      '<div style="height:5px;border-radius:3px;background:rgba(127,127,127,.18);margin-top:5px"><div style="height:5px;border-radius:3px;width:'+w+'%;background:'+COR[l.cor]+'"></div></div></div>';
+  }).join('');
+  host.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">'+
+      '<div style="font-weight:700;letter-spacing:.04em">AGENTE NUNA</div>'+
+      '<div style="font-size:12px;opacity:.7">'+(p==='NuNa'?'conjunto':esc(p))+' &middot; '+mes+(frac!==null&&frac<1?' &middot; '+Math.round(frac*100)+'% do m&ecirc;s':'')+'</div></div>'+
+    (alertas.length?'<div style="margin-top:10px">'+alertas.map(function(a){return '<div style="display:flex;align-items:flex-start;margin:6px 0;font-size:14px">'+dot(a[0])+'<span>'+a[1]+'</span></div>';}).join('')+'</div>':'')+
+    '<div style="margin-top:12px;font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.05em">Sem&aacute;foro do or&ccedil;amento</div>'+
+    (semaf||'<div style="font-size:13px;margin-top:6px">Nenhuma categoria em alerta.</div>')+
+    (ok?'<div style="font-size:12px;opacity:.7;margin-top:6px">'+dot('green')+ok+' categoria'+(ok>1?'s':'')+' dentro do or&ccedil;amento</div>':'')+
+    '<div style="margin-top:12px;font-size:12px;opacity:.7;text-transform:uppercase;letter-spacing:.05em">Dicas</div>'+
+    '<ul style="margin:6px 0 0;padding-left:18px;font-size:14px">'+dicas.map(function(d){return '<li style="margin:4px 0">'+d+'</li>';}).join('')+'</ul>';
+}
+(function(){
+  var _kpi=renderKPI;
+  renderKPI=function(){ var r=_kpi.apply(this,arguments); try{renderAgente();}catch(e){console.warn('Agente NuNa',e);} return r; };
+})();
+document.addEventListener('click',function(e){
+  if(!e.target||!e.target.closest||!e.target.closest('#ag-save'))return;
+  try{
+    var v=parseFloat(String(el('ag-valor').value).replace(/\./g,'').replace(',','.')); if(!(v>0))return;
+    var conj=el('ag-div').value==='CONJUNTA';
+    var p=conj?'NuNa':el('ag-perfil').value, c=conj?el('ag-grupo').value:el('ag-cat').value;
+    var b=+(((DATA.budgets||{})[p]||{})[c])||0; if(!b)return;
+    var g=(agtTotais(state.mes,p)[c]||0)+v, msg='';
+    if(g>b)msg='Atenção: com esse gasto, '+c+' passa do orçamento em '+brl(g-b)+'.';
+    else if(g>=0.8*b)msg='Aviso: '+c+' chegou a '+Math.round(g/b*100)+'% do orçamento (restam '+brl(b-g)+').';
+    if(msg)setTimeout(function(){flashToast(msg);},900);
+  }catch(err){}
+},true);
