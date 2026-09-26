@@ -69,12 +69,29 @@ function inView(t,p){if(t.contrib) return false; return p==='NuNa' ? !!t.grupo :
    porque a versao oficial deles ja esta na base importada (regra anti-duplicidade) */
 function agComoTx(mes){
   if(typeof AG==='undefined'||!AG.itens.length) return [];
-  return AG.itens.filter(function(i){ return agMesNoDash(i.data)===mes && i.status!=='Conciliado' })
-    .map(function(i){ return {mes:mes,data:agBR(i.data),perfil:i.perfil,raw:i.desc,desc:i.desc,
+  var out=[];
+  AG.itens.forEach(function(i){
+    if(i.status==='Conciliado') return;
+    /* compra parcelada: cada parcela entra na fatura em que vai cair,
+       e sai sozinha quando a parcela aparece na fatura importada */
+    if(typeof agNumParcelas==='function' && agNumParcelas(i)>1){
+      agParcelasDe(i).forEach(function(pc){
+        if(pc.mes!==mes || pc.conciliada) return;
+        out.push(agTxDeItem(i, mes, pc.valor, i.desc+' ('+agDois(pc.k)+'/'+agDois(pc.n)+')', 'AG|'+i.id+'|'+pc.k));
+      });
+      return;
+    }
+    if(agMesNoDash(i.data)!==mes) return;
+    out.push(agTxDeItem(i, mes, i.valor, i.desc, 'AG|'+i.id));
+  });
+  return out;
+}
+function agTxDeItem(i, mes, valor, desc, chave){
+  return {mes:mes,data:agBR(i.data),perfil:i.perfil,raw:desc,desc:desc,
       tipo:i.categoria,grupo:i.grupo||null,plano:i.categoria,planoOrig:i.categoria,grupoOrig:i.grupo||null,
-      valor:i.valor,fonte:i.fonte,fonteLabel:i.fonte,fontePendente:false,cartao:'-',
+      valor:valor,fonte:i.fonte,fonteLabel:i.fonte,fontePendente:false,cartao:'-',
       revisar:(i.status==='Pendente'||i.status==='Revisar'),status:'',divisao:i.divisao,
-      contrib:false,possivelDup:false,manual:true,agStatus:i.status,id:i.id,uid:i.id,dedupKey:'AG|'+i.id}; });
+      contrib:false,possivelDup:false,manual:true,agStatus:i.status,id:i.id,uid:i.id,dedupKey:chave};
 }
 /* CONTRIBUICAO NAO E DESPESA: vive fora da lista de transacoes, nao entra
    em nenhum total nem grafico de despesas. Participa exclusivamente da

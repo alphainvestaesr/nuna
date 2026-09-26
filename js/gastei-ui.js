@@ -23,6 +23,12 @@ function agWire(){
     el('ag-grupo').disabled = el('ag-div').value!=='CONJUNTA';
   });
   el('ag-desc').addEventListener('input', agAutoSugerir);
+  if(el('ag-parc')){
+    el('ag-parc').innerHTML=Array.apply(null,{length:24}).map(function(_,k){ var n=k+1;
+      return '<option value="'+n+'">'+(n===1?'&Agrave; vista (1x)':n+'x')+'</option>'; }).join('');
+    ['ag-parc','ag-valor','ag-data','ag-fonte'].forEach(function(id){
+      el(id).addEventListener('input', agInfoParcelas); el(id).addEventListener('change', agInfoParcelas); });
+  }
   el('ag-save').addEventListener('click', agSalvar);
   el('ag-clear').addEventListener('click', agLimpar);
   el('ag-open').addEventListener('click',function(){
@@ -54,7 +60,19 @@ function agAutoSugerir(){
 }
 function agLimpar(){
   el('ag-desc').value=''; el('ag-valor').value=''; el('ag-data').value=agHojeISO();
+  if(el('ag-parc')) el('ag-parc').value='1'; agInfoParcelas();
   el('ag-sugestao').innerHTML=''; el('ag-div').value='INDIVIDUAL'; el('ag-grupo').disabled=true;
+}
+/* mostra, antes de salvar, como a compra parcelada vai se espalhar nas faturas */
+function agInfoParcelas(){
+  var box=el('ag-parc-info'); if(!box) return;
+  var n=parseInt((el('ag-parc')||{}).value,10)||1;
+  var valor=parseFloat(String(el('ag-valor').value).replace(/\./g,'').replace(',','.'));
+  if(n<2 || !(valor>0)){ box.innerHTML=''; return; }
+  var pcs=agParcelasDe({data:el('ag-data').value||agHojeISO(), valor:valor, parcelas:n, fonte:el('ag-fonte').value});
+  box.innerHTML='<b>'+n+'x de '+brl(pcs[n-1].valor)+'</b>'+(pcs[0].valor!==pcs[n-1].valor?' (1&ordf; de '+brl(pcs[0].valor)+')':'')+
+    ' &middot; 1&ordf; parcela na fatura de <b>'+mesNome(pcs[0].mes)+'</b>, &uacute;ltima em <b>'+mesNome(pcs[n-1].mes)+'</b>. '+
+    'Quando cada fatura for importada, a parcela &eacute; encontrada e sai daqui sozinha, sem contar duas vezes.';
 }
 function agSalvar(){
   var desc=el('ag-desc').value.trim();
@@ -67,18 +85,21 @@ function agSalvar(){
     fonte:el('ag-fonte').value, perfil:el('ag-perfil').value, categoria:el('ag-cat').value,
     divisao:div, grupo: div==='CONJUNTA'? el('ag-grupo').value : null,
     criadoEm:new Date().toISOString(), origem:'ACABEI DE GASTAR' };
+  var nParc=parseInt((el('ag-parc')||{}).value,10)||1;
+  if(nParc>1) item.parcelas=nParc;
   var s=agSugerir(desc,item.perfil);
-  var c=agConciliar(item);
+  var c=nParc>1 ? {status:null} : agConciliar(item);
   if(c.status==='Conciliado'){ item.status='Conciliado'; item.conciliadoCom=c.match.raw; item.conciliadoEm=new Date().toISOString(); }
   else if(c.status==='Revisar'){ item.status='Revisar'; item.possivelMatch=c.match.raw; }
   else item.status = s && s.score>=0.55 ? 'Confirmado' : (s?'Pendente':'Revisar');
   item.confianca = Math.round((s?s.score:0)*100);
   AG.itens = AG.itens.concat([item]);
+  if(nParc>1){ try{ agReconciliar(); }catch(e){} }
   agSalvarItem(item).then(function(){
     agLimpar(); agRenderAll(); renderAll(true);
     flashToast(item.status==='Conciliado'
       ? 'Salvo e ja conciliado com a fatura - nao vai contar duas vezes.'
-      : 'Gasto salvo como '+item.status+'.');
+      : (nParc>1 ? 'Compra em '+nParc+'x salva - cada parcela entra na fatura em que vai cair.' : 'Gasto salvo como '+item.status+'.'));
   });
 }
 function agEditarLinha(e){
@@ -88,7 +109,12 @@ function agEditarLinha(e){
   if(cl.indexOf('ag-c-cat')>=0) item.categoria=e.target.value;
   if(cl.indexOf('ag-c-fonte')>=0) item.fonte=e.target.value;
   if(cl.indexOf('ag-c-div')>=0){ item.divisao=e.target.value; item.grupo = item.divisao==='CONJUNTA' ? (item.grupo||GRUPO_PADRAO) : null; }
-  if(cl.indexOf('ag-c-st')>=0) item.status=e.target.value;
+  if(cl.indexOf('ag-c-st')>=0){
+    /* se a pessoa tirar de "Conciliado" na mao, a conferencia automatica nao volta a conciliar */
+    if(item.status==='Conciliado' && e.target.value!=='Conciliado'){ item.naoConciliar=true; delete item.parcConc; delete item.conciliadoUid; }
+    if(e.target.value==='Conciliado') delete item.naoConciliar;
+    item.status=e.target.value;
+  }
   agSalvarItem(item).then(function(){ agRenderAll(); renderAll(true); });
 }
 
@@ -131,7 +157,7 @@ function agRenderHoje(){
   var tb=el('ag-hoje').querySelector('tbody');
   tb.innerHTML=l.map(function(i){
     return '<tr data-id="'+i.id+'">'+
-      '<td>'+esc(i.desc)+(i.conciliadoCom?'<br><span style="font-size:11px;color:var(--tx3)">conciliado com: '+esc(i.conciliadoCom)+'</span>':'')+
+      '<td>'+esc(i.desc)+(agNumParcelas(i)>1?'<br><span style="font-size:11px;color:var(--tx3)">'+agTextoParcelas(i)+'</span>':'')+(i.conciliadoCom?'<br><span style="font-size:11px;color:var(--tx3)">conciliado com: '+esc(i.conciliadoCom)+'</span>':'')+
         (i.possivelMatch?'<br><span style="font-size:11px;color:var(--neg)">parecido com: '+esc(i.possivelMatch)+'</span>':'')+'</td>'+
       '<td><select class="ag-c-fonte">'+fontesParaGasto().map(function(f){return '<option'+(f===i.fonte?' selected':'')+'>'+f+'</option>'}).join('')+'</select></td>'+
       '<td><span class="badge b-ind">'+i.perfil+'</span></td>'+
@@ -173,4 +199,10 @@ function agRenderFontes(){
     ? ks.map(function(k){var v=por[k];
         return '<tr><td>'+esc(k)+'</td><td class="num">'+brl(v.ana)+'</td><td class="num">'+brl(v.man)+'</td><td class="num">'+brl(v.ind)+'</td><td class="num">'+brl(v.cj)+'</td><td class="num"><b>'+brl(v.tot)+'</b></td></tr>';}).join('')
     : '<tr><td colspan="6" style="color:var(--tx3)">Sem lan&ccedil;amentos ainda.</td></tr>';
+}
+
+function agTextoParcelas(i){
+  var pcs=agParcelasDe(i), n=pcs.length, ok=pcs.filter(function(p){return p.conciliada}).length;
+  return n+'x de '+brl(pcs[n-1].valor)+' &middot; faturas de '+mesNome(pcs[0].mes)+' a '+mesNome(pcs[n-1].mes)+
+    (ok? ' &middot; '+ok+' de '+n+' j&aacute; na fatura' : '');
 }

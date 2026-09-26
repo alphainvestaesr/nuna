@@ -74,7 +74,8 @@ ddMontarFontes(nomeNovo); if(typeof agAtualizarFontes==='function') agAtualizarF
 if(nomeNovo) setTimeout(function(){ flashToast('Cartao cadastrado: '+nomeNovo+'. Ja aparece para as duas.'); },3600);
     ultimaPreparacao=null; el('dd-aplicar').disabled=true; el('dd-file').value=''; textoCSV=null;
     el('dd-preview').innerHTML='<p class="note">'+n+' lan&ccedil;amentos importados. Est&atilde;o na aba <b>Revisar</b> aguardando sua confer&ecirc;ncia.</p>';
-    renderAll(); flashToast(n+' lancamentos importados sem duplicar.');
+    var achados=0; try{ achados=agReconciliar(); if(achados) agRenderAll(); }catch(e){ console.error('agReconciliar',e); }
+    renderAll(); flashToast(n+' lancamentos importados sem duplicar.'+(achados? ' '+achados+' gasto(s)/parcela(s) do ACABEI DE GASTAR encontrados na fatura - nao contam duas vezes.' : ''));
   });
   el('dd-backup').addEventListener('click', function(){
     baixarArquivo('nuna-backup-'+new Date().toISOString().slice(0,10)+'.json',
