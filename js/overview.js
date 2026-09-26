@@ -141,7 +141,7 @@ function renderCollab(){
 }
 var donutChart=null;
 function renderDonut(){
-  var tot=catTotals(txOf(state.mes,state.perfil));
+  var tot=catTotals(txOf(state.mes,state.perfil).filter(function(t){ return state.perfil==='NuNa' || t.divisao!=='CONJUNTA'; })); // perfil individual: so gastos individuais (conjuntas geradas ficam no card proprio e no perfil NuNa)
   var arr=Object.keys(tot).map(function(k){return [k,tot[k]]}).sort(function(a,b){return b[1]-a[1]});
   var soma=arr.reduce(function(s,a){return s+a[1]},0);
   el('donut-legend').innerHTML=arr.map(function(a){
