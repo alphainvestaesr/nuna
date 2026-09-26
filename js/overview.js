@@ -16,7 +16,7 @@ function renderKPI(){
       kpiCard('Renda do casal', brl(renda), 'Ana + Manuela'+(aberto&&DATA.months[state.mes].receita.Ana===0?' &mdash; sem contracheque da Ana':''),'green');
   } else {
     el('ov-kpis').innerHTML=
-      kpiCard('Receitas', brl(renda), p==='Ana'?'contracheque + extras':'sal&aacute;rio + dividendos informados','green')+
+      kpiCard('Receitas', brl(renda), p==='Ana'?'contracheque + extras':'sal&aacute;rio + extras informados','green')+
       kpiCard('Despesas individuais', brl(sp.ind), 'consumo s&oacute; dela','red')+
       kpiCard('Conjuntas pagas por ela', brl(contribManualOf(state.mes,p)), 'contribui&ccedil;&atilde;o registrada no m&ecirc;s','orange')+
       kpiCard('Conjuntas geradas por ela', brl(sp.conj), 'informativo &mdash; n&atilde;o entra no saldo','')+
@@ -168,7 +168,7 @@ function renderTransfers(){
   [].forEach.call(el('transfers').querySelectorAll('input'),function(c){c.onchange=function(){
     var tr=Store.get(K.TRANSF,{}); if(c.checked) tr[c.dataset.k]=1; else delete tr[c.dataset.k]; Store.set(K.TRANSF,tr); }});
   var base = state.perfil==='NuNa' ? 'Base: o caixa do casal no m&ecirc;s (renda das duas menos <b>todos</b> os gastos das duas, individuais inclusive) &mdash; '+brl(saldo)+'. ' : '';
-  base += 'Imposto de Renda e INSS/Funaprev j&aacute; saem no contracheque e <b>n&atilde;o</b> contam como dispon&iacute;vel para a Caixinha.';
+  if(state.perfil!=='Manuela') base += 'Imposto de Renda e INSS/Funaprev j&aacute; saem no contracheque e <b>n&atilde;o</b> contam como dispon&iacute;vel para a Caixinha.';
   el('transfers-note').innerHTML = (saldo<=0 ? 'Este m&ecirc;s fechou no vermelho, ent&atilde;o n&atilde;o h&aacute; saldo para transferir. Primeiro alvo: zerar o d&eacute;ficit. ' : '') + base;
 }
 function renderSavingsTracker(){
