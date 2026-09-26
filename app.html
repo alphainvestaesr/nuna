@@ -198,7 +198,8 @@
       <div class="agform">
         <label>Data<input type="date" id="ag-data"></label>
         <label>Descri&ccedil;&atilde;o<input type="text" id="ag-desc" placeholder="Supermercado, gasolina, farm&aacute;cia..."></label>
-        <label>Valor (R$)<input type="text" id="ag-valor" inputmode="decimal" placeholder="0,00"></label>
+        <label>Valor total (R$)<input type="text" id="ag-valor" inputmode="decimal" placeholder="0,00"></label>
+        <label>Parcelas<select id="ag-parc"></select></label>
         <label>Fonte<select id="ag-fonte"></select></label>
         <label>Perfil<select id="ag-perfil"><option value="Ana">Ana</option><option value="Manuela">Manuela</option></select></label>
         <label>Categoria<select id="ag-cat"></select></label>
@@ -206,6 +207,7 @@
         <label>Grupo conjunto<select id="ag-grupo" disabled></select></label>
       </div>
       <p class="note" id="ag-sugestao"></p>
+      <p class="note" id="ag-parc-info"></p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
         <button class="btn" id="ag-save">Salvar gasto</button>
         <button class="pill" id="ag-clear">Limpar</button>
