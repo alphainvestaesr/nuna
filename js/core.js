@@ -114,7 +114,7 @@ function contribOf(mes){
   var tr=DATA.months[mes].transactions.filter(function(t){return t.contrib}).reduce(function(s,t){return s+t.valor},0);
   return {ana:contribTotalOf(mes,'Ana'), manu:contribTotalOf(mes,'Manuela'), tr:tr};
 }
-function catTotals(list){var o={};list.forEach(function(t){var k=catKey(t)||'(sem grupo)';o[k]=(o[k]||0)+t.valor});return o;}
+function catTotals(list){var o={};list.forEach(function(t){if(state.perfil!=='NuNa'&&t.divisao==='CONJUNTA')return; /* perfil individual: so gastos individuais */ var k=catKey(t)||'(sem grupo)';o[k]=(o[k]||0)+t.valor});return o;}
 
 
 function wireProfile(){
