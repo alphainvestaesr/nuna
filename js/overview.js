@@ -376,7 +376,7 @@ var CORES_FIXAS={
   'Descontos em folha':'#6C757D','Dívidas & Crédito':'#8E5572','Boletos 99Pay':'#E0A64B','Compras pessoais':'#2A9D8F',
   'Transferências':'#9C6644','Comer fora':'#E07A5F','Outros':'#A8A29E','Carro':'#588157','Saúde & Bem-estar':'#B5838D',
   'Assinaturas':'#D4B483','Casa da mamãe (Quilombo)':'#7FB069','Investimento/Gustavo':'#264653','Conta telefonica':'#D64F8F',
-  'CRMV':'#8D99AE','Uber':'#E9C46A','Terreno':'#588157','Cravo & Canela':'#C77D43','Saúde':'#264653','Despesa conjunta':'#5C4033'
+  'CRMV':'#06D6A0','Uber':'#E9C46A','Terreno':'#588157','Cravo & Canela':'#C77D43','Saúde':'#264653','Despesa conjunta':'#5C4033'
 };
 (function(){ var _c=colorOf; colorOf=function(c){ return CORES_FIXAS[c]||_c(c); }; })();
 
@@ -632,6 +632,8 @@ function txEnxuga(){
   var th=tbl.tHead&&tbl.tHead.rows[0]; if(th&&th.cells.length===11&&th.dataset.reord)th.cells[7].textContent='Divisão';
   [].forEach.call(tbl.querySelectorAll('select.c-grupo option[value=""]'),function(o){ o.textContent='Individual'; });
   if(tbl.tBodies[0])[].forEach.call(tbl.tBodies[0].rows,function(r){ var g=r.querySelector('select.c-grupo'), pl=r.querySelector('select.c-plano'); if(g&&pl)pl.style.visibility=g.value?'hidden':''; });
+  /* no Conjunto todos os lancamentos sao da casa: a coluna Categoria (plano individual) fica vazia, entao some inteira */
+  (function(){ var esc=state.perfil==='NuNa'; [].forEach.call(tbl.rows,function(r){ if(r.cells.length>4&&!r.cells[0].hasAttribute('colspan')) r.cells[4].style.display=esc?'none':''; }); })();
   var lista=txFiltered(), tot=lista.reduce(function(s,t){return s+(+t.valor||0);},0);
   var assin=[state.txMes,el('tx-search').value,el('tx-status').value,el('tx-tipo').value,el('tx-rev').value,el('tx-fonte').value,state.perfil,state.sort.k,state.sort.dir].join('|');
   if(assin!==txAssin){ txAssin=assin; txPagina=1; }
