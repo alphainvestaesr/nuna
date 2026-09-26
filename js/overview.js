@@ -465,3 +465,272 @@ window.addEventListener('load',function(){
   if(typeof rcRenderLista==='function'){ var _rl=rcRenderLista; rcRenderLista=function(){ var r=_rl.apply(this,arguments); try{receitasCompacto();}catch(e){} return r; }; }
   try{receitasCompacto();}catch(e){}
 });
+
+
+/* ===== Aba Acabei de Gastar: fluxo simples, um agente so ===== */
+var AG_FORA=['Descontos em folha','Despesa conjunta'];
+function agLabel(e){ return e&&e.closest('label'); }
+function agFillCat(){
+  var cat=el('ag-cat'), div=el('ag-div'), grp=el('ag-grupo'), per=el('ag-perfil'); if(!cat||!div||!grp)return;
+  var conj=div.value==='CONJUNTA', atual=cat.value;
+  var lista=conj?[].map.call(grp.options,function(o){return o.value;})
+                :((CATS[per?per.value:state.perfil])||[]).filter(function(c){return AG_FORA.indexOf(c)<0;});
+  cat.innerHTML=lista.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+  if(lista.indexOf(atual)>=0)cat.value=atual;
+  if(conj)grp.value=cat.value;
+  var lb=agLabel(cat), t=lb&&[].filter.call(lb.querySelectorAll('*'),function(e){return !e.children.length&&/categoria/i.test(e.textContent);})[0];
+  if(t)t.textContent=conj?'Categoria (conjunta)':'Categoria (individual)';
+}
+function agFormFluxo(){
+  var cat=el('ag-cat'), div=el('ag-div'), grp=el('ag-grupo'), per=el('ag-perfil'); if(!cat||!div||!grp)return;
+  if(!div.dataset.fluxo){
+    div.dataset.fluxo='1';
+    agLabel(cat).parentNode.insertBefore(agLabel(div),agLabel(cat));
+    agLabel(grp).style.display='none';
+    div.addEventListener('change',agFillCat); if(per)per.addEventListener('change',agFillCat);
+    cat.addEventListener('change',function(){ if(div.value==='CONJUNTA')grp.value=cat.value; });
+  }
+  agFillCat();
+}
+function agCompacto(){
+  var p=el('panel-gastei'); if(!p)return;
+  var k=el('ag-kpis');
+  if(k)[].forEach.call(k.children,function(c){
+    var lab=c.querySelector('.lab'); if(!lab)return; var t=lab.textContent.trim().toUpperCase();
+    if(t==='ANA'||t==='MANUELA')c.style.display='none';
+    if(t==='CONJUNTO'){ lab.textContent='Conjuntas geradas por mim'; var s=c.querySelector('.sub'); if(s)s.textContent='entram no NuNa como geradas por você'; }
+  });
+  [].forEach.call(p.children,function(c){
+    var h=c.querySelector('h2,h3'); if(!h)return; var t=h.textContent.trim();
+    if(/^(Hoje|Dias anteriores|Histórico|Por forma de pagamento)/.test(t)){
+      var rows=c.querySelectorAll('tbody tr'), vazio=!rows.length||(rows.length===1&&rows[0].querySelector('td[colspan]'));
+      c.style.display=vazio?'none':'';
+    }
+    if(/^Relatório do Agente/.test(t)){
+      [].forEach.call(c.children,function(x){ if(x.id!=='ag-clareza')x.style.display='none'; });
+      var box=el('ag-clareza'); if(!box){ box=document.createElement('div'); box.id='ag-clareza'; c.appendChild(box); }
+      try{ renderAgente(); }catch(e){}
+      var src=el('agente-nuna');
+      if(src){ var cl=src.cloneNode(true); cl.removeAttribute('id'); cl.style.margin='0';
+        var sb=cl.querySelector('#clareza-share'); if(sb)sb.remove();
+        var d=cl.querySelector('#clareza-det'); if(d)d.removeAttribute('id');
+        box.innerHTML=''; box.appendChild(cl); }
+      c.style.padding='0'; c.style.border='none'; c.style.background='transparent'; c.style.boxShadow='none';
+    }
+  });
+}
+(function(){
+  var s=document.createElement('style');
+  s.textContent='#ag-fontes th:nth-child(2),#ag-fontes th:nth-child(3),#ag-fontes td:nth-child(2):not([colspan]),#ag-fontes td:nth-child(3){display:none}';
+  document.head.appendChild(s);
+})();
+window.addEventListener('load',function(){
+  if(typeof agRenderAll==='function'){ var _ag=agRenderAll; agRenderAll=function(){ var r=_ag.apply(this,arguments); try{agFormFluxo();agCompacto();}catch(e){console.warn(e);} return r; }; }
+  try{ agFormFluxo(); agCompacto(); }catch(e){}
+});
+document.addEventListener('click',function(e){
+  var t=e.target&&e.target.closest&&e.target.closest('[data-tab="gastei"],.prof');
+  if(t)setTimeout(function(){ try{agFormFluxo();agCompacto();}catch(err){} },80);
+});
+
+
+/* ===== Mes vs Mes: sem mistura, meses abertos sinalizados; rodape fixo ===== */
+function mesAberto(m){ return CLOSED.indexOf(m)<0; }
+function rotulosMeses(){ return MONTHS.map(function(m){ return mesAberto(m)?m+' (aberto)':m; }); }
+function eixoK(v){ return 'R$ '+((Math.abs(v)%1000)?(v/1000).toFixed(1):(v/1000).toFixed(0))+'k'; }
+function nunaMonthVsMonth(){
+  var ctx=el('bars'); if(!ctx||typeof Chart==='undefined')return;
+  var p=state.perfil;
+  var cor=function(c){ return MONTHS.map(function(m){ return mesAberto(m)?c+'55':c; }); };
+  var ds=p==='NuNa'?[
+      {label:'Renda do casal',stack:'r',data:MONTHS.map(function(m){return rendaOf(m,'NuNa');}),backgroundColor:cor('#1B4332'),borderRadius:4},
+      {label:'Despesas conjuntas',stack:'g',data:MONTHS.map(function(m){return gastoOf(m,'NuNa');}),backgroundColor:cor('#BC4749'),borderRadius:4}
+    ]:[
+      {label:'Receitas',stack:'r',data:MONTHS.map(function(m){return rendaOf(m,p);}),backgroundColor:cor('#1B4332'),borderRadius:4},
+      {label:'Gastos individuais',stack:'g',data:MONTHS.map(function(m){return splitOf(m,p).ind;}),backgroundColor:cor('#BC4749')},
+      {label:'Contribuição nas conjuntas',stack:'g',data:MONTHS.map(function(m){return contribTotalOf(m,p);}),backgroundColor:cor('#D98A8B'),borderRadius:4}
+    ];
+  if(barChart)barChart.destroy();
+  barChart=new Chart(ctx,{type:'bar',data:{labels:rotulosMeses(),datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+brl(c.raw);},
+          afterBody:function(it){var m=MONTHS[it[0].dataIndex];
+            return (mesAberto(m)?'Mês em aberto — dados incompletos\n':'')+(p==='NuNa'?'':'Saldo: '+brl(saldoOf(m,p)));}}}},
+      scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:11}}},
+              y:{stacked:true,ticks:{callback:eixoK,font:{size:10}},grid:{color:'rgba(128,128,128,.15)'}}}}});
+}
+function nunaSaldos(){
+  var ctx=el('saldos'); if(!ctx||typeof Chart==='undefined')return;
+  var p=state.perfil;
+  var mk=function(q,c){return {label:q,data:MONTHS.map(function(m){return saldoOf(m,q);}),borderColor:c,backgroundColor:c+'22',
+    tension:.3,pointRadius:4,fill:false,
+    pointBackgroundColor:MONTHS.map(function(m){return mesAberto(m)?'transparent':c;}),
+    segment:{borderDash:function(s){return mesAberto(MONTHS[s.p1DataIndex])?[5,5]:undefined;}}};};
+  var sets=p==='NuNa'?[mk('Ana','#4A6FA5'),mk('Manuela','#6F4E7C'),mk('NuNa','#1B4332')]:[mk(p,p==='Manuela'?'#6F4E7C':'#4A6FA5')];
+  var card=ctx.closest('.card'), h=card&&card.querySelector('h2,h3');
+  if(h)h.textContent=p==='NuNa'?'Saldo por mês — Ana, Manuela e NuNa':'Saldo por mês — '+p;
+  if(saldoChart)saldoChart.destroy();
+  saldoChart=new Chart(ctx,{type:'line',data:{labels:rotulosMeses(),datasets:sets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:p==='NuNa',position:'bottom',labels:{boxWidth:10,font:{size:11}}},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+brl(c.raw);},
+          afterBody:function(it){return mesAberto(MONTHS[it[0].dataIndex])?'Mês em aberto — dados incompletos':'';}}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:11}}},
+              y:{ticks:{callback:eixoK,font:{size:10}},
+                 grid:{color:function(c){return c.tick&&c.tick.value===0?'rgba(128,128,128,.6)':'rgba(128,128,128,.15)';}}}}}});
+}
+function nunaTrendAberto(){
+  if(typeof trendChart==='undefined'||!trendChart||!trendChart.data)return;
+  trendChart.data.labels=rotulosMeses();
+  trendChart.data.datasets.forEach(function(d){ d.segment={borderDash:function(s){return mesAberto(MONTHS[s.p1DataIndex])?[5,5]:undefined;}}; });
+  trendChart.update('none');
+}
+var RODAPE_TXT='“Os planos do diligente levam à fartura, mas o apressado sempre acaba na miséria.”';
+var RODAPE_REF='Provérbios 21:5';
+function rodapeFixo(){
+  [].forEach.call(document.querySelectorAll('footer.insight-footer'),function(f){
+    var t=f.querySelector('.insight-text'), m=f.querySelector('.insight-meta');
+    if(t&&t.textContent!==RODAPE_TXT)t.textContent=RODAPE_TXT;
+    if(m&&m.textContent!==RODAPE_REF)m.textContent=RODAPE_REF;
+  });
+}
+window.addEventListener('load',function(){
+  if(typeof renderMonthVsMonth==='function')renderMonthVsMonth=nunaMonthVsMonth;
+  if(typeof renderSaldos==='function')renderSaldos=nunaSaldos;
+  if(typeof renderCategoryTrend==='function'){ var _ct=renderCategoryTrend; renderCategoryTrend=function(){ var r=_ct.apply(this,arguments); try{nunaTrendAberto();}catch(e){} return r; }; }
+  if(typeof renderAll==='function'){ var _ra2=renderAll; renderAll=function(){ var r=_ra2.apply(this,arguments); try{rodapeFixo();}catch(e){} return r; }; }
+  try{ rodapeFixo(); renderAll(true); }catch(e){}
+  if(window.MutationObserver){ var ob=new MutationObserver(function(){ rodapeFixo(); });
+    [].forEach.call(document.querySelectorAll('footer.insight-footer'),function(f){ ob.observe(f,{childList:true,subtree:true,characterData:true}); }); }
+});
+
+
+/* ===== Transacoes: Valor e Status logo apos a descricao ===== */
+var TX_ORDEM=[0,1,8,9,6,7,4,5,2,3,10];
+function txReordena(){
+  var p=el('panel-transactions'), tbl=p&&p.querySelector('table'); if(!tbl)return;
+  [].forEach.call(tbl.rows,function(r){
+    var cs=[].slice.call(r.cells);
+    if(!r.dataset.reord&&cs.length===11){ TX_ORDEM.forEach(function(i){ r.appendChild(cs[i]); }); r.dataset.reord='1'; cs=[].slice.call(r.cells); }
+    if(cs.length===11) cs[9].style.display=state.perfil==='NuNa'?'':'none';
+  });
+}
+window.addEventListener('load',function(){
+  if(typeof renderTxTable==='function'){ var _tt=renderTxTable; renderTxTable=function(){ var r=_tt.apply(this,arguments); try{txReordena();}catch(e){} return r; }; }
+  try{txReordena();}catch(e){}
+});
+
+
+/* ===== Transacoes: mes atual, mais recentes primeiro, 50 por vez, total do filtro ===== */
+var TX_PAG=50, txPagina=1, txAssin='';
+function txEnxuga(){
+  var p=el('panel-transactions'); if(!p)return;
+  [].forEach.call(p.querySelectorAll('button'),function(b){ if(/overrides\.json/i.test(b.textContent))b.style.display='none'; });
+  var tbl=p.querySelector('table'); if(!tbl)return;
+  [].forEach.call(tbl.rows,function(r){ if(r.cells.length===11&&r.dataset.reord)r.cells[6].style.display='none'; });
+  var th=tbl.tHead&&tbl.tHead.rows[0]; if(th&&th.cells.length===11&&th.dataset.reord)th.cells[7].textContent='Divisão';
+  [].forEach.call(tbl.querySelectorAll('select.c-grupo option[value=""]'),function(o){ o.textContent='Individual'; });
+  if(tbl.tBodies[0])[].forEach.call(tbl.tBodies[0].rows,function(r){ var g=r.querySelector('select.c-grupo'), pl=r.querySelector('select.c-plano'); if(g&&pl)pl.style.visibility=g.value?'hidden':''; });
+  var lista=txFiltered(), tot=lista.reduce(function(s,t){return s+(+t.valor||0);},0);
+  var assin=[state.txMes,el('tx-search').value,el('tx-status').value,el('tx-tipo').value,el('tx-rev').value,el('tx-fonte').value,state.perfil,state.sort.k,state.sort.dir].join('|');
+  if(assin!==txAssin){ txAssin=assin; txPagina=1; }
+  var wrap=tbl.parentElement;
+  var resumo=el('tx-resumo');
+  if(!resumo){ resumo=document.createElement('div'); resumo.id='tx-resumo'; resumo.style.cssText='font-size:13px;margin:4px 0 10px;opacity:.9'; wrap.parentNode.insertBefore(resumo,wrap); }
+  resumo.innerHTML='<b>'+lista.length+'</b> lan&ccedil;amento'+(lista.length===1?'':'s')+' &middot; <b>'+brl(tot)+'</b>'+(state.txMes==='__all'?' &middot; todos os meses':' &middot; '+state.txMes);
+  var rows=tbl.tBodies[0]?[].slice.call(tbl.tBodies[0].rows):[], lim=TX_PAG*txPagina;
+  rows.forEach(function(r,i){ r.style.display=i<lim?'':'none'; });
+  var mais=el('tx-mais');
+  if(!mais){ mais=document.createElement('button'); mais.id='tx-mais'; mais.type='button';
+    mais.style.cssText='font:inherit;font-size:13px;margin:12px auto 0;display:block;padding:6px 16px;border-radius:999px;border:1px solid rgba(127,127,127,.45);background:transparent;color:inherit;cursor:pointer';
+    mais.onclick=function(){ txPagina++; txEnxuga(); };
+    wrap.parentNode.insertBefore(mais,wrap.nextSibling); }
+  var rest=rows.length-lim;
+  mais.style.display=rest>0?'block':'none';
+  mais.textContent='Mostrar mais ('+Math.min(rest,TX_PAG)+' de '+rest+' restantes)';
+}
+window.addEventListener('load',function(){
+  if(state.txMes==='__all')state.txMes=state.mes;
+  state.sort={k:'data',dir:-1};
+  if(typeof renderTxTable==='function'){ var _tt2=renderTxTable; renderTxTable=function(){ var r=_tt2.apply(this,arguments); try{txEnxuga();}catch(e){console.warn(e);} return r; }; }
+  try{ renderAll(true); }catch(e){}
+});
+
+
+/* ===== Orcamento: cabe na renda, status do mes, fixas, meta, total ===== */
+var ORC_FIXAS={'Descontos em folha':1,'Moradia (Apto)':1,'Terreno':1,'Casa da mamãe (Quilombo)':1,'Conta telefonica':1,'CRMV':1};
+var ORC_METAS={'Investimento/Gustavo':1};
+var ORC_FORA={'Despesa conjunta':1,'Cravo & Canela':1};
+function orcBadge(txt,cor){ return '<span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid '+cor+';color:'+cor+';white-space:nowrap">'+txt+'</span>'; }
+function orcMedia(arr){ return arr.length?arr.reduce(function(a,b){return a+b;},0)/arr.length:0; }
+function orcMelhora(){
+  var tbl=el('bd-table'); if(!tbl||!tbl.tBodies[0]||!tbl.tHead)return;
+  var p=state.perfil, mes=state.mes, B=(DATA.budgets&&DATA.budgets[p])||{}, frac=agtFrac(mes);
+  var C={ok:'#2e9d5b',warn:'#d49a1e',bad:'#d64545',neu:'#8D99AE'};
+  var TM={}; MONTHS.forEach(function(m){ TM[m]=agtTotais(m,p); });
+  var tot=TM[mes]||{}, cont={ok:0,warn:0,bad:0};
+  var ini=2, fim=2+MONTHS.length;
+  var hr=tbl.tHead.rows[0];
+  [].forEach.call(hr.cells,function(c,i){ if(i>=ini&&i<fim){ var m=MONTHS[i-ini]; c.style.opacity=mesAberto(m)?'.5':''; c.title=mesAberto(m)?'mês em aberto':''; } });
+  hr.cells[hr.cells.length-1].textContent='Status ('+mes+')';
+  var old=el('bd-total'); if(old)old.remove();
+  var somaB=0, somaMes={}, somaMed=0;
+  [].forEach.call(tbl.tBodies[0].rows,function(r){
+    var cat=r.cells[0].textContent.trim(), b=+B[cat]||0, g=tot[cat]||0;
+    r.style.display=(p!=='NuNa'&&ORC_FORA[cat])?'none':'';
+    [].forEach.call(r.cells,function(c,i){ if(i>=ini&&i<fim)c.style.opacity=mesAberto(MONTHS[i-ini])?'.5':''; });
+    var tem=MONTHS.some(function(m){ return (TM[m][cat]||0)>0; }), st;
+    if(ORC_METAS[cat]){ st=g>=b&&b?orcBadge('meta atingida',C.ok):orcBadge('guardado '+brl(g)+' de '+brl(b),C.warn); }
+    else if(!tem){ st=orcBadge('sem lançamentos',C.neu); }
+    else if(ORC_FIXAS[cat]){ st=orcBadge('fixa',C.neu); }
+    else {
+      var pct=b?g/b:(g?9:0);
+      if(pct>1){ st=orcBadge('estourou',C.bad); cont.bad++; }
+      else if(pct>=0.9||(frac!==null&&frac<1&&pct>frac+0.15)){ st=orcBadge('atenção',C.warn); cont.warn++; }
+      else { st=orcBadge('no alvo',C.ok); cont.ok++; }
+    }
+    r.cells[r.cells.length-1].innerHTML=st;
+    if(!ORC_METAS[cat]&&!ORC_FORA[cat]){
+      somaB+=b; MONTHS.forEach(function(m){ somaMes[m]=(somaMes[m]||0)+(TM[m][cat]||0); });
+      somaMed+=orcMedia(CLOSED.map(function(m){return TM[m][cat]||0;}));
+    }
+  });
+  var tr=document.createElement('tr'); tr.id='bd-total'; tr.style.fontWeight='700'; tr.style.borderTop='2px solid rgba(127,127,127,.35)';
+  var h='<td>Total</td><td class="num">'+brl(somaB)+'</td>';
+  MONTHS.forEach(function(m){ h+='<td class="num" style="opacity:'+(mesAberto(m)?'.5':'1')+'">'+(somaMes[m]?brl(somaMes[m]).replace('R$','').trim():'—')+'</td>'; });
+  h+='<td class="num">'+brl(somaMed).replace('R$','').trim()+'</td><td></td>';
+  tr.innerHTML=h; tbl.tBodies[0].appendChild(tr);
+  var cards=el('bd-cards');
+  if(cards){ var v=cards.querySelectorAll('.val'), s=cards.querySelectorAll('.sub');
+    if(v[0])v[0].textContent=cont.ok; if(v[1])v[1].textContent=cont.warn; if(v[2])v[2].textContent=cont.bad;
+    if(s[0])s[0].textContent='dentro do orçamento em '+mes; if(s[1])s[1].textContent='perto do limite em '+mes; if(s[2])s[2].textContent='acima do orçamento em '+mes; }
+  orcCabe(TM,B,somaB);
+}
+function orcCabe(TM,B,somaB){
+  var cards=el('bd-cards'); if(!cards)return;
+  var box=el('orc-renda');
+  if(!box){ box=document.createElement('div'); box.id='orc-renda'; box.style.cssText='border:1px solid rgba(127,127,127,.28);border-radius:12px;padding:12px 14px;margin:0 0 14px'; cards.parentNode.insertBefore(box,cards); }
+  var p=state.perfil, F=CLOSED;
+  var renda=orcMedia(F.map(function(m){return rendaOf(m,p);}));
+  var linha=function(l,v,neg){ return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;margin:3px 0"><span>'+l+'</span><span>'+(neg?'− ':'')+brl(v)+'</span></div>'; };
+  var cor=function(v){ return v>=0?'#2e9d5b':'#d64545'; };
+  var h='<div style="font-weight:700;letter-spacing:.04em;font-size:13px;margin-bottom:6px">CABE NA RENDA? <span style="font-weight:400;opacity:.65;letter-spacing:0">média de '+F[0]+' a '+F[F.length-1]+'</span></div>';
+  if(p==='NuNa'){
+    var gasto=orcMedia(F.map(function(m){return gastoOf(m,'NuNa');}));
+    h+=linha('Renda do casal',renda)+linha('Custo conjunto real',gasto,true)+linha('Custo conjunto orçado',somaB,true);
+    h+='<div style="font-size:13px;margin-top:6px">O custo conjunto consome <b>'+(renda?Math.round(gasto/renda*100):0)+'%</b> da renda do casal.</div>';
+  } else {
+    var desc=orcMedia(F.map(function(m){return TM[m]['Descontos em folha']||0;}));
+    var contr=orcMedia(F.map(function(m){return contribTotalOf(m,p);}));
+    var sobra=renda-desc-contr, orcInd=somaB-(+B['Descontos em folha']||0), dif=sobra-orcInd;
+    h+=linha('Receita',renda)+linha('Descontos em folha',desc,true)+linha('Contribuição nas conjuntas',contr,true);
+    h+='<div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;margin:6px 0 2px;padding-top:6px;border-top:1px solid rgba(127,127,127,.25)"><b>Sobra para gastos individuais</b><b style="color:'+cor(sobra)+'">'+brl(sobra)+'</b></div>';
+    h+='<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;margin:3px 0"><span>Orçado para gastos individuais</span><span>'+brl(orcInd)+'</span></div>';
+    h+='<div style="font-size:13px;margin-top:6px;color:'+cor(dif)+'">'+(dif>=0?'O orçamento cabe, com folga de <b>'+brl(dif)+'</b>.':'O orçamento passa em <b>'+brl(-dif)+'</b> do que sobra da renda.')+'</div>';
+  }
+  box.innerHTML=h;
+}
+window.addEventListener('load',function(){
+  if(typeof renderBudgetTable==='function'){ var _bt=renderBudgetTable; renderBudgetTable=function(){ var r=_bt.apply(this,arguments); try{orcMelhora();}catch(e){console.warn(e);} return r; }; }
+});
