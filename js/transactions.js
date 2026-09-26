@@ -12,7 +12,9 @@ function tipoOpts(sel){
   var l=TIPOS.indexOf(sel)<0?TIPOS.concat([sel]):TIPOS;
   return l.map(function(c){return '<option value="'+esc(c)+'"'+(c===sel?' selected':'')+'>'+c+'</option>'}).join('');
 }
-function txFiltered(){
+/* mes da aba Transacoes: se vier vazio ou invalido (ex.: base ainda carregando), usa o mes selecionado ou todos */
+function txMesOk(){ var m=state.txMes; if(m==='__all'||(m&&DATA&&DATA.months&&DATA.months[m]))return; state.txMes=(state.mes&&DATA&&DATA.months&&DATA.months[state.mes])?state.mes:'__all'; try{renderTxMonthPills();}catch(e){} }
+function txFiltered(){ txMesOk();
   var q=(el('tx-search').value||'').toLowerCase(), st=el('tx-status').value, tp=el('tx-tipo').value, rv=el('tx-rev').value, fo=el('tx-fonte').value;
   var ms=state.txMes==='__all'?MONTHS:[state.txMes], out=[];
   ms.forEach(function(m){mesTx(m).forEach(function(t){
@@ -81,7 +83,7 @@ function wireTxControls(){
     if(state.sort.k===th.dataset.s)state.sort.dir*=-1;else{state.sort.k=th.dataset.s;state.sort.dir=1;}
     renderTxTable();});
 }
-function renderTxInsight(){
+function renderTxInsight(){ txMesOk();
   var l=state.txMes==='__all'?allTx().filter(function(t){return inView(t,state.perfil)}):txOf(state.txMes,state.perfil);
   var ass=l.filter(function(t){return t.tipo==='Assinaturas'||t.tipo==='Streaming'||t.tipo==='Gympass'});
   el('ins-tx').textContent='"'+ass.length+' assinaturas detectadas no recorte atual, somando '+brl(ass.reduce(function(s,t){return s+t.valor},0))+'. Marque o que nao usa para ver a economia."';
