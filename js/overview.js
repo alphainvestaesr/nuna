@@ -375,8 +375,8 @@ var CORES_FIXAS={
   'Manutenção do Apto':'#6C757D','Pets':'#7FB069','Lazer & Viagem':'#B5838D',
   'Descontos em folha':'#6C757D','Dívidas & Crédito':'#8E5572','Boletos 99Pay':'#E0A64B','Compras pessoais':'#2A9D8F',
   'Transferências':'#9C6644','Comer fora':'#E07A5F','Outros':'#A8A29E','Carro':'#588157','Saúde & Bem-estar':'#B5838D',
-  'Assinaturas':'#D4B483','Casa da mamãe (Quilombo)':'#7FB069','Investimento/Gustavo':'#264653','Conta telefonica':'#A56336',
-  'CRMV':'#8D99AE','Uber':'#E9C46A','Terreno':'#9C6644','Cravo & Canela':'#C77D43'
+  'Assinaturas':'#D4B483','Casa da mamãe (Quilombo)':'#7FB069','Investimento/Gustavo':'#264653','Conta telefonica':'#D64F8F',
+  'CRMV':'#8D99AE','Uber':'#E9C46A','Terreno':'#588157','Cravo & Canela':'#C77D43','Saúde':'#264653','Despesa conjunta':'#5C4033'
 };
 (function(){ var _c=colorOf; colorOf=function(c){ return CORES_FIXAS[c]||_c(c); }; })();
 
