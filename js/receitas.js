@@ -127,8 +127,8 @@ function rcAdicionarManual(){
   var temCC = eu === 'Ana' && (mm.contracheques || []).length > 0;
   var antigo = (mm.receita || {})[eu] || 0;
   if (!temItens && !temCC && antigo > 0) {
-    var substituir = confirm(mesNome(m) + ' já tem ' + brl(antigo) + ' registrado.\n\nOK = SUBSTITUIR esse valor por ' + brl(v) + '\nCancelar = SOMAR ' + brl(v) + ' ao que já existe');
-    if (!substituir) mm.receitaItens.push({ id: 'r' + Date.now().toString(36) + 'a', perfil: eu, valor: antigo, desc: 'Valor já registrado antes', origem: 'anterior', criadoEm: new Date().toISOString() });
+    /* extras sempre SOMAM ao valor que já existe no mês (nunca substituem) */
+    mm.receitaItens.push({ id: 'r' + Date.now().toString(36) + 'a', perfil: eu, valor: antigo, desc: 'Valor já registrado antes', origem: 'anterior', criadoEm: new Date().toISOString() });
   }
   mm.receitaItens.push({ id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), perfil: eu, valor: rcArred(v), desc: d, origem: 'informado', criadoEm: new Date().toISOString() });
   rcRecalcular(mm, eu);
