@@ -93,8 +93,10 @@ function renderTxInsight(){ txMesOk();
 /* cada uma revisa so os proprios lancamentos e os conjuntos */
 function revVisivel(t){var lg=(typeof Auth!=='undefined'&&Auth.sessao()||{}).perfil; return !lg || t.perfil===lg || !!t.grupo;}
 function revList(){
+  txMesOk(); /* Revisar usa o mesmo mes selecionado na aba Transacoes */
   var q=(el('rev-search').value||'').toLowerCase(), pf=el('rev-perfil').value, out=[];
-  MONTHS.forEach(function(m){DATA.months[m].transactions.forEach(function(t){
+  var ms=state.txMes==='__all'?MONTHS:[state.txMes];
+  ms.forEach(function(m){DATA.months[m].transactions.forEach(function(t){
     if(!t.revisar)return;
 if(!revVisivel(t))return;
     if(pf&&t.perfil!==pf)return;
@@ -103,14 +105,18 @@ if(!revVisivel(t))return;
   out.sort(function(a,b){return b.valor-a.valor});
   return out;
 }
+function renderRevMonthPills(){ var n=el('rev-months'); if(!n) return;
+  monthPills(n,state.txMes,function(m){state.txMes=m;renderReview();try{renderTxMonthPills();renderTxTable();renderTxInsight();}catch(e){}},true); }
 function renderReview(){
   var list=revList(), tb=el('rev-table').querySelector('tbody');
+  renderRevMonthPills();
+  var todos=state.txMes==='__all', nomeMes=todos?'todos os meses':(typeof mesNome==='function'?mesNome(state.txMes):state.txMes);
   var total=allTx().filter(revVisivel).length, pend=allTx().filter(function(t){return t.revisar&&revVisivel(t)}).length;
   el('rev-pin').textContent=pend; el('rev-pin').dataset.zero = pend===0?'1':'0';
   el('rev-head').innerHTML='Cerca de <b>'+Math.round(pend/total*100)+'%</b> dos lan&ccedil;amentos ('+pend+' de '+total+') foram categorizados automaticamente e ainda esperam sua confer&ecirc;ncia. Corrija a categoria se estiver errada e marque <b>Conferido</b> &mdash; a marca&ccedil;&atilde;o &eacute; salva automaticamente e os pr&oacute;ximos meses j&aacute; aprendem com ela. Aqui aparecem s&oacute; os seus lan&ccedil;amentos e os conjuntos.';
   tb.innerHTML=list.slice(0,400).map(function(t){
     return '<tr data-id="'+t._m+'|'+t.id+'">'+
-      '<td style="white-space:nowrap">'+t.data+'</td>'+
+      '<td style="white-space:nowrap">'+t.data+(todos?'<br><span style="font-size:11px;color:var(--tx3)">fatura '+esc(t._m)+'</span>':'')+'</td>'+
       '<td title="'+esc(t.raw)+'">'+esc(t.desc)+(t.possivelDup?' <span class="badge b-warn">poss. dup.</span>':'')+'</td>'+
       '<td><span class="badge '+(t.fontePendente?'b-warn':'b-ind')+'">'+esc(t.fonteLabel)+'</span></td>'+
       '<td><span class="badge b-ind">'+t.perfil+'</span></td>'+
@@ -120,7 +126,7 @@ function renderReview(){
       '<td><select class="c-tipo">'+tipoOpts(t.tipo)+'</select></td>'+
       '<td class="num">'+brl(t.valor)+'</td>'+
       '<td style="text-align:center"><input type="checkbox" class="c-rev" style="width:17px;height:17px;accent-color:var(--pos)"></td></tr>';}).join('');
-  el('rev-count').innerHTML='<b>'+list.length+'</b> lan&ccedil;amentos aguardando confer&ecirc;ncia'+(list.length>400?' (mostrando os 400 maiores)':'')+
+  el('rev-count').innerHTML='<b>'+list.length+'</b> lan&ccedil;amentos aguardando confer&ecirc;ncia em <b>'+nomeMes+'</b>'+(list.length>400?' (mostrando os 400 maiores)':'')+
     ' &middot; total '+brl(list.reduce(function(s,t){return s+t.valor},0));
   el('ins-rev').textContent = pend===0
     ? '"Tudo conferido. Cada correcao sua vira regra para os proximos meses."'

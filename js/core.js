@@ -163,4 +163,4 @@ function monthPills(node,cur,cb,withAll){
     b.onclick=function(){cb(m)};node.appendChild(b);});
 }
 function renderOverviewMonths(){monthPills(el('ov-months'),state.mes,function(m){state.mes=m;salvarPrefs();renderAll();},false);}
-function renderTxMonthPills(){monthPills(el('tx-months'),state.txMes,function(m){state.txMes=m;renderTxTable();renderTxInsight();},true);}
+function renderTxMonthPills(){monthPills(el('tx-months'),state.txMes,function(m){state.txMes=m;renderTxTable();renderTxInsight();try{renderReview();}catch(e){}},true);}
