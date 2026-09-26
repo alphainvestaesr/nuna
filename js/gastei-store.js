@@ -173,6 +173,7 @@ function agReconciliar(){
   var achados=0, mudou=false;
   AG.itens.forEach(function(i){
     if(i.status==='Conciliado' || i.naoConciliar) return;
+    if(/^dinheiro$/i.test(i.fonte||'')) return; /* dinheiro nunca aparece em fatura ou extrato: o lancamento manual e a unica fonte e sempre conta */
     var n=agNumParcelas(i);
     if(n===1){
       var c=agConciliar(i, usadas);

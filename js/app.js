@@ -119,8 +119,8 @@ function renderInsights(){
   ].map(function(s){return '<li>'+s+'</li>'}).join('');
 
   el('in-limit').innerHTML=[
-    'A an&aacute;lise vem <b>s&oacute;</b> das faturas de cart&atilde;o e dos contracheques dispon&iacute;veis. Despesa paga por <b>boleto, d&eacute;bito, Pix ou dinheiro</b> n&atilde;o aparece aqui.',
-    'Por isso, <b>energia, internet, g&aacute;s e &aacute;gua</b> do Nosso Lar est&atilde;o zerados &mdash; n&atilde;o significa que n&atilde;o existem, s&oacute; que est&atilde;o fora das fontes integradas.',
+    'A an&aacute;lise junta as faturas de cart&atilde;o e extratos importados, os contracheques e <b>tudo o que for lan&ccedil;ado &agrave; m&atilde;o</b> &mdash; no ACABEI DE GASTAR ou como &ldquo;Informado manualmente&rdquo;. Despesa paga por <b>boleto, d&eacute;bito, Pix ou dinheiro</b> entra em todos os totais, gr&aacute;ficos, or&ccedil;amento e insights assim que for lan&ccedil;ada.',
+    'O que foi pago fora do cart&atilde;o e <b>n&atilde;o</b> foi lan&ccedil;ado &agrave; m&atilde;o continua fora da an&aacute;lise &mdash; por exemplo, <b>energia, internet, g&aacute;s e &aacute;gua</b> do Nosso Lar, enquanto n&atilde;o forem registrados.',
     '<b>Aluguel+&Aacute;gua, Terreno e telefone da Manuela</b> entram como premissa informada por voc&ecirc;, n&atilde;o como lan&ccedil;amento comprovado.',
     'A renda da Manuela &eacute; <b>informada, sem contracheque</b> &mdash; R$ 2.000/m&ecirc;s de mar&ccedil;o a julho e R$ 4.280/m&ecirc;s de agosto em diante.',
     'De <b>mar&ccedil;o a julho</b>, o perfil da Manuela segue a regra fechada: terreno (R$ 860) + telefone (R$ 35) + contribui&ccedil;&atilde;o NuNa do m&ecirc;s, e todo o restante da renda cai em <b>Outros</b>. Por isso o saldo dela fecha exatamente em zero nesses meses. De agosto em diante valem os lan&ccedil;amentos reais.',
