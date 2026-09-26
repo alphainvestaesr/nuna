@@ -567,9 +567,10 @@ function nunaSaldos(){
     tension:.3,pointRadius:4,fill:false,
     pointBackgroundColor:MONTHS.map(function(m){return mesAberto(m)?'transparent':c;}),
     segment:{borderDash:function(s){return mesAberto(MONTHS[s.p1DataIndex])?[5,5]:undefined;}}};};
-  var sets=p==='NuNa'?[mk('Ana','#4A6FA5'),mk('Manuela','#6F4E7C'),mk('NuNa','#1B4332')]:[mk(p,p==='Manuela'?'#6F4E7C':'#4A6FA5')];
+  /* conjunto nao tem saldo: o consumo conjunto fica nos cards do Insights */
+  var sets=p==='NuNa'?[mk('Ana','#4A6FA5'),mk('Manuela','#6F4E7C')]:[mk(p,p==='Manuela'?'#6F4E7C':'#4A6FA5')];
   var card=ctx.closest('.card'), h=card&&card.querySelector('h2,h3');
-  if(h)h.textContent=p==='NuNa'?'Saldo por mês — Ana, Manuela e NuNa':'Saldo por mês — '+p;
+  if(h)h.textContent=p==='NuNa'?'Saldo por mês — Ana e Manuela':'Saldo por mês — '+p;
   if(saldoChart)saldoChart.destroy();
   saldoChart=new Chart(ctx,{type:'line',data:{labels:rotulosMeses(),datasets:sets},
     options:{responsive:true,maintainAspectRatio:false,

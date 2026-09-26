@@ -1,28 +1,55 @@
 /* NuNa - app.js: insights e inicializacao do dashboard */
 function renderInsights(){
-  /* perfil conjunto: o saldo que faz sentido e o do CASAL (renda das duas menos
-     todos os gastos das duas), o mesmo "caixa do casal" usado na Caixinha.
-     O antigo -gastoOf('NuNa') so mostrava a despesa conjunta com sinal trocado. */
-  var casal = state.perfil==='NuNa';
-  var saldoMes=function(m){ return casal ? caixaCasal(m) : saldoOf(m,state.perfil); };
-  var rendaMes=function(m){ return casal ? rendaOf(m,'Ana')+rendaOf(m,'Manuela') : rendaOf(m,state.perfil); };
-  var sal=CLOSED.map(saldoMes);
-  var tot=sal.reduce(function(a,b){return a+b},0);
-  var rend=CLOSED.map(rendaMes).reduce(function(a,b){return a+b},0);
-  var taxa=rend?Math.round(tot/rend*100):0;
-  var pares=CLOSED.map(function(m,i){return [m,sal[i]]}).sort(function(a,b){return b[1]-a[1]});
   var periodo=CLOSED.length ? (CLOSED[0]+' a '+(typeof mesNome==='function'?mesNome(CLOSED[CLOSED.length-1]):CLOSED[CLOSED.length-1])).toLowerCase() : '';
-  var cards=
-    kpiCard((casal?'Saldo do casal em ':'Saldo em ')+CLOSED.length+' meses',brl(tot),
-      casal ? 'renda das duas &minus; todos os gastos das duas &middot; '+periodo : periodo, tot>=0?'green':'red')+
-    kpiCard('Taxa de poupan&ccedil;a real'+(casal?' do casal':''),taxa+'%',casal?'saldo do casal / renda das duas':'saldo / receitas',taxa>=0?'green':'red')+
-    kpiCard('Melhor m&ecirc;s',pares[0][0],brl(pares[0][1]),'green')+
-    kpiCard('Pior m&ecirc;s',pares[pares.length-1][0],brl(pares[pares.length-1][1]),'red');
+  var casal = state.perfil==='NuNa', cards;
+  var blocoNuna=el('in-nuna'); if(blocoNuna) blocoNuna.hidden=!casal;
   if(casal){
-    /* as contas conjuntas foram cobertas pelas contribuicoes das duas? */
-    var cob=CLOSED.map(function(m){var c=contribOf(m); return c.ana+c.manu-gastoOf(m,'NuNa');}).reduce(function(a,b){return a+b},0);
-    cards+=kpiCard('Contas conjuntas', (cob>=0?'+':'')+brl(cob),
-      cob>=0 ? 'contribui&ccedil;&otilde;es cobriram as despesas conjuntas' : 'faltou contribui&ccedil;&atilde;o para cobrir as conjuntas', cob>=0?'green':'red');
+    /* perfil conjunto: foco no CONSUMO das contas conjuntas, nao em saldo
+       (saldo e dos perfis individuais) */
+    var gm=CLOSED.map(function(m){return [m,gastoOf(m,'NuNa')]});
+    var totC=gm.reduce(function(s,x){return s+x[1]},0), media=totC/Math.max(1,gm.length);
+    var ult=gm.slice(-3), medUlt=ult.reduce(function(s,x){return s+x[1]},0)/Math.max(1,ult.length);
+    var varUlt=media?Math.round((medUlt/media-1)*100):0;
+    var porGrupo={}, alim={};
+    CLOSED.forEach(function(m){txOf(m,'NuNa').forEach(function(t){
+      var k=t.grupo||'(sem grupo)'; porGrupo[k]=(porGrupo[k]||0)+t.valor;
+      if(t.grupo==='Alimenta\u00e7\u00e3o'){ alim[t.tipo||'Outros']=(alim[t.tipo||'Outros']||0)+t.valor; }
+    })});
+    var grupos=Object.keys(porGrupo).sort(function(x,y){return porGrupo[y]-porGrupo[x]});
+    var gTop=grupos[0];
+    var ord=gm.slice().sort(function(x,y){return x[1]-y[1]});
+    cards=
+      kpiCard('Contas conjuntas em '+CLOSED.length+' meses',brl(totC),'consumo da vida em comum &middot; '+periodo,'')+
+      kpiCard('M&eacute;dia por m&ecirc;s',brl(media),'&uacute;ltimos 3 meses: '+brl(medUlt)+' ('+(varUlt>0?'+':'')+varUlt+'%)',varUlt>0?'red':'green')+
+      kpiCard('Custo por dia da casa',brl(media/30.4)+'/dia','m&eacute;dia de '+periodo,'')+
+      (gTop? kpiCard('Maior grupo',gTop,brl(porGrupo[gTop])+' &middot; '+Math.round(porGrupo[gTop]/totC*100)+'% do conjunto','') : '')+
+      (ord.length? kpiCard('M&ecirc;s mais econ&ocirc;mico',ord[0][0],brl(ord[0][1]),'green')+
+                   kpiCard('M&ecirc;s mais caro',ord[ord.length-1][0],brl(ord[ord.length-1][1]),'red') : '');
+    /* ranking dos grupos no periodo */
+    var maxG=grupos.length?porGrupo[grupos[0]]:1;
+    if(el('in-rank')) el('in-rank').innerHTML = grupos.length ? grupos.map(function(g){
+      return '<div style="display:grid;grid-template-columns:minmax(90px,150px) 1fr auto;gap:10px;align-items:center;margin:7px 0;font-size:13px">'+
+        '<span>'+esc(g)+'</span><span style="height:10px;background:var(--border);border-radius:6px;overflow:hidden"><span style="display:block;height:100%;width:'+(porGrupo[g]/maxG*100).toFixed(1)+'%;background:'+colorOf(g)+';border-radius:6px"></span></span>'+
+        '<span class="num">'+brl(porGrupo[g])+'</span></div>';}).join('') : '<p class="note">Sem despesas conjuntas nos meses fechados.</p>';
+    /* alimentacao por dentro: por tipo de gasto */
+    var NOME={'Alimentacao Fora':'Comer fora'};
+    var at=Object.keys(alim).sort(function(x,y){return alim[y]-alim[x]}), totA=at.reduce(function(s,k){return s+alim[k]},0);
+    var CORES=['var(--amb)','var(--neg)','var(--pos)','var(--acc)','var(--tx3)'];
+    if(el('in-alim')) el('in-alim').innerHTML = totA ?
+      '<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;margin:4px 0 10px">'+at.map(function(k,i){return '<span style="width:'+(alim[k]/totA*100).toFixed(1)+'%;background:'+CORES[i%CORES.length]+'"></span>'}).join('')+'</div>'+
+      '<ul class="mini">'+at.map(function(k,i){return '<li><span style="display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:'+CORES[i%CORES.length]+'"></span><b>'+esc(NOME[k]||k)+'</b>: '+brl(alim[k])+' ('+Math.round(alim[k]/totA*100)+'%) &middot; ~'+brl(alim[k]/CLOSED.length)+'/m&ecirc;s</li>'}).join('')+'</ul>'
+      : '<p class="note">Sem gastos de alimenta&ccedil;&atilde;o no conjunto nos meses fechados.</p>';
+  } else {
+    var sal=CLOSED.map(function(m){return saldoOf(m,state.perfil)});
+    var tot=sal.reduce(function(a,b){return a+b},0);
+    var rend=CLOSED.map(function(m){return rendaOf(m,state.perfil)}).reduce(function(a,b){return a+b},0);
+    var taxa=rend?Math.round(tot/rend*100):0;
+    var pares=CLOSED.map(function(m,i){return [m,sal[i]]}).sort(function(a,b){return b[1]-a[1]});
+    cards=
+      kpiCard('Saldo em '+CLOSED.length+' meses',brl(tot),periodo,tot>=0?'green':'red')+
+      kpiCard('Taxa de poupan&ccedil;a real',taxa+'%','saldo / receitas',taxa>=0?'green':'red')+
+      kpiCard('Melhor m&ecirc;s',pares[0][0],brl(pares[0][1]),'green')+
+      kpiCard('Pior m&ecirc;s',pares[pares.length-1][0],brl(pares[pares.length-1][1]),'red');
   }
   el('in-cards').innerHTML=cards;
 
@@ -33,7 +60,20 @@ function renderInsights(){
     var avg=v.reduce(function(a,b){return a+b},0)/v.length; if(avg<80)return;
     v.forEach(function(x,i){if(x>avg*1.6)anom.push([c,CLOSED[i],Math.round((x/avg-1)*100),x])});});
   anom.sort(function(a,b){return b[3]-a[3]});
-  el('in-anom').innerHTML=anom.slice(0,8).map(function(a){return '<li><b>'+a[0]+'</b> em '+a[1]+': '+brl(a[3])+' &mdash; '+a[2]+'% acima da m&eacute;dia.</li>'}).join('')||'<li>Nenhum pico relevante nos meses fechados.</li>';
+  var abertos='';
+  if(casal){
+    var orc=(DATA.budgets&&DATA.budgets.NuNa)||{};
+    MONTHS.filter(function(m){return CLOSED.indexOf(m)<0}).forEach(function(m){
+      var acima=Object.keys(orc).map(function(g){
+        var v=txOf(m,'NuNa').filter(function(t){return t.grupo===g}).reduce(function(s,t){return s+t.valor},0);
+        return [g,v,orc[g]];}).filter(function(x){return x[2]>0 && x[1]>x[2]*1.05}).sort(function(x,y){return (y[1]-y[2])-(x[1]-x[2])});
+      if(!acima.length) return;
+      abertos+='<li style="list-style:none;margin-left:-18px;border-left:3px solid var(--neg);padding:6px 10px;background:var(--negL);border-radius:6px"><b>'+
+        (typeof mesNome==='function'?mesNome(m):m)+' (em aberto): '+acima.length+' grupo'+(acima.length===1?'':'s')+' acima do or&ccedil;amento.</b> '+
+        acima.map(function(x){return esc(x[0])+' '+brl(x[1])+' (or&ccedil;amento '+brl(x[2])+')'}).join(' &middot; ')+'</li>';
+    });
+  }
+  el('in-anom').innerHTML=abertos+(anom.slice(0,8).map(function(a){return '<li><b>'+a[0]+'</b> em '+a[1]+': '+brl(a[3])+' &mdash; '+a[2]+'% acima da m&eacute;dia.</li>'}).join('')||'<li>Nenhum pico relevante nos meses fechados.</li>');
 
   var est=[];
   Object.keys(seen).forEach(function(c){
