@@ -18,6 +18,19 @@
 <meta name="apple-mobile-web-app-title" content="NuNa">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+<style id="in-secoes-css">
+.in-secao{margin:4px 0 14px}
+.in-kicker{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);margin:0}
+.in-titulo{display:block;font-size:20px;font-weight:800;margin:2px 0 4px;color:var(--tx)}
+.in-sub{display:block;margin:0}
+.in-sobre{margin-top:34px;border-top:2px dashed var(--border);padding-top:18px}
+.in-sobre>summary{cursor:pointer;list-style:none;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card);margin-bottom:14px}
+.in-sobre>summary::-webkit-details-marker{display:none}
+.in-sobre>summary .in-titulo{font-size:17px}
+.in-sobre>summary .in-titulo::after{content:" \25BE";color:var(--tx3);font-size:14px}
+.in-sobre[open]>summary .in-titulo::after{content:" \25B4"}
+.in-sobre .in-kicker{color:var(--tx3)}
+</style>
 </head>
 <body>
 
@@ -284,20 +297,35 @@
   </div>
 
   <div id="panel-insights" class="panel">
+    <!-- PARTE 1: o que o Agente Financeiro diz (diagnostico e acoes) -->
+    <div class="in-secao">
+      <p class="in-kicker">Agente Financeiro</p>
+      <h2 class="in-titulo">Diagn&oacute;stico e o que fazer</h2>
+      <p class="note in-sub">Leitura dos seus n&uacute;meros e das a&ccedil;&otilde;es para sair do aperto. Muda sozinha a cada m&ecirc;s.</p>
+    </div>
     <div id="in-resgate"></div>
     <div class="grid3" id="in-cards" style="margin-bottom:16px"></div>
     <div class="row" id="in-nuna" hidden style="margin-bottom:16px">
       <div class="card"><h2>Ranking dos grupos no per&iacute;odo</h2><div id="in-rank"></div></div>
       <div class="card"><h2>Alimenta&ccedil;&atilde;o por dentro</h2><div id="in-alim"></div></div>
     </div>
+    <div class="card"><h2>Onde d&aacute; pra ganhar</h2><ul class="mini" id="in-wins"></ul></div>
     <div class="row">
       <div class="card"><h2>Anomalias</h2><ul class="mini" id="in-anom"></ul></div>
       <div class="card"><h2>Linhas est&aacute;veis</h2><ul class="mini" id="in-stable"></ul></div>
     </div>
-    <div class="card"><h2>Onde d&aacute; pra ganhar</h2><ul class="mini" id="in-wins"></ul></div>
-    <div class="card"><h2>Controle de duplicidade</h2><ul class="mini" id="in-dup"></ul></div>
-    <div class="card"><h2>Limita&ccedil;&otilde;es dos dados</h2><ul class="mini" id="in-limit"></ul></div>
-    <div class="card"><h2>Premissas e decis&otilde;es deste dashboard</h2><ul class="mini" id="in-assum"></ul></div>
+
+    <!-- PARTE 2: como o dashboard funciona (referencia, fica recolhido) -->
+    <details class="in-sobre">
+      <summary>
+        <span class="in-kicker">Sobre o NuNa</span>
+        <span class="in-titulo">Como o dashboard funciona</span>
+        <span class="note in-sub">De onde v&ecirc;m os dados, o que fica de fora e as regras de c&aacute;lculo. Toque para abrir.</span>
+      </summary>
+      <div class="card"><h2>Limita&ccedil;&otilde;es dos dados</h2><ul class="mini" id="in-limit"></ul></div>
+      <div class="card"><h2>Premissas e decis&otilde;es deste dashboard</h2><ul class="mini" id="in-assum"></ul></div>
+      <div class="card"><h2>Controle de duplicidade</h2><ul class="mini" id="in-dup"></ul></div>
+    </details>
     <footer class="insight-footer"><p class="insight-text" id="ins-in"></p><p class="insight-meta">n4flow finance insights</p></footer>
   </div>
 </div>
