@@ -273,14 +273,24 @@ function renderAgente(){
     '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+
       '<div style="display:flex;align-items:center;min-width:0">'+dot(nivel)+'<span style="font-weight:700;letter-spacing:.04em;font-size:13px;margin-right:10px">CLAREZA &middot; ALERTA</span>'+
       '<span style="font-size:13px;opacity:.9">'+resumo.join(' &middot; ')+'</span></div>'+
-      '<span style="font-size:11px;opacity:.6">'+(p==='NuNa'?'conjunto':esc(p))+' &middot; '+mes+'</span></div>'+
+      '<span style="display:flex;align-items:center;gap:10px"><span style="font-size:11px;opacity:.6">'+(p==='NuNa'?'conjunto':esc(p))+' &middot; '+mes+'</span>'+
+      '<button id="clareza-share" type="button" style="font:inherit;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;cursor:pointer">Enviar resumo</button></span></div>'+
     (chips?'<div>'+chips+'</div>':'')+
     '<details id="clareza-det"'+(aberto?' open':'')+' style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;opacity:.75">Detalhes e dicas</summary>'+
       (barras?'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px;margin-top:10px">'+barras+'</div>':'')+
       (ok?'<div style="font-size:12px;opacity:.7;margin-top:8px">'+dot('green')+ok+' categoria'+(ok>1?'s':'')+' dentro do or&ccedil;amento ou fixas</div>':'')+
       (dicas.length?'<ul style="margin:8px 0 0;padding-left:18px;font-size:13px">'+dicas.map(function(d){return '<li style="margin:3px 0">'+d+'</li>';}).join('')+'</ul>':'')+
     '</details>';
+  var strip=function(h){var x=document.createElement('div');x.innerHTML=h;return x.textContent;};
+  var txt=['NuNa - Clareza: '+(p==='NuNa'?'Conjunto':p)+' - '+mes,(nivel==='red'?'[VERMELHO]':nivel==='amber'?'[ATENCAO]':'[OK]')+' '+strip(resumo.join(' &middot; '))];
+  if(alerta.length)txt.push('Em alerta: '+alerta.slice(0,6).map(function(l){return l.c+' '+(l.b?Math.round(l.pct*100)+'%':'sem orc.');}).join(', '));
+  dicas.forEach(function(x){txt.push('- '+strip(x));});
+  var sb=el('clareza-share'); if(sb)sb.addEventListener('click',function(){clarezaCompartilhar(txt.join('\n'));});
   var det=el('clareza-det'); if(det)det.addEventListener('toggle',function(){try{localStorage.setItem('clarezaAberto',det.open?'1':'0');}catch(e){}});
+}
+function clarezaCompartilhar(t){
+  if(navigator.share){navigator.share({text:t}).catch(function(){});return;}
+  window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank');
 }
 (function(){
   var _kpi=renderKPI;
