@@ -1,15 +1,30 @@
 /* NuNa - app.js: insights e inicializacao do dashboard */
 function renderInsights(){
-  var sal=CLOSED.map(function(m){return saldoOf(m,state.perfil)});
+  /* perfil conjunto: o saldo que faz sentido e o do CASAL (renda das duas menos
+     todos os gastos das duas), o mesmo "caixa do casal" usado na Caixinha.
+     O antigo -gastoOf('NuNa') so mostrava a despesa conjunta com sinal trocado. */
+  var casal = state.perfil==='NuNa';
+  var saldoMes=function(m){ return casal ? caixaCasal(m) : saldoOf(m,state.perfil); };
+  var rendaMes=function(m){ return casal ? rendaOf(m,'Ana')+rendaOf(m,'Manuela') : rendaOf(m,state.perfil); };
+  var sal=CLOSED.map(saldoMes);
   var tot=sal.reduce(function(a,b){return a+b},0);
-  var rend=CLOSED.map(function(m){return rendaOf(m,state.perfil)}).reduce(function(a,b){return a+b},0);
+  var rend=CLOSED.map(rendaMes).reduce(function(a,b){return a+b},0);
   var taxa=rend?Math.round(tot/rend*100):0;
   var pares=CLOSED.map(function(m,i){return [m,sal[i]]}).sort(function(a,b){return b[1]-a[1]});
-  el('in-cards').innerHTML=
-    kpiCard('Saldo em '+CLOSED.length+' meses',brl(tot),'mar a ago/2026',tot>=0?'green':'red')+
-    kpiCard('Taxa de poupan&ccedil;a real',taxa+'%','saldo / receitas',taxa>=0?'green':'red')+
+  var periodo=CLOSED.length ? (CLOSED[0]+' a '+(typeof mesNome==='function'?mesNome(CLOSED[CLOSED.length-1]):CLOSED[CLOSED.length-1])).toLowerCase() : '';
+  var cards=
+    kpiCard((casal?'Saldo do casal em ':'Saldo em ')+CLOSED.length+' meses',brl(tot),
+      casal ? 'renda das duas &minus; todos os gastos das duas &middot; '+periodo : periodo, tot>=0?'green':'red')+
+    kpiCard('Taxa de poupan&ccedil;a real'+(casal?' do casal':''),taxa+'%',casal?'saldo do casal / renda das duas':'saldo / receitas',taxa>=0?'green':'red')+
     kpiCard('Melhor m&ecirc;s',pares[0][0],brl(pares[0][1]),'green')+
     kpiCard('Pior m&ecirc;s',pares[pares.length-1][0],brl(pares[pares.length-1][1]),'red');
+  if(casal){
+    /* as contas conjuntas foram cobertas pelas contribuicoes das duas? */
+    var cob=CLOSED.map(function(m){var c=contribOf(m); return c.ana+c.manu-gastoOf(m,'NuNa');}).reduce(function(a,b){return a+b},0);
+    cards+=kpiCard('Contas conjuntas', (cob>=0?'+':'')+brl(cob),
+      cob>=0 ? 'contribui&ccedil;&otilde;es cobriram as despesas conjuntas' : 'faltou contribui&ccedil;&atilde;o para cobrir as conjuntas', cob>=0?'green':'red');
+  }
+  el('in-cards').innerHTML=cards;
 
   var seen={};CLOSED.forEach(function(m){Object.keys(catTotals(txOf(m,state.perfil))).forEach(function(c){seen[c]=1})});
   var anom=[];
