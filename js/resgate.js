@@ -149,7 +149,7 @@ function renderResgate(){
     if (eu.sup > RG_TETO_SUPERFLUO) pq.push('<b>Compras, comer fora e transfer&ecirc;ncias: ' + rgR(eu.sup) + '/m&ecirc;s.</b>');
     if (b.corteMerc > 0) pq.push('<b>Supermercado da casa: ' + rgR(b.merc) + '/m&ecirc;s</b>' + (b.orcMerc ? ', contra um or&ccedil;amento de ' + rgR(b.orcMerc) : '') + '.');
     if (eu.juros > 50 || b.parcelas > 2000) pq.push((eu.juros > 50 ? '<b>Juros e encargos: ' + rgR(eu.juros) + '/m&ecirc;s</b>' : '') +
-      (eu.juros > 50 && b.parcelas > 2000 ? ', e ' : '') + (b.parcelas > 2000 ? 'as pr&oacute;ximas faturas j&aacute; t&ecirc;m <b>~' + rgR(b.parcelas) + ' em parcelas</b> comprometidas' : '') + '.');
+      (eu.juros > 50 && b.parcelas > 2000 ? ', e ' : '') + (b.parcelas > 2000 ? (eu.juros > 50 ? 'as' : 'As') + ' pr&oacute;ximas faturas j&aacute; t&ecirc;m <b>~' + rgR(b.parcelas) + ' em parcelas</b> comprometidas' : '') + '.');
     /* o que fazer */
     if (splitFora) {
       if (p === 'Ana') { ac.push(['<b>Cobrar o ' + labSplit + ' a partir deste m&ecirc;s.</b> A parte da Manuela &eacute; ~' + rgR(b.parte.Manuela) + '.', '+' + rgR(ganhoSplit) + '/m&ecirc;s']); proj += ganhoSplit; }

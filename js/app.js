@@ -1,5 +1,6 @@
 /* NuNa - app.js: insights e inicializacao do dashboard */
 function renderInsights(){
+  try{ if(typeof renderResgate==='function') renderResgate(); }catch(e){ console.error('renderResgate',e); }
   var periodo=CLOSED.length ? (CLOSED[0]+' a '+(typeof mesNome==='function'?mesNome(CLOSED[CLOSED.length-1]):CLOSED[CLOSED.length-1])).toLowerCase() : '';
   var casal = state.perfil==='NuNa', cards;
   var blocoNuna=el('in-nuna'); if(blocoNuna) blocoNuna.hidden=!casal;
