@@ -8,7 +8,7 @@ var PALETTE = ['#C9A227','#3F6296','#2A9D8F','#8E5572','#E0A64B','#588157','#6F4
 var COLOR = {};
 function colorOf(c){ if(!(c in COLOR)) COLOR[c]=PALETTE[Object.keys(COLOR).length%PALETTE.length]; return COLOR[c]; }
 
-var state={perfil:'NuNa', mes:null, txMes:'__all', axis:'plano', trendCat:null, sort:{k:'data',dir:1}};
+var state={perfil:'NuNa', mes:null, txMes:null, revMes:'__all', axis:'plano', trendCat:null, sort:{k:'data',dir:1}};
 
 /* ---------- montagem da base + persistencia das edicoes ---------- */
 function aplicarBase(base){
@@ -22,7 +22,9 @@ function aplicarBase(base){
   var vistos = {};
   MONTHS.forEach(function(m){ DATA.months[m].transactions.forEach(function(t){ vistos[t.uid]=1; vistos[t.dedupKey]=1; }) });
   imp.forEach(function(t){
-    if(vistos[t.uid] || MONTHS.indexOf(t.mes)<0) return;
+    if(vistos[t.uid]) return;
+    /* fatura de um mes que ainda nao existe na base (ex.: novembro): cria o mes */
+    if(MONTHS.indexOf(t.mes)<0){ if(typeof rcGarantirMes==='function' && /^[A-Z][a-z]{2}(\/\d\d)?$/.test(String(t.mes))) rcGarantirMes(DATA,t.mes); else return; }
     vistos[t.uid]=1; DATA.months[t.mes].transactions.push(t);
   });
 
@@ -40,7 +42,12 @@ function aplicarBase(base){
     if(o.divisao!==undefined) t.divisao=o.divisao;
     if(o.status!==undefined) t.status=o.status;
     if(o.revisar!==undefined) t.revisar=o.revisar;
+    if(o.sub!==undefined) t.sub=o.sub;
   })});
+
+  /* catalogo de categorias (por perfil, com subcategorias e cores) e parcelas futuras */
+  if(typeof catAplicar==='function') try{ catAplicar(); }catch(e){ console.error('catAplicar',e); }
+  if(typeof parcProjetar==='function') try{ parcProjetar(); }catch(e){ console.error('parcProjetar',e); }
 
   COLOR = {}; var i=0;
   [].concat(CATS.NuNa,CATS.Ana,CATS.Manuela,TIPOS).forEach(function(c){ if(!(c in COLOR)) COLOR[c]=PALETTE[(i++)%PALETTE.length] });
@@ -53,7 +60,7 @@ function aplicarBase(base){
 function salvarPrefs(){ Store.set(K.PREFS, {perfil:state.perfil, mes:state.mes, axis:state.axis}); }
 function salvarOverride(t){
   var ov = Store.get(K.OVERRIDES, {});
-  ov[t.uid] = {plano:t.plano, tipo:t.tipo, grupo:t.grupo, divisao:t.divisao, status:t.status, revisar:t.revisar};
+  ov[t.uid] = {plano:t.plano, sub:t.sub||'', tipo:t.tipo, grupo:t.grupo, divisao:t.divisao, status:t.status, revisar:t.revisar};
   Store.set(K.OVERRIDES, ov);
 }
 function salvarOrcamentos(){ Store.set(K.ORCAMENTOS, DATA.budgets); }
@@ -88,7 +95,7 @@ function agComoTx(mes){
 }
 function agTxDeItem(i, mes, valor, desc, chave){
   return {mes:mes,data:agBR(i.data),perfil:i.perfil,raw:desc,desc:desc,
-      tipo:i.categoria,grupo:i.grupo||null,plano:i.categoria,planoOrig:i.categoria,grupoOrig:i.grupo||null,
+      tipo:i.categoria,grupo:i.grupo||null,plano:i.categoria,sub:i.sub||'',obs:i.obs||'',planoOrig:i.categoria,grupoOrig:i.grupo||null,
       valor:valor,fonte:i.fonte,fonteLabel:i.fonte,fontePendente:false,cartao:'-',
       revisar:(i.status==='Pendente'||i.status==='Revisar'),status:'',divisao:i.divisao,
       contrib:false,possivelDup:false,manual:true,agStatus:i.status,id:i.id,uid:i.id,dedupKey:chave};
@@ -162,5 +169,5 @@ function monthPills(node,cur,cb,withAll){
     if(CLOSED.indexOf(m)<0)b.title='Mes em aberto / dados parciais';
     b.onclick=function(){cb(m)};node.appendChild(b);});
 }
-function renderOverviewMonths(){monthPills(el('ov-months'),state.mes,function(m){state.mes=m;salvarPrefs();renderAll();},false);}
-function renderTxMonthPills(){monthPills(el('tx-months'),state.txMes,function(m){state.txMes=m;renderTxTable();renderTxInsight();try{renderReview();}catch(e){}},true);}
+function renderOverviewMonths(){monthPills(el('ov-months'),state.mes,function(m){state.mes=m;state.txMes=m;salvarPrefs();renderAll();},false);}
+function renderTxMonthPills(){monthPills(el('tx-months'),state.txMes,function(m){state.txMes=m;renderTxMonthPills();renderTxTable();renderTxInsight();},false);}

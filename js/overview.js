@@ -490,14 +490,16 @@ window.addEventListener('load',function(){
 /* ===== Aba Acabei de Gastar: fluxo simples, um agente so ===== */
 var AG_FORA=['Descontos em folha','Despesa conjunta'];
 function agLabel(e){ return e&&e.closest('label'); }
-function agFillCat(){
+function agFillCat(val,sub){
   var cat=el('ag-cat'), div=el('ag-div'), grp=el('ag-grupo'), per=el('ag-perfil'); if(!cat||!div||!grp)return;
-  var conj=div.value==='CONJUNTA', atual=cat.value;
-  var lista=conj?[].map.call(grp.options,function(o){return o.value;})
-                :((CATS[per?per.value:state.perfil])||[]).filter(function(c){return AG_FORA.indexOf(c)<0;});
-  cat.innerHTML=lista.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
-  if(lista.indexOf(atual)>=0)cat.value=atual;
-  if(conj)grp.value=cat.value;
+  var conj=div.value==='CONJUNTA', cp=catParse(cat.value||'');
+  if(val===undefined){ val=cp.cat; sub=cp.sub; }
+  var perfil=conj?'NuNa':(per?per.value:state.perfil);
+  cat.dataset.perfil=perfil;
+  cat.innerHTML=catOptsHTML(perfil,val,sub||'',{novo:true,excluir:conj?[]:AG_FORA,semExtra:true});
+  if(conj){ var gv=catParse(cat.value).cat;
+    if(gv&&![].some.call(grp.options,function(o){return o.value===gv;})){ var op=document.createElement('option'); op.value=op.textContent=gv; grp.appendChild(op); }
+    grp.value=gv; }
   var lb=agLabel(cat), t=lb&&[].filter.call(lb.querySelectorAll('*'),function(e){return !e.children.length&&/categoria/i.test(e.textContent);})[0];
   if(t)t.textContent=conj?'Categoria (conjunta)':'Categoria (individual)';
 }
@@ -508,7 +510,7 @@ function agFormFluxo(){
     agLabel(cat).parentNode.insertBefore(agLabel(div),agLabel(cat));
     agLabel(grp).style.display='none';
     div.addEventListener('change',agFillCat); if(per)per.addEventListener('change',agFillCat);
-    cat.addEventListener('change',function(){ if(div.value==='CONJUNTA')grp.value=cat.value; });
+    cat.addEventListener('change',function(){ if(div.value==='CONJUNTA')grp.value=catParse(cat.value).cat; });
   }
   agFillCat();
 }
@@ -701,7 +703,7 @@ function orcMelhora(){
   var somaB=0, somaMes={}, somaMed=0;
   [].forEach.call(tbl.tBodies[0].rows,function(r){
     var cat=r.cells[0].textContent.trim(), b=+B[cat]||0, g=tot[cat]||0;
-    r.style.display=(p!=='NuNa'&&ORC_FORA[cat])?'none':'';
+    r.style.display=((p!=='NuNa'&&ORC_FORA[cat])||(!b&&!MONTHS.some(function(m){ return (TM[m][cat]||0)>0; })))?'none':'';
     [].forEach.call(r.cells,function(c,i){ if(i>=ini&&i<fim)c.style.opacity=mesAberto(MONTHS[i-ini])?'.5':''; });
     var tem=MONTHS.some(function(m){ return (TM[m][cat]||0)>0; }), st;
     if(ORC_METAS[cat]){ st=g>=b&&b?orcBadge('meta atingida',C.ok):orcBadge('guardado '+brl(g)+' de '+brl(b),C.warn); }

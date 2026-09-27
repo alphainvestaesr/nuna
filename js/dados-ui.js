@@ -10,7 +10,7 @@ function renderDados(){
   el('dd-resumo').innerHTML =
     kpiCard('Lan&ccedil;amentos na base', allTx().length, 'base + importados','')+
     kpiCard('Importados de CSV', imp.length, 'guardados no banco online','')+
-    kpiCard('Edi&ccedil;&otilde;es suas', Object.keys(ov).length, 'categoria, divis&atilde;o, revis&atilde;o','')+
+    kpiCard('Edi&ccedil;&otilde;es suas', Object.keys(ov).filter(function(k){return k!=='__catalogo__'}).length, 'categoria, divis&atilde;o, revis&atilde;o','')+
     kpiCard('ACABEI DE GASTAR', g.length, 'lan&ccedil;amentos r&aacute;pidos','');
   el('dd-armazenamento').innerHTML = '&#10003; Conectado ao banco online. O que voc&ecirc; edita ou lan&ccedil;a vai para o Supabase e aparece para as duas, em qualquer aparelho.'
     + (typeof USANDO_EXEMPLO !== 'undefined' && USANDO_EXEMPLO ? ' <b>Aten&ccedil;&atilde;o: a base ainda n&atilde;o foi importada &mdash; o que est&aacute; na tela s&atilde;o dados de exemplo.</b>' : '');

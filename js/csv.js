@@ -114,8 +114,8 @@ var CSV = (function () {
       var uid = 'csv-' + hashCurto(chave + '#' + ord);
       novos.push({
         mes: mes, data: dataBR(r.iso), perfil: perfil, raw: r.desc, desc: r.desc,
-        tipo: 'Outros', grupo: null, plano: perfil === 'Manuela' ? 'Cartao Bradesco' : 'Bradesco',
-        planoOrig: perfil === 'Manuela' ? 'Cartao Bradesco' : 'Bradesco', grupoOrig: null,
+        tipo: 'Outros', grupo: null, plano: 'Outros', sub: '',
+        planoOrig: 'Outros', grupoOrig: null,
         valor: Math.round(r.valor * 100) / 100, fonte: fonte, cartao: '-',
         fonteLabel: fonte, fontePendente: !r.fonte && !opcoes.fonte,
         revisar: true, status: '', divisao: 'INDIVIDUAL', contrib: false,
