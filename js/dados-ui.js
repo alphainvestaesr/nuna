@@ -47,7 +47,12 @@ function reprocessarCSV(){
     ultimaPreparacao=null; el('dd-aplicar').disabled=true; return; }
   var prep=CSV.preparar(res.linhas, {fonte: ddFonteEscolhida(), perfil: el('dd-perfil').value, mesFatura: el('dd-mes').value||''});
   ultimaPreparacao=prep;
-  el('dd-preview').innerHTML=
+  /* fatura de cartao sem "Mes da fatura": cada linha iria para o mes da COMPRA
+     (compras de setembro da fatura de outubro caiam em Set). Avisa antes de aplicar. */
+  var ehCartao=/cart/i.test(ddFonteEscolhida()||'')||/cart|fatura/i.test(nomeArquivoCSV||'');
+  var avisoMes=(ehCartao && !el('dd-mes').value)
+    ? '<p class="note" style="color:var(--neg);margin:10px 0 0"><b>Escolha o M&ecirc;s da fatura.</b> Sem ele, cada compra vai para o m&ecirc;s da data dela, e n&atilde;o para o m&ecirc;s em que a fatura vence.</p>' : '';
+  el('dd-preview').innerHTML=avisoMes+
     '<div class="grid3" style="margin:12px 0">'+
     kpiCard('Novos', prep.novos.length, 'entram como "a revisar"','green')+
     kpiCard('J&aacute; existiam', prep.duplicados.length, 'ignorados, sem duplicar','orange')+
