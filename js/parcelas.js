@@ -204,7 +204,9 @@ function renderParcelasCard() {
     b = document.createElement('button'); b.type = 'button'; b.id = 'pc-banner'; b.className = 'pc-banner';
     b.addEventListener('click', pcAbrirPainel);
   }
-  var anchor = el('agente-nuna') || k;
+  /* depois do bloco do grafico Gastos por Categoria (o impacto do grafico vem antes) */
+  var dn = el('donut'), anchor = dn && dn.closest('#panel-overview > *');
+  if (!anchor) anchor = el('agente-nuna') || k;
   if (b.previousElementSibling !== anchor) anchor.parentNode.insertBefore(b, anchor.nextSibling);
   var lista = pcCompras();
   if (!lista.length) { b.hidden = true; return; }
@@ -280,7 +282,7 @@ function pcAbrirPainel() {
     '.pc-mais{font:inherit;font-size:13px;margin:12px auto 0;display:block;padding:6px 16px;border-radius:999px;border:1px solid var(--border);background:transparent;color:inherit;cursor:pointer}',
     '.pc-flash{animation:pcFlash 1.6s ease}',
     '@keyframes pcFlash{0%,100%{box-shadow:0 0 0 0 transparent}30%{box-shadow:0 0 0 4px var(--acc)}}',
-    '.pc-banner{display:flex;align-items:center;gap:14px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;margin:0 0 18px;padding:12px 16px;border-radius:12px;border:1.5px solid var(--acc);background:linear-gradient(90deg,var(--accL),var(--card));position:relative;overflow:hidden}',
+    '.pc-banner{display:flex;align-items:center;gap:14px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;margin:16px 0;padding:12px 16px;border-radius:12px;border:1.5px solid var(--acc);background:linear-gradient(90deg,var(--accL),var(--card));position:relative;overflow:hidden}',
     '.pc-banner::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--acc),var(--neg))}',
     '.pc-banner:hover{border-color:var(--amb)}',
     '.pc-b-ico{color:var(--amb);flex:0 0 auto;display:flex}',
