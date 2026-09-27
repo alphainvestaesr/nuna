@@ -430,7 +430,7 @@ function fechamentoCompacto(){
   var card=box.closest('#panel-dados > *'), nota=card&&card.querySelector('p.note');
   if(nota)nota.innerHTML='Feche o m&ecirc;s depois de importar as faturas e revisar os lan&ccedil;amentos. M&ecirc;s fechado entra nas m&eacute;dias e fica <b>travado para edi&ccedil;&atilde;o</b> &mdash; clique de novo para reabrir.';
   var f=mesesFechados();
-  box.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px">'+MONTHS.map(function(m){
+  box.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px">'+MONTHS.filter(function(m){return !(typeof mesPrevisao==='function'&&mesPrevisao(m));}).map(function(m){
     var fechado=f.indexOf(m)>=0;
     var pend=allTx().filter(function(t){return t.revisar&&(t._m||t.mes)===m&&(typeof revVisivel!=='function'||revVisivel(t));}).length;
     return '<button type="button" data-m="'+m+'" title="'+(fechado?'Fechado - clique para reabrir':'Aberto - clique para fechar')+'" style="font:inherit;font-size:13px;padding:6px 12px;border-radius:999px;cursor:pointer;'+
@@ -558,7 +558,7 @@ document.addEventListener('click',function(e){
 
 /* ===== Mes vs Mes: sem mistura, meses abertos sinalizados; rodape fixo ===== */
 function mesAberto(m){ return CLOSED.indexOf(m)<0; }
-function rotulosMeses(){ return MONTHS.map(function(m){ return mesAberto(m)?m+' (aberto)':m; }); }
+function rotulosMeses(){ return MONTHS.map(function(m){ return (typeof mesPrevisao==='function'&&mesPrevisao(m))?m+' (previsão)':(mesAberto(m)?m+' (aberto)':m); }); }
 function eixoK(v){ return 'R$ '+((Math.abs(v)%1000)?(v/1000).toFixed(1):(v/1000).toFixed(0))+'k'; }
 function nunaMonthVsMonth(){
   var ctx=el('bars'); if(!ctx||typeof Chart==='undefined')return;

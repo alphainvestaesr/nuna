@@ -205,7 +205,9 @@ function renderParcelasCard() {
     b.addEventListener('click', pcAbrirPainel);
   }
   /* depois do bloco do grafico Gastos por Categoria (o impacto do grafico vem antes) */
-  var dn = el('donut'), anchor = dn && dn.closest('#panel-overview > *');
+  /* ordem: grafico Gastos por Categoria -> Divisao do mes (so no Conjunto) -> Parcelas a vencer */
+  var dn = el('donut'), anchor = dn && dn.closest('#panel-overview > *'), cb = el('collab-card');
+  if (cb && !cb.hidden && anchor && (anchor.compareDocumentPosition(cb) & Node.DOCUMENT_POSITION_FOLLOWING)) anchor = cb;
   if (!anchor) anchor = el('agente-nuna') || k;
   if (b.previousElementSibling !== anchor) anchor.parentNode.insertBefore(b, anchor.nextSibling);
   var lista = pcCompras();
@@ -293,5 +295,88 @@ function pcAbrirPainel() {
     '.pc-b-go{font-size:13px;font-weight:700;color:var(--acc);white-space:nowrap}',
     '@media (max-width:560px){.pc-b-go{display:none}.pc-lista{grid-template-columns:1fr}}'
   ].join('');
+  document.head.appendChild(st);
+})();
+
+/* ============ MESES DE PREVISAO ============
+   Mes que ainda nao comecou e so existe por causa das parcelas futuras.
+   - receita estimada pela media dos 3 ultimos meses fechados
+   - Clareza e Orcamento nao acusam "estourado" nesses meses
+   - fica fora do fechamento e dos alertas de mes em aberto
+   Deixa de ser previsao assim que tiver lancamento real ou receita. */
+function mesPrevisao(m) {
+  var mm = DATA && DATA.months && DATA.months[m];
+  if (!mm || !mm._previsao) return false;
+  if ((mm.receitaItens && mm.receitaItens.length) || (mm.contracheques && mm.contracheques.length)) return false;
+  return !(mm.transactions || []).some(function (t) { return !t.previsto; });
+}
+function pcRendaEstimada(p) {
+  var F = (CLOSED || []).slice(-3);
+  if (!F.length) return 0;
+  var r = function (q) { return F.reduce(function (s, m) { return s + (DATA.months[m].receita[q] || 0); }, 0) / F.length; };
+  return p === 'Ana' ? r('Ana') : p === 'Manuela' ? r('Manuela') : r('Ana') + r('Manuela');
+}
+(function () {
+  var _r = rendaOf;
+  rendaOf = function (mes, p) { return mesPrevisao(mes) ? pcRendaEstimada(p) : _r.apply(this, arguments); };
+})();
+function pcAvisoPrevisao() {
+  var k = el('ov-kpis'); if (!k) return;
+  var av = el('pc-prev-aviso');
+  if (!mesPrevisao(state.mes)) { if (av) av.remove(); return; }
+  if (!av) { av = document.createElement('div'); av.id = 'pc-prev-aviso'; }
+  if (av.nextElementSibling !== k) k.parentNode.insertBefore(av, k);
+  var F = (CLOSED || []).slice(-3);
+  av.innerHTML = '<b>' + esc(pcMesNome(state.mes)) + ' &eacute; previs&atilde;o.</b> O m&ecirc;s ainda n&atilde;o come&ccedil;ou: os gastos s&atilde;o s&oacute; as parcelas j&aacute; comprometidas e a receita &eacute; estimada pela m&eacute;dia de ' +
+    (F.length ? F[0] + '&ndash;' + F[F.length - 1] : 'meses fechados') + '. Nada aqui conta como estouro de or&ccedil;amento.';
+}
+/* Clareza: no mes de previsao mostra o peso das parcelas, sem "estourado" */
+window.addEventListener('load', function () {
+  if (typeof renderAgente === 'function') {
+    var _ag = renderAgente;
+    renderAgente = function () {
+      var r = _ag.apply(this, arguments);
+      try {
+        var host = el('agente-nuna');
+        if (host && mesPrevisao(state.mes)) {
+          var g = gastoOf(state.mes, state.perfil), renda = rendaOf(state.mes, state.perfil);
+          host.innerHTML = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--acc)"></span>' +
+            '<span style="font-weight:700;letter-spacing:.04em;font-size:13px">CLAREZA &middot; PREVIS&Atilde;O</span>' +
+            '<span style="font-size:13px;opacity:.9">' + brl(g) + ' j&aacute; comprometidos em parcelas' + (renda ? ' &middot; ' + Math.round(g / renda * 100) + '% da receita estimada (' + brl(renda) + ')' : '') + '</span></div>';
+        }
+      } catch (e) { console.warn(e); }
+      return r;
+    };
+  }
+  if (typeof renderKPI === 'function') {
+    var _k = renderKPI;
+    renderKPI = function () { var r = _k.apply(this, arguments); try { pcAvisoPrevisao(); } catch (e) {} return r; };
+  }
+  if (typeof orcMelhora === 'function') {
+    var _o = orcMelhora;
+    orcMelhora = function () {
+      var r = _o.apply(this, arguments);
+      try {
+        if (!mesPrevisao(state.mes)) return r;
+        var tb = el('bd-table') && el('bd-table').tBodies[0];
+        if (tb) [].forEach.call(tb.rows, function (row) {
+          if (row.id === 'bd-total') return;
+          row.style.background = '';
+          row.cells[row.cells.length - 1].innerHTML = '<span style="display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px dashed var(--tx3);color:var(--tx3)">previs&atilde;o</span>';
+        });
+        var cards = el('bd-cards');
+        if (cards) { var v = cards.querySelectorAll('.val'), s = cards.querySelectorAll('.sub');
+          [].forEach.call(v, function (x) { x.textContent = '—'; });
+          [].forEach.call(s, function (x) { x.textContent = state.mes + ' é previsão'; }); }
+      } catch (e) { console.warn(e); }
+      return r;
+    };
+  }
+});
+(function () {
+  var st = document.createElement('style');
+  st.textContent = '.pill-prev{border-style:dashed!important;font-style:italic}' +
+    '.pill-prev.on{font-style:normal}' +
+    '#pc-prev-aviso{font-size:13px;margin:0 0 12px;padding:10px 14px;border-radius:10px;border:1px dashed var(--acc);background:var(--accL);color:var(--tx)}';
   document.head.appendChild(st);
 })();

@@ -167,6 +167,7 @@ function monthPills(node,cur,cb,withAll){
   if(withAll){var a=document.createElement('button');a.className='pill'+(cur==='__all'?' on':'');a.textContent='Todos os meses';a.onclick=function(){cb('__all')};node.appendChild(a);}
   MONTHS.forEach(function(m){var b=document.createElement('button');b.className='pill'+(m===cur?' on':'');b.textContent=m;
     if(CLOSED.indexOf(m)<0)b.title='Mes em aberto / dados parciais';
+    if(typeof mesPrevisao==='function'&&mesPrevisao(m)){b.classList.add('pill-prev');b.title='Previsão: só parcelas já comprometidas e receita estimada';}
     b.onclick=function(){cb(m)};node.appendChild(b);});
 }
 function renderOverviewMonths(){monthPills(el('ov-months'),state.mes,function(m){state.mes=m;state.txMes=m;salvarPrefs();renderAll();},false);}

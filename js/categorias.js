@@ -244,7 +244,10 @@ function parcDois(n) { return (n < 10 ? '0' : '') + n; }
 function parcLabel(o) { return mesLabelDe(Math.floor(o / 12), (o % 12) + 1); }
 function parcGarantirMes(label) {
   if (DATA.months[label]) return;
+  var antes = {}; MONTHS.forEach(function (m) { antes[m] = 1; });
   rcGarantirMes(DATA, label);
+  /* mes criado so para receber parcelas futuras: e um mes de PREVISAO */
+  MONTHS.forEach(function (m) { if (!antes[m]) DATA.months[m]._previsao = true; });
 }
 function parcProjetar() {
   if (!DATA || !DATA.months || typeof agParcelaDaDesc !== 'function' || typeof rcGarantirMes !== 'function') return;

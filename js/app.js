@@ -64,7 +64,7 @@ function renderInsights(){
   var abertos='';
   if(casal){
     var orc=(DATA.budgets&&DATA.budgets.NuNa)||{};
-    MONTHS.filter(function(m){return CLOSED.indexOf(m)<0}).forEach(function(m){
+    MONTHS.filter(function(m){return CLOSED.indexOf(m)<0 && !(typeof mesPrevisao==='function'&&mesPrevisao(m))}).forEach(function(m){
       var acima=Object.keys(orc).map(function(g){
         var v=txOf(m,'NuNa').filter(function(t){return t.grupo===g}).reduce(function(s,t){return s+t.valor},0);
         return [g,v,orc[g]];}).filter(function(x){return x[2]>0 && x[1]>x[2]*1.05}).sort(function(x,y){return (y[1]-y[2])-(x[1]-x[2])});
