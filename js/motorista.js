@@ -190,7 +190,7 @@ function vcLista() {
   if (!DATA || !DATA.months) return [];
   var hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   var fontes = {};
-  MONTHS.slice(-4).forEach(function (m) { mesTx(m).forEach(function (t) { if (vcDia(t.fonteLabel) && /^(cart|banco inter)/i.test(t.fonteLabel)) fontes[t.fonteLabel] = 1; }); });
+  MONTHS.filter(function (m) { return !mtEhPrev(m); }).slice(-4).forEach(function (m) { mesTx(m).forEach(function (t) { if (vcDia(t.fonteLabel) && /^(cart|banco inter)/i.test(t.fonteLabel)) fontes[t.fonteLabel] = 1; }); });
   return Object.keys(fontes).filter(function (f) {
     if (state.perfil === 'NuNa') return true;
     return f.indexOf('(' + state.perfil + ')') >= 0;
