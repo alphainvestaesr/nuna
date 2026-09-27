@@ -89,8 +89,10 @@ function renderBudgetTable(){
   th.innerHTML='<tr><th>Categoria</th><th class="num">Or&ccedil;amento/m&ecirc;s</th>'+MONTHS.map(function(m){return '<th class="num">'+m+'</th>'}).join('')+'<th class="num">M&eacute;dia</th><th>Status</th></tr>';
   var counts={ok:0,warn:0,bad:0};
   tb.innerHTML=list.map(function(c){
-    var vals=MONTHS.map(function(m){return txOf(m,state.perfil).filter(function(t){return catKey(t)===c}).reduce(function(s,t){return s+t.valor},0)});
-    var cv=CLOSED.map(function(m){return txOf(m,state.perfil).filter(function(t){return catKey(t)===c}).reduce(function(s,t){return s+t.valor},0)});
+    /* perfil individual: conta conjunta nao entra nas linhas (mesma regra do Total e do catTotals) */
+    var daLinha=function(t){return catKey(t)===c&&(state.perfil==='NuNa'||t.divisao!=='CONJUNTA')};
+    var vals=MONTHS.map(function(m){return txOf(m,state.perfil).filter(daLinha).reduce(function(s,t){return s+t.valor},0)});
+    var cv=CLOSED.map(function(m){return txOf(m,state.perfil).filter(daLinha).reduce(function(s,t){return s+t.valor},0)});
     var med=cv.reduce(function(a,b){return a+b},0)/cv.length, b=budgetOf(c), r=b?med/b:0, cls,lab;
     if(!b){cls='b-ind';lab='sem meta';}
     else if(r>1.05){cls='b-bad';lab='estourou';counts.bad++;}
@@ -110,7 +112,7 @@ function renderBudgetInsight(){
   var seen={};CLOSED.forEach(function(m){Object.keys(catTotals(txOf(m,state.perfil))).forEach(function(c){seen[c]=1})});
   var worst=null,n0=0;
   Object.keys(seen).forEach(function(c){var b=budgetOf(c);if(!b)return;
-    var n=CLOSED.filter(function(m){return txOf(m,state.perfil).filter(function(t){return catKey(t)===c}).reduce(function(s,t){return s+t.valor},0)>b*1.05}).length;
+    var n=CLOSED.filter(function(m){return txOf(m,state.perfil).filter(function(t){return catKey(t)===c&&(state.perfil==='NuNa'||t.divisao!=='CONJUNTA')}).reduce(function(s,t){return s+t.valor},0)>b*1.05}).length;
     if(n>n0){n0=n;worst=c;}});
   el('ins-bd').textContent=worst?'"'+worst+' estourou o orcamento em '+n0+' dos '+CLOSED.length+' meses fechados. Considere ajustar a meta ou o habito."'
     :'"Tudo dentro do orcamento nos meses fechados - parabens."';
