@@ -248,11 +248,12 @@ function parcGarantirMes(label) {
 }
 function parcProjetar() {
   if (!DATA || !DATA.months || typeof agParcelaDaDesc !== 'function' || typeof rcGarantirMes !== 'function') return;
-  var grupos = {}, vistos = {}, fontesMes = {};
+  var grupos = {}, vistos = {}, fontesMes = {}, ultimaFatura = {};
   MONTHS.slice().forEach(function (m) {
     DATA.months[m].transactions = DATA.months[m].transactions.filter(function (t) { return !t.previsto; });
     DATA.months[m].transactions.forEach(function (t) {
       fontesMes[m + '|' + t.fonteLabel] = 1;
+      if (!t.manual) ultimaFatura[t.fonteLabel] = Math.max(ultimaFatura[t.fonteLabel] || 0, mesOrdem(m));
       if (t.contrib || t.manual) return;
       var pd = agParcelaDaDesc(t.raw || t.desc); if (!pd) return;
       var chave = [t.fonteLabel, t.data, parcBase(t.raw || t.desc).toUpperCase(), Number(t.valor).toFixed(2), pd.n].join('|');
@@ -264,6 +265,8 @@ function parcProjetar() {
   var ov = Store.get(K.OVERRIDES, {}) || {};
   Object.keys(grupos).forEach(function (chave) {
     var g = grupos[chave];
+    /* ja existe fatura mais nova desse cartao sem esta compra: foi quitada/antecipada */
+    if ((ultimaFatura[g.t.fonteLabel] || 0) > g.o) return;
     for (var j = g.k + 1; j <= g.n; j++) {
       if (vistos[chave + '#' + j]) continue;
       var lab = parcLabel(g.o + (j - g.k));
