@@ -276,7 +276,8 @@ function parcProjetar() {
       var v = Object.assign({}, g.t, {
         mes: lab, raw: parcBase(g.t.raw || g.t.desc) + suf, desc: parcBase(g.t.desc) + suf,
         previsto: true, revisar: false, possivelDup: false, status: '',
-        uid: uid, id: uid, dedupKey: 'PREV|' + chave + '#' + j, ordinal: 1
+        uid: uid, id: uid, dedupKey: 'PREV|' + chave + '#' + j, ordinal: 1,
+        parcGrupo: chave, parcK: j, parcN: g.n, parcUlt: g.k, parcNome: parcBase(g.t.desc)
       });
       delete v._m;
       var o = ov[uid];
