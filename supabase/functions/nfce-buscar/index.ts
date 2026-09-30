@@ -28,7 +28,7 @@ const limpa = (s: string) =>
   s.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
 
-export function parseNFCe(html: string) {
+function parseNFCeHtml(html: string) {
   const h = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "");
   const emit = h.match(/<div[^>]*class="[^"]*txtTopo[^"]*"[^>]*>([\s\S]*?)<\/div>/i) ||
     h.match(/<div[^>]*id="u20"[^>]*>([\s\S]*?)<\/div>/i);
@@ -59,6 +59,49 @@ export function parseNFCe(html: string) {
   let total = tm ? num(tm[1]) : 0;
   if (!total && itens.length) total = Math.round(itens.reduce((s, i) => s + i.total, 0) * 100) / 100;
   return { emitente, cnpj, data_emissao, total, itens };
+}
+
+const tag = (x: string, t: string): string | null => {
+  const m = x.match(new RegExp("<" + t + "(?:\\s[^>]*)?>([\\s\\S]*?)</" + t + ">", "i"));
+  return m ? m[1].trim() : null;
+};
+const xmlTxt = (s: string) => limpa(s.replace(/<!\[CDATA\[|\]\]>/g, ""));
+
+// A SEFAZ-PE devolve a nota em XML (o navegador aplica um XSL para mostrar a tela).
+const nx = (s: string | null): number => { const v = parseFloat(String(s || "").trim()); return isFinite(v) ? v : 0; };
+
+export function parseNFCeXml(xml: string) {
+  const emit = tag(xml, "emit") || "";
+  const emitente = xmlTxt(tag(emit, "xNome") || tag(emit, "xFant") || "") || null;
+  const cnpj = tag(emit, "CNPJ");
+  const dh = tag(xml, "dhEmi");
+  const itens: { desc: string; qtd: number; un: string; unit: number; total: number; ean?: string; cod?: string }[] = [];
+  const dets = xml.match(/<det\s[\s\S]*?<\/det>/gi) || [];
+  for (const d of dets) {
+    const prod = tag(d, "prod") || d;
+    const ean = (tag(prod, "cEAN") || "").replace(/\D/g, "");
+    const qtd = nx(tag(prod, "qCom"));
+    const bruto = nx(tag(prod, "vProd"));
+    const desc = nx(tag(prod, "vDesc"));
+    itens.push({
+      desc: xmlTxt(tag(prod, "xProd") || ""),
+      qtd: qtd || 1,
+      un: xmlTxt(tag(prod, "uCom") || ""),
+      unit: nx(tag(prod, "vUnCom")),
+      total: Math.round((bruto - desc) * 100) / 100,
+      ...(ean.length >= 8 && !/^0+$/.test(ean) ? { ean } : {}),
+      cod: xmlTxt(tag(prod, "cProd") || "") || undefined,
+    });
+  }
+  const icms = tag(xml, "ICMSTot") || "";
+  let total = nx(tag(icms, "vNF"));
+  if (!total && itens.length) total = Math.round(itens.reduce((s, i) => s + i.total, 0) * 100) / 100;
+  return { emitente, cnpj, data_emissao: dh, total, itens };
+}
+
+export function parseNFCe(body: string) {
+  if (/<nfeProc|<NFe[\s>]/i.test(body)) return parseNFCeXml(body);
+  return parseNFCeHtml(body);
 }
 
 Deno.serve(async (req) => {
