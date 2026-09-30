@@ -181,9 +181,9 @@ function ntRender() {
     a.qtd += +i.qtd || 0; a.total += +i.total || 0; a.vezes++;
   }); });
   var top = Object.keys(agg).map(function (k) { return agg[k]; }).sort(function (a, b) { return b.total - a.total; }).slice(0, 10);
-  el('nt-top').innerHTML = top.length ? '<div class="card"><h2>Onde mais gastou (itens)</h2>' + top.map(function (a) {
+  el('nt-top').innerHTML = top.length ? '<details class="card nt-card"><summary><span>Onde mais gastou (itens)</span></summary><div class="ntc-corpo">' + top.map(function (a) {
     return '<div class="nt-top"><span>' + esc(a.desc) + '<small style="display:block;color:var(--tx3)">' + a.vezes + 'x · qtd ' + (Math.round(a.qtd * 1000) / 1000) + '</small></span><b>' + brl(a.total) + '</b></div>';
-  }).join('') + '</div>' : '';
+  }).join('') + '</div></details>' : '';
 }
 function ntNotaHtml(n) {
   var itens = n.itens || [], quando = n.data_emissao ? new Date(n.data_emissao).toLocaleDateString('pt-BR') : (n.mes_ref || '');
