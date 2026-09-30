@@ -130,6 +130,7 @@ function ntMontar() {
     var n = NT.lista.filter(function (x) { return x.id === b.dataset.id; })[0]; if (!n) return;
     if (b.dataset.nt === 'rm') ntRemover(n.id);
     else if (b.dataset.nt === 'retry') ntSalvarNota(n.chave, n.url);
+    else if (b.dataset.nt === 'conj') ntSetConj(n.chave, !n.conjunta);
   });
 }
 function ntTratar(txt) {
@@ -162,12 +163,12 @@ function ntRender() {
   if (aberto) box.classList.add('mp-open');
   if (typeof mpColapsarMeses === 'function') mpColapsarMeses(box, NT.mes);
 
-  var doMes = NT.lista.filter(function (n) { return ntMesDe(n) === NT.mes; });
+  var doMes = NT.lista.filter(function (n) { return ntMesDe(n) === NT.mes && ntVisivel(n); });
   var total = doMes.reduce(function (s, n) { return s + (+n.total || 0); }, 0);
   var nItens = doMes.reduce(function (s, n) { return s + (n.itens || []).length; }, 0);
   el('nt-resumo').innerHTML = '<div class="kpis"><div class="kpi"><div class="lab">Notas em ' + esc(mesNome(NT.mes)) + '</div><div class="val">' + doMes.length + '</div></div>' +
     '<div class="kpi"><div class="lab">Total em notas</div><div class="val">' + brl(total) + '</div></div>' +
-    '<div class="kpi"><div class="lab">Itens</div><div class="val">' + nItens + '</div></div></div>';
+    '<div class="kpi"><div class="lab">Itens</div><div class="val">' + nItens + '</div></div></div>' + ntBlocoCats(doMes);
 
   el('nt-lista').innerHTML = doMes.length ? doMes.map(ntNotaHtml).join('') :
     '<div class="card"><p class="note" style="margin:0">' + (NT.carregando ? 'Carregando…' : 'Nenhuma nota neste mês. Toque em “Ler QR Code” para adicionar.') + '</p></div>';
@@ -189,7 +190,7 @@ function ntNotaHtml(n) {
   var nome = n.emitente || (n.cnpj ? 'CNPJ ' + ntFormatCnpj(String(n.cnpj)) : 'Nota ' + String(n.chave).slice(-8));
   var tag = n.status === 'lida' ? '' : '<span class="nt-tag err">itens pendentes</span>';
   return '<details class="nt-nota"><summary><div><div class="nt-loja">' + esc(nome) + tag + '</div>' +
-    '<div class="nt-meta">' + esc(quando) + (n.uf ? ' · ' + esc(n.uf) : '') + ' · ' + itens.length + ' itens' + (n.lida_por ? ' · ' + esc(n.lida_por) : '') + '</div></div>' +
+    '<div class="nt-meta">' + esc(quando) + (n.uf ? ' · ' + esc(n.uf) : '') + ' · ' + itens.length + ' itens' + (n.lida_por ? ' · ' + esc(n.lida_por) : '') + (n.conjunta ? ' · conjunta' : '') + '</div></div>' +
     '<div class="nt-tot">' + (n.total != null ? brl(+n.total) : '—') + '</div></summary><div class="nt-corpo">' +
     (itens.length ? itens.map(function (i) {
       return '<div class="nt-item"><span>' + esc(i.desc) + '<small>' + (Math.round((+i.qtd || 0) * 1000) / 1000) + ' ' + esc(i.un || '') + ' × ' + brl(+i.unit || 0) + '</small></span><b>' + brl(+i.total || 0) + '</b></div>';
@@ -197,6 +198,7 @@ function ntNotaHtml(n) {
     '<div class="nt-sub">' +
     (n.status !== 'lida' && n.url ? '<button class="pill" data-nt="retry" data-id="' + esc(n.id) + '">Buscar itens de novo</button>' : '') +
     (n.url ? '<a class="pill" href="' + esc(n.url) + '" target="_blank" rel="noopener">Abrir na SEFAZ</a>' : '') +
+    '<button class="pill" data-nt="conj" data-id="' + esc(n.id) + '">' + (n.conjunta ? 'Tornar individual' : 'Marcar como conjunta') + '</button>' +
     '<button class="pill" data-nt="rm" data-id="' + esc(n.id) + '">Remover</button></div></div></details>';
 }
 
@@ -342,7 +344,8 @@ function ntCat(n) {
 function ntCatHtml(n) {
   var atual = ntCat(n);
   return '<label class="nres-cat">Categoria <select class="nres-catsel" data-chave="' + esc(n.chave) + '">' +
-    NT_CATS.map(function (c) { return '<option' + (c === atual ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>';
+    NT_CATS.map(function (c) { return '<option' + (c === atual ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>' +
+    '<label class="nres-cat">Compra conjunta (casal) <input type="checkbox" class="nres-conj" data-chave="' + esc(n.chave) + '"' + (n.conjunta ? ' checked' : '') + '></label>';
 }
 function ntSetCat(chave, cat) {
   var n = (NT.lista || []).filter(function (x) { return x.chave === chave; })[0], c = ntCli(); if (!n || !c) return;
@@ -352,48 +355,37 @@ function ntSetCat(chave, cat) {
     if (r && r.error) { flashToast('Não consegui guardar a categoria.'); return; }
     (NT.lista || []).forEach(function (x) { if (n.cnpj ? x.cnpj === n.cnpj : x.id === n.id) { x.categoria = cat; x.cat_manual = true; } });
     flashToast('Guardei: ' + (n.emitente || 'loja') + ' → ' + cat + '. As próximas notas dessa loja seguem assim.');
-    try { ntCardMes(); } catch (e) {}
+    try { ntRender(); } catch (e) {}
   });
 }
 document.addEventListener('change', function (e) {
-  var s = e.target; if (s && s.classList && s.classList.contains('nres-catsel')) ntSetCat(s.dataset.chave, s.value);
+  var s = e.target; if (!s || !s.classList) return;
+  if (s.classList.contains('nres-catsel')) ntSetCat(s.dataset.chave, s.value);
+  else if (s.classList.contains('nres-conj')) ntSetConj(s.dataset.chave, s.checked);
 });
-function ntCardMes() {
-  var ov = document.getElementById('panel-overview'); if (!ov || !window.state) return;
-  var card = document.getElementById('nt-card'), mes = state.mes;
-  var lista = (NT.lista || []).filter(function (n) { return n.status === 'lida' && ntMesDe(n) === mes; });
-  if (!lista.length) { if (card) card.remove(); return; }
+function ntVisivel(n) {
+  var p = (window.state && state.perfil) || 'NuNa';
+  if (p === 'NuNa') return !!n.conjunta;
+  return !n.conjunta && (n.lida_por || 'Ana') === p;
+}
+function ntBlocoCats(lista) {
+  if (!lista.length) return '';
   var ag = {}, tot = 0;
   lista.forEach(function (n) { var k = ntCat(n), v = +n.total || 0; (ag[k] = ag[k] || { t: 0, q: 0 }); ag[k].t += v; ag[k].q++; tot += v; });
   var linhas = Object.keys(ag).sort(function (a, b) { return ag[b].t - ag[a].t; });
   var max = ag[linhas[0]].t || 1;
   var cor = function (k) { try { return typeof colorOf === 'function' ? colorOf(k) : '#A8A29E'; } catch (e) { return '#A8A29E'; } };
-  var aberto = card ? card.open : false;
-  var html = '<summary><span>Notas fiscais do mês</span><b>' + brl(tot) + '</b></summary><div class="ntc-corpo">' +
-    linhas.map(function (k) {
-      return '<div class="ntc-row"><div class="ntc-l"><span>' + esc(k) + ' <small>' + ag[k].q + (ag[k].q > 1 ? ' notas' : ' nota') + '</small></span><b>' + brl(ag[k].t) + '</b></div>' +
-        '<div class="ntc-bar"><i style="width:' + Math.max(4, Math.round(ag[k].t / max * 100)) + '%;background:' + cor(k) + '"></i></div></div>';
-    }).join('') +
-    '<p class="note" style="margin:8px 0 0">Informativo: vem das notas lidas pelo QR e não soma nos totais acima (a fatura já conta esses gastos).</p></div>';
-  if (!card) {
-    card = document.createElement('details'); card.id = 'nt-card'; card.className = 'card nt-card';
-    var h = [].filter.call(ov.querySelectorAll('h2'), function (x) { return /Gastos por Categoria/i.test(x.textContent); })[0];
-    var ref = h && h.closest('.card');
-    if (ref && ref.parentNode) ref.parentNode.insertBefore(card, ref.nextSibling); else ov.appendChild(card);
-  }
-  card.innerHTML = html; card.open = aberto;
+  return '<div class="card"><h2>Para onde foi</h2><div class="ntc-corpo">' + linhas.map(function (k) {
+    return '<div class="ntc-row"><div class="ntc-l"><span>' + esc(k) + ' <small>' + ag[k].q + (ag[k].q > 1 ? ' notas' : ' nota') + '</small></span><b>' + brl(ag[k].t) + '</b></div>' +
+      '<div class="ntc-bar"><i style="width:' + Math.max(4, Math.round(ag[k].t / max * 100)) + '%;background:' + cor(k) + '"></i></div></div>';
+  }).join('') + '<p class="note" style="margin:8px 0 0">Informativo: vem das notas lidas pelo QR e não soma nos totais do painel (a fatura já conta esses gastos).</p></div></div>';
 }
-(function () {
-  if (typeof window.ntRender === 'function') {
-    var r0 = window.ntRender;
-    window.ntRender = function () { var r = r0.apply(this, arguments); try { ntCardMes(); } catch (e) {} return r; };
-  }
-  if (typeof window.renderAll === 'function') {
-    var ra = window.renderAll;
-    window.renderAll = function () {
-      var r = ra.apply(this, arguments);
-      try { ntCarregar().then(function () { ntCardMes(); }); } catch (e) {}
-      return r;
-    };
-  }
-})();
+function ntSetConj(chave, v) {
+  var n = (NT.lista || []).filter(function (x) { return x.chave === chave; })[0], c = ntCli(); if (!n || !c) return;
+  c.from('notas_fiscais').update({ conjunta: !!v }).eq('id', n.id).then(function (r) {
+    if (r && r.error) { flashToast('Não consegui atualizar a nota.'); return; }
+    n.conjunta = !!v;
+    flashToast(v ? 'Compra conjunta: aparece só no perfil Conjunto.' : 'Compra individual: aparece só no perfil de quem leu.');
+    try { ntRender(); } catch (e) {}
+  });
+}
