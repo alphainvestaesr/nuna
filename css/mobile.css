@@ -147,3 +147,10 @@ html.app-mode .split-donut:not(.lg-open)>.legend{display:none}
 html.app-mode .split-donut>:first-child{cursor:pointer}
 html.app-mode .split-donut:not(.lg-open)::after{content:"Toque no gráfico para ver a lista ▾";display:block;text-align:center;font-size:12px;color:var(--tx3);padding:4px 0 2px}
 html.app-mode .split-donut.lg-open::after{content:"Toque no gráfico para ocultar ▴";display:block;text-align:center;font-size:12px;color:var(--tx3);padding:8px 0 0}
+
+/* blocos da Visao Geral recolhidos (Caixinha, Divisao do mes, Como o saldo se forma) */
+html.app-mode .card.mp-f2>.mp-h2x{cursor:pointer;position:relative;padding-right:24px;user-select:none}
+html.app-mode .card.mp-f2>.mp-h2x::after{content:"";position:absolute;right:6px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid var(--tx3);border-bottom:2px solid var(--tx3);transform:rotate(45deg);transition:transform .15s}
+html.app-mode .card.mp-f2.mp-f2-closed>.mp-h2x::after{transform:rotate(-45deg);margin-top:-4px}
+html.app-mode .card.mp-f2.mp-f2-closed>*:not(.mp-h2x){display:none!important}
+html.app-mode .card.mp-f2.mp-f2-closed>.mp-h2x{margin-bottom:0}
