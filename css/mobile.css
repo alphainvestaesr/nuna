@@ -197,3 +197,21 @@ html.app-mode #tx-months~.scroll td:nth-child(7)::before{content:"Divisão"}
 html.app-mode #tx-months~.scroll td:nth-child(8)::before{content:"Grupo"}
 html.app-mode #tx-months~.scroll td:nth-child(n+4):nth-child(-n+8)::before{display:block;font-size:11px;color:var(--tx3);margin-bottom:2px}
 html.app-mode #tx-months~.scroll td select{width:100%}
+
+/* resumo da nota logo depois de ler o QR */
+.nres-bg{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .18s}
+.nres-bg.open{opacity:1;pointer-events:auto}
+.nres{position:fixed;left:0;right:0;bottom:0;z-index:96;max-height:78vh;display:flex;flex-direction:column;background:var(--bg);border-radius:18px 18px 0 0;border-top:1px solid var(--border);padding:8px 14px calc(14px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .2s ease;max-width:720px;margin:0 auto}
+.nres.open{transform:none}
+.nres .grip{width:42px;height:4px;border-radius:4px;background:var(--border);margin:2px auto 10px;flex:none}
+.nres-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex:none}
+.nres-loja{font-weight:700;font-size:15px;overflow-wrap:anywhere}
+.nres-meta{font-size:12px;color:var(--tx3);margin-top:2px}
+.nres-tot{font-weight:800;font-size:20px;white-space:nowrap;color:var(--acc)}
+.nres-itens{overflow:auto;margin:8px 0;border-top:1px solid var(--border2);-webkit-overflow-scrolling:touch}
+.nres-it{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--border2);font-size:13px}
+.nres-it small{display:block;color:var(--tx3);font-size:11px}
+.nres-it b{white-space:nowrap}
+.nres-bt{display:flex;gap:8px;flex:none}
+.nres-bt button{flex:1;min-height:40px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--tx);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.nres-bt button.pri{background:var(--tx);color:var(--bg);border-color:var(--tx)}
