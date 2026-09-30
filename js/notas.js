@@ -193,7 +193,7 @@ function ntNotaHtml(n) {
     '<div class="nt-meta">' + esc(quando) + (n.uf ? ' · ' + esc(n.uf) : '') + ' · ' + itens.length + ' itens' + (n.lida_por ? ' · ' + esc(n.lida_por) : '') + (n.conjunta ? ' · conjunta' : '') + '</div></div>' +
     '<div class="nt-tot">' + (n.total != null ? brl(+n.total) : '—') + '</div></summary><div class="nt-corpo">' +
     (itens.length ? itens.map(function (i) {
-      return '<div class="nt-item"><span>' + esc(i.desc) + '<small>' + (Math.round((+i.qtd || 0) * 1000) / 1000) + ' ' + esc(i.un || '') + ' × ' + brl(+i.unit || 0) + '</small></span><b>' + brl(+i.total || 0) + '</b></div>';
+      return '<div class="nt-item"><span>' + esc(i.desc) + '<small>' + (Math.round((+i.qtd || 0) * 1000) / 1000) + ' ' + esc(i.un || '') + ' × ' + brl(+i.unit || 0) + ntCmpHtml(n, i) + '</small></span><b>' + brl(+i.total || 0) + '</b></div>';
     }).join('') : '<p class="note" style="margin:0">' + esc(n.erro || 'Sem itens.') + '</p>') +
     '<div class="nt-sub">' +
     (n.status !== 'lida' && n.url ? '<button class="pill" data-nt="retry" data-id="' + esc(n.id) + '">Buscar itens de novo</button>' : '') +
@@ -388,4 +388,27 @@ function ntSetConj(chave, v) {
     flashToast(v ? 'Compra conjunta: aparece só no perfil Conjunto.' : 'Compra individual: aparece só no perfil de quem leu.');
     try { ntRender(); } catch (e) {}
   });
+}
+
+/* ---------- comparacao de precos com a compra anterior do mesmo produto ---------- */
+function ntChaveItem(i) { return i.ean ? 'e:' + i.ean : 'd:' + String(i.desc || '').toUpperCase().replace(/\s+/g, ' ').trim(); }
+function ntAnterior(n, i) {
+  var k = ntChaveItem(i), t0 = n.data_emissao || n.criado_em || '', best = null;
+  (NT.lista || []).forEach(function (x) {
+    if (x.id === n.id || x.chave === n.chave || x.status !== 'lida') return;
+    var t = x.data_emissao || x.criado_em || ''; if (t0 && t >= t0) return;
+    (x.itens || []).forEach(function (j) {
+      if (ntChaveItem(j) !== k || (j.un || '') !== (i.un || '') || !(+j.unit > 0)) return;
+      if (!best || t > best.t) best = { t: t, unit: +j.unit, loja: x.emitente };
+    });
+  });
+  return best;
+}
+function ntCmpHtml(n, i) {
+  if (!(+i.unit > 0)) return '';
+  var a = ntAnterior(n, i); if (!a) return '';
+  var r = Math.round((+i.unit - a.unit) / a.unit * 1000) / 10;
+  var cls = r > 0.5 ? 'nt-up' : (r < -0.5 ? 'nt-dn' : 'nt-eq');
+  var txt = r > 0.5 ? '▲ +' + r + '%' : (r < -0.5 ? '▼ ' + r + '%' : '= igual');
+  return ' <span class="nt-cmp ' + cls + '">' + txt + ' <em>antes ' + brl(a.unit) + (a.loja ? ' · ' + esc(String(a.loja).slice(0, 18)) : '') + '</em></span>';
 }
