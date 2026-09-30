@@ -235,40 +235,59 @@ function ntAcertou(texto) {
   ntFecharLeitor();
   ntTratar(texto);
 }
+function ntQuadro(v, cv, larg) {
+  var w = v.videoWidth, h = v.videoHeight; if (!w || !h) return false;
+  var k = Math.min(1, larg / w); cv.width = Math.round(w * k); cv.height = Math.round(h * k);
+  cv.getContext('2d', { willReadFrequently: true }).drawImage(v, 0, 0, cv.width, cv.height);
+  return true;
+}
+function ntDecodeZX(Z, rd, cv) {
+  try {
+    var bmp = new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)));
+    return rd.decode(bmp).getText();
+  } catch (e) { return null; }
+}
 function ntAbrirLeitor() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { flashToast('Este navegador não dá acesso à câmera. Use “Foto do QR” ou cole o link.'); return; }
   var o = ntOverlay(), v = o.querySelector('video'), msg = document.getElementById('nt-scan-msg');
   o.classList.add('open'); NT_LEITOR.aberto = true; msg.textContent = 'Abrindo a câmera…';
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false }).then(function (stream) {
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false }).then(function (stream) {
     if (!NT_LEITOR.aberto) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
-    NT_LEITOR.stream = stream; v.srcObject = stream; v.play().catch(function () {});
-    msg.textContent = 'Procurando o código… mantenha a nota bem iluminada e firme.';
+    NT_LEITOR.stream = stream; v.setAttribute('playsinline', ''); v.muted = true; v.srcObject = stream;
+    var pl = v.play(); if (pl && pl.catch) pl.catch(function () {});
+    try { var tr = stream.getVideoTracks()[0], cap = tr.getCapabilities && tr.getCapabilities(); if (cap && cap.focusMode && cap.focusMode.indexOf('continuous') >= 0) tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function () {}); } catch (e) {}
+    var det = null, Z = null, zrd = null, cv = document.createElement('canvas'), inicio = Date.now(), ocupado = false, quadros = 0;
+    function motor() { return (det ? 'leitor nativo' : '') + (det && Z ? ' + ' : '') + (Z ? 'ZXing' : '') || 'carregando leitor'; }
     if ('BarcodeDetector' in window) {
-      var det;
-      var pronto = (BarcodeDetector.getSupportedFormats ? BarcodeDetector.getSupportedFormats() : Promise.resolve(['qr_code', 'code_128', 'itf', 'ean_13'])).then(function (fs) {
-        var quer = ['qr_code', 'code_128', 'itf', 'ean_13'].filter(function (f) { return fs.indexOf(f) >= 0; });
-        det = new BarcodeDetector({ formats: quer.length ? quer : undefined });
-      });
-      pronto.then(function () {
-        var ocupado = false;
-        NT_LEITOR.timer = setInterval(function () {
-          if (ocupado || v.readyState < 2) return; ocupado = true;
-          det.detect(v).then(function (rs) { if (rs && rs.length) ntAcertou(rs[0].rawValue); }).catch(function () {}).then(function () { ocupado = false; });
-        }, 260);
-      });
-    } else {
-      ntCarregarZXing().then(function (Z) {
-        if (!NT_LEITOR.aberto) return;
-        var hints = new Map();
-        hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.QR_CODE, Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.ITF, Z.BarcodeFormat.EAN_13]);
-        hints.set(Z.DecodeHintType.TRY_HARDER, true);
-        var rd = new Z.BrowserMultiFormatReader(hints); NT_LEITOR.zx = rd;
-        rd.decodeFromStream(stream, v, function (res) { if (res) ntAcertou(res.getText()); });
-      }).catch(function (e) { msg.textContent = e.message; });
+      try { det = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'itf', 'ean_13'] }); } catch (e) { try { det = new BarcodeDetector(); } catch (e2) { det = null; } }
     }
+    ntCarregarZXing().then(function (lib) {
+      Z = lib;
+      var hints = new Map();
+      hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.QR_CODE, Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.ITF, Z.BarcodeFormat.EAN_13]);
+      hints.set(Z.DecodeHintType.TRY_HARDER, true);
+      zrd = new Z.MultiFormatReader(); zrd.setHints(hints);
+    }).catch(function () { Z = null; });
+    NT_LEITOR.timer = setInterval(function () {
+      if (!NT_LEITOR.aberto || ocupado) return;
+      if (v.readyState < 2 || !v.videoWidth) { msg.textContent = 'Câmera aberta, aguardando imagem…'; return; }
+      ocupado = true; quadros++;
+      var seg = Math.round((Date.now() - inicio) / 1000);
+      msg.textContent = 'Procurando o código… (' + motor() + ', ' + v.videoWidth + 'x' + v.videoHeight + ')' + (seg > 8 ? ' — aproxime, evite reflexo, ou use “Foto do QR”.' : '');
+      var fim = function () { ocupado = false; };
+      var viaZX = function () {
+        if (Z && zrd && ntQuadro(v, cv, 1280)) { var t = ntDecodeZX(Z, zrd, cv); if (t) ntAcertou(t); }
+        fim();
+      };
+      if (det) { det.detect(v).then(function (rs) { if (rs && rs.length) ntAcertou(rs[0].rawValue); else viaZX(); }).catch(viaZX); }
+      else viaZX();
+    }, 350);
   }).catch(function (e) {
     ntFecharLeitor();
-    flashToast(e && e.name === 'NotAllowedError' ? 'Permita o uso da câmera para ler a nota, ou use “Foto do QR”.' : 'Não consegui abrir a câmera. Use “Foto do QR” ou cole o link.');
+    var n = e && e.name;
+    flashToast(n === 'NotAllowedError' ? 'A câmera foi bloqueada. Libere a câmera para este site nas permissões do navegador, ou use “Foto do QR”.' :
+      n === 'NotFoundError' ? 'Não encontrei câmera neste aparelho. Use “Foto do QR” ou cole o link.' :
+      'Não consegui abrir a câmera (' + (n || 'erro') + '). Use “Foto do QR” ou cole o link.');
   });
 }
 /* foto do QR (quando a camera ao vivo nao esta disponivel) */
