@@ -240,3 +240,10 @@ html.app-mode .inst-faixa button[data-i="x"]{background:none;color:var(--tx3);fo
 .ntc-l small{color:var(--tx3);font-size:11px}
 .ntc-bar{height:6px;border-radius:6px;background:var(--border2);margin-top:3px;overflow:hidden}
 .ntc-bar i{display:block;height:100%;border-radius:6px}
+
+/* comparacao de precos nos itens */
+.nt-cmp{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 7px;margin-left:4px;white-space:nowrap}
+.nt-cmp em{font-style:normal;font-weight:500;opacity:.85}
+.nt-up{background:var(--negL);color:var(--neg)}
+.nt-dn{background:rgba(42,157,143,.16);color:#1F7A6F}
+.nt-eq{background:var(--border2);color:var(--tx2)}
