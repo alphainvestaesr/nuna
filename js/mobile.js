@@ -191,6 +191,9 @@
     if (typeof flashToast === 'function') flashToast(ios() ? 'No iPhone: toque em Compartilhar e depois em Adicionar à Tela de Início.' : 'No menu do navegador, escolha Instalar app / Adicionar à tela inicial.');
   }
 
+  function tile(go, nome, svg, pin) {
+    return '<button class="mtile" data-go="' + go + '"><svg viewBox="0 0 24 24" aria-hidden="true">' + svg + '</svg><span>' + nome + '</span>' + (pin ? '<i class="pin">' + pin + '</i>' : '') + '</button>';
+  }
   function atualizarSheet() {
     var sh = $('msheet'); if (!sh) return;
     var tema = (typeof TEMA !== 'undefined' && TEMA.modo) ? TEMA.modo : 'auto';
@@ -199,18 +202,18 @@
     sh.innerHTML =
       '<div class="grip"></div>' +
       (instalado ? '' : '<button class="mrow mrow-inst" data-acao="instalar">Instalar o NuNa neste aparelho <small>' + (promptInstalar ? 'toque para instalar' : (ios() ? 'iPhone/iPad' : 'menu do navegador')) + '</small></button>') +
-      '<h4>Ir para</h4>' +
-      '<button class="mrow" data-go="mvm">Mês vs Mês <small>histórico</small></button>' +
-      '<button class="mrow" data-go="budget">Orçamento</button>' +
-      '<button class="mrow" data-go="review">Revisar' + (rev && rev !== '0' ? '<span class="pin" data-zero="0">' + rev + '</span>' : '') + '</button>' +
-      '<button class="mrow" data-go="insights">Insights</button>' +
-      '<button class="mrow" data-go="dados">Dados e receitas</button>' +
-      '<button class="mrow" data-go="notas">Notas fiscais <small>lista e itens</small></button>' +
-      '<h4>Tema</h4>' +
-      '<div class="seg">' +
-        ['claro:Claro', 'escuro:Escuro', 'auto:Auto'].map(function (x) { var p = x.split(':'); return '<button data-acao="tema" data-t="' + p[0] + '"' + (tema === p[0] ? ' class="on"' : '') + '>' + p[1] + '</button>'; }).join('') +
+      '<div class="mgrid">' +
+        tile('mvm', 'Mês vs Mês', '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>') +
+        tile('budget', 'Orçamento', '<path d="M4 7h16v12H4z"/><path d="M4 7l2-3h12l2 3M15 13h2"/>') +
+        tile('review', 'Revisar', '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>', (rev && rev !== '0') ? rev : '') +
+        tile('insights', 'Insights', '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/>') +
+        tile('dados', 'Dados', '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>') +
+        tile('notas', 'Notas', '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>') +
       '</div>' +
-      '<h4>Conta</h4><button class="mrow" data-acao="sair">Sair</button>';
+      '<div class="mfoot">' +
+        '<button data-acao="tema" data-t="' + ({ claro: 'escuro', escuro: 'auto', auto: 'claro' }[tema] || 'claro') + '">Tema: ' + ({ claro: 'Claro', escuro: 'Escuro', auto: 'Auto' }[tema] || 'Auto') + '</button>' +
+        '<button data-acao="sair">Sair</button>' +
+      '</div>';
   }
 
   /* ---------- aba Notas (esqueleto: conteudo em notas.js) ---------- */
