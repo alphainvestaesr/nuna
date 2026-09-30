@@ -378,7 +378,7 @@
     }
     sh.innerHTML = '<div class="grip"></div><div class="nres-cab"><div><div class="nres-loja">' + esc2(nome) + '</div><div class="nres-meta">' + esc2(quando) + ' · ' + itens.length + ' itens</div></div><div class="nres-tot">' + (n.total != null ? brl(+n.total) : '—') + '</div></div>' +
       (window.ntCatHtml ? window.ntCatHtml(n) : '') + '<div class="nres-itens">' + (itens.length ? itens.map(function (i) {
-        return '<div class="nres-it"><span>' + esc2(i.desc) + '<small>' + (Math.round((+i.qtd || 0) * 1000) / 1000) + ' ' + esc2(i.un || '') + ' × ' + brl(+i.unit || 0) + '</small></span><b>' + brl(+i.total || 0) + '</b></div>';
+        return '<div class="nres-it"><span>' + esc2(i.desc) + '<small>' + (Math.round((+i.qtd || 0) * 1000) / 1000) + ' ' + esc2(i.un || '') + ' × ' + brl(+i.unit || 0) + (window.ntCmpHtml ? window.ntCmpHtml(n, i) : '') + '</small></span><b>' + brl(+i.total || 0) + '</b></div>';
       }).join('') : '<p class="note">' + esc2(n.erro || 'Nenhum item reconhecido.') + '</p>') + '</div>' +
       '<div class="nres-bt"><button type="button" data-r="ver">Ver notas</button><button type="button" class="pri" data-r="ok">Pronto</button></div>';
     sh.querySelector('[data-r="ok"]').onclick = fechar;
