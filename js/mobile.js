@@ -370,3 +370,43 @@
     tr.classList.toggle('tx-open');
   });
 })();
+
+/* NuNa · resumo da nota logo depois de ler o QR (loja, total e itens) */
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  function esc2(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fechar() { var a = $('nres'), b = $('nres-bg'); if (a) a.classList.remove('open'); if (b) b.classList.remove('open'); }
+  function mostrar(n) {
+    var itens = n.itens || [];
+    var quando = n.data_emissao ? new Date(n.data_emissao).toLocaleDateString('pt-BR') : (n.mes_ref || '');
+    var nome = n.emitente || 'Nota ' + String(n.chave).slice(-8);
+    var bg = $('nres-bg'), sh = $('nres');
+    if (!bg) {
+      bg = document.createElement('div'); bg.id = 'nres-bg'; bg.className = 'nres-bg'; bg.addEventListener('click', fechar); document.body.appendChild(bg);
+      sh = document.createElement('div'); sh.id = 'nres'; sh.className = 'nres'; document.body.appendChild(sh);
+    }
+    sh.innerHTML = '<div class="grip"></div><div class="nres-cab"><div><div class="nres-loja">' + esc2(nome) + '</div><div class="nres-meta">' + esc2(quando) + ' · ' + itens.length + ' itens</div></div><div class="nres-tot">' + (n.total != null ? brl(+n.total) : '—') + '</div></div>' +
+      '<div class="nres-itens">' + (itens.length ? itens.map(function (i) {
+        return '<div class="nres-it"><span>' + esc2(i.desc) + '<small>' + (Math.round((+i.qtd || 0) * 1000) / 1000) + ' ' + esc2(i.un || '') + ' × ' + brl(+i.unit || 0) + '</small></span><b>' + brl(+i.total || 0) + '</b></div>';
+      }).join('') : '<p class="note">' + esc2(n.erro || 'Nenhum item reconhecido.') + '</p>') + '</div>' +
+      '<div class="nres-bt"><button type="button" data-r="ver">Ver notas</button><button type="button" class="pri" data-r="ok">Pronto</button></div>';
+    sh.querySelector('[data-r="ok"]').onclick = fechar;
+    sh.querySelector('[data-r="ver"]').onclick = function () { fechar(); var b = document.querySelector('#tabs [data-tab="notas"]'); if (b) b.click(); };
+    requestAnimationFrame(function () { sh.classList.add('open'); bg.classList.add('open'); });
+  }
+  function ligar() {
+    if (typeof window.ntSalvarNota !== 'function' || window.ntSalvarNota.__res) return;
+    var orig = window.ntSalvarNota;
+    var novo = function (chave, url) {
+      var p = orig.apply(this, arguments);
+      return Promise.resolve(p).then(function () {
+        try {
+          var n = (window.NT && NT.lista || []).filter(function (x) { return x.chave === chave; })[0];
+          if (n) mostrar(n);
+        } catch (e) {}
+      });
+    };
+    novo.__res = 1; window.ntSalvarNota = novo;
+  }
+  ligar(); document.addEventListener('DOMContentLoaded', ligar); window.addEventListener('load', ligar);
+})();
