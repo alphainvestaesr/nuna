@@ -99,10 +99,9 @@
     return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
   }
   function modoEfetivo() {
-    var m = lsGet(LS.modo, 'auto');
-    if (m === 'on') return true;
-    if (m === 'off') return false;
-    return standalone() || (window.matchMedia && matchMedia('(max-width: 820px)').matches);
+    /* fixo: celulares, iPad e app instalado usam o visual APP; computador usa o visual normal */
+    var mm = window.matchMedia ? function (q) { return matchMedia(q).matches; } : function () { return false; };
+    return standalone() || ios() || mm('(max-width: 1024px)') || (mm('(pointer: coarse)') && Math.min(screen.width, screen.height) <= 1100);
   }
   function aplicarModo() {
     document.documentElement.classList.toggle('app-mode', modoEfetivo());
@@ -194,30 +193,23 @@
 
   function atualizarSheet() {
     var sh = $('msheet'); if (!sh) return;
-    var modo = lsGet(LS.modo, 'auto');
     var tema = (typeof TEMA !== 'undefined' && TEMA.modo) ? TEMA.modo : 'auto';
     var rp = $('rev-pin'), rev = rp ? rp.textContent : '0';
     var instalado = standalone();
     sh.innerHTML =
       '<div class="grip"></div>' +
+      (instalado ? '' : '<button class="mrow mrow-inst" data-acao="instalar">Instalar o NuNa neste aparelho <small>' + (promptInstalar ? 'toque para instalar' : (ios() ? 'iPhone/iPad' : 'menu do navegador')) + '</small></button>') +
       '<h4>Ir para</h4>' +
+      '<button class="mrow" data-go="mvm">Mês vs Mês <small>histórico</small></button>' +
       '<button class="mrow" data-go="budget">Orçamento</button>' +
       '<button class="mrow" data-go="review">Revisar' + (rev && rev !== '0' ? '<span class="pin" data-zero="0">' + rev + '</span>' : '') + '</button>' +
-      '<button class="mrow" data-go="notas">Notas fiscais <small>lista e itens</small></button>' +
       '<button class="mrow" data-go="insights">Insights</button>' +
-      '<button class="mrow" data-go="mvm">Mês vs Mês <small>histórico</small></button>' +
       '<button class="mrow" data-go="dados">Dados e receitas</button>' +
-      '<h4>Visual do app neste aparelho</h4>' +
-      '<div class="seg">' +
-        ['auto:Automático', 'on:Ligado', 'off:Desligado'].map(function (x) { var p = x.split(':'); return '<button data-modo="' + p[0] + '"' + (modo === p[0] ? ' class="on"' : '') + '>' + p[1] + '</button>'; }).join('') +
-      '</div>' +
-      '<p class="mnote">Ligado mostra a barra inferior de ícones. Automático liga no celular e no app instalado.</p>' +
+      '<button class="mrow" data-go="notas">Notas fiscais <small>lista e itens</small></button>' +
       '<h4>Tema</h4>' +
       '<div class="seg">' +
         ['claro:Claro', 'escuro:Escuro', 'auto:Auto'].map(function (x) { var p = x.split(':'); return '<button data-acao="tema" data-t="' + p[0] + '"' + (tema === p[0] ? ' class="on"' : '') + '>' + p[1] + '</button>'; }).join('') +
       '</div>' +
-      (instalado ? '' :
-        '<h4>App</h4><button class="mrow" data-acao="instalar">Instalar o NuNa neste aparelho <small>' + (promptInstalar ? 'pronto' : (ios() ? 'iPhone' : 'menu do navegador')) + '</small></button>') +
       '<h4>Conta</h4><button class="mrow" data-acao="sair">Sair</button>';
   }
 
@@ -225,8 +217,7 @@
   function garantirAbaNotas() {
     var tabs = $('tabs'); if (!tabs || tabs.querySelector('[data-tab="notas"]')) return;
     var b = document.createElement('button'); b.dataset.tab = 'notas'; b.textContent = 'Notas'; b.hidden = true; /* escondida: acesso pelo QR da barra ou por "Mais" */
-    var ref = tabs.querySelector('[data-tab="transactions"]');
-    if (ref && ref.nextSibling) tabs.insertBefore(b, ref.nextSibling); else tabs.appendChild(b);
+    tabs.appendChild(b); /* sempre a ultima */
     var ins = $('panel-insights');
     if (ins && !$('panel-notas')) {
       var p = document.createElement('div'); p.id = 'panel-notas'; p.className = 'panel';
@@ -249,7 +240,7 @@
     var rp = $('rev-pin');
     if (rp && window.MutationObserver) new MutationObserver(marcarAtivo).observe(rp, { childList: true, characterData: true, subtree: true, attributes: true });
     if (window.matchMedia) {
-      var mq = matchMedia('(max-width: 820px)'); (mq.addEventListener ? mq.addEventListener('change', aplicarModo) : mq.addListener(aplicarModo));
+      var mq = matchMedia('(max-width: 1024px)'); (mq.addEventListener ? mq.addEventListener('change', aplicarModo) : mq.addListener(aplicarModo));
     }
   }
   if (typeof window.renderAll === 'function') {
@@ -394,19 +385,65 @@
     sh.querySelector('[data-r="ver"]').onclick = function () { fechar(); var b = document.querySelector('#tabs [data-tab="notas"]'); if (b) b.click(); };
     requestAnimationFrame(function () { sh.classList.add('open'); bg.classList.add('open'); });
   }
+  function duplicada(n) {
+    if (navigator.vibrate) try { navigator.vibrate([120, 60, 120]); } catch (e) {}
+    var quando = n.data_emissao ? new Date(n.data_emissao).toLocaleDateString('pt-BR') : (n.mes_ref || '');
+    var lida = n.criado_em ? new Date(n.criado_em).toLocaleDateString('pt-BR') : '';
+    var bg = $('nres-bg'), sh = $('nres');
+    if (!bg) {
+      bg = document.createElement('div'); bg.id = 'nres-bg'; bg.className = 'nres-bg'; bg.addEventListener('click', fechar); document.body.appendChild(bg);
+      sh = document.createElement('div'); sh.id = 'nres'; sh.className = 'nres'; document.body.appendChild(sh);
+    }
+    sh.innerHTML = '<div class="grip"></div><div class="nres-alerta">Nota fiscal repetida — não foi cadastrada de novo.</div>' +
+      '<div class="nres-cab"><div><div class="nres-loja">' + esc2(n.emitente || 'Nota ' + String(n.chave).slice(-8)) + '</div><div class="nres-meta">' + esc2(quando) + ' · ' + (n.itens || []).length + ' itens' + (n.lida_por ? ' · lida por ' + esc2(n.lida_por) : '') + (lida ? ' em ' + esc2(lida) : '') + '</div></div><div class="nres-tot">' + (n.total != null ? brl(+n.total) : '—') + '</div></div>' +
+      '<div class="nres-bt" style="margin-top:12px"><button type="button" data-r="ver">Ver esta nota</button><button type="button" class="pri" data-r="ok">Entendi</button></div>';
+    sh.querySelector('[data-r="ok"]').onclick = fechar;
+    sh.querySelector('[data-r="ver"]').onclick = function () { fechar(); var b = document.querySelector('#tabs [data-tab="notas"]'); if (b) b.click(); };
+    requestAnimationFrame(function () { sh.classList.add('open'); bg.classList.add('open'); });
+  }
   function ligar() {
     if (typeof window.ntSalvarNota !== 'function' || window.ntSalvarNota.__res) return;
     var orig = window.ntSalvarNota;
     var novo = function (chave, url) {
-      var p = orig.apply(this, arguments);
-      return Promise.resolve(p).then(function () {
+      var self = this, args = arguments;
+      var pre = (typeof window.ntCarregar === 'function') ? Promise.resolve(window.ntCarregar(true)).catch(function () {}) : Promise.resolve();
+      return pre.then(function () {
+        var ex = (window.NT && NT.lista || []).filter(function (x) { return x.chave === chave && x.status === 'lida'; })[0];
+        if (ex) { duplicada(ex); return; }
+        var p = orig.apply(self, args);
+        return Promise.resolve(p).then(function () {
         try {
           var n = (window.NT && NT.lista || []).filter(function (x) { return x.chave === chave; })[0];
           if (n) mostrar(n);
         } catch (e) {}
       });
+      });
     };
     novo.__res = 1; window.ntSalvarNota = novo;
   }
   ligar(); document.addEventListener('DOMContentLoaded', ligar); window.addEventListener('load', ligar);
+})();
+
+/* NuNa · convite para instalar o app neste aparelho (faixa no topo; pode dispensar) */
+(function () {
+  var CH = 'nuna.instbanner';
+  function standalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
+  function ios() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function dispensado() { try { return localStorage.getItem(CH) === '1'; } catch (e) { return false; } }
+  function faixa() {
+    if (document.getElementById('inst-faixa') || standalone() || dispensado()) return;
+    if (!document.documentElement.classList.contains('app-mode')) return;
+    var host = document.getElementById('tela-app'); if (!host || host.hidden) return;
+    var f = document.createElement('div'); f.id = 'inst-faixa'; f.className = 'inst-faixa';
+    f.innerHTML = '<span>' + (ios() ? 'Para instalar: toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.' : 'Instale o NuNa no seu aparelho para abrir como app.') + '</span>' +
+      (ios() ? '' : '<button type="button" data-i="ok">Instalar</button>') + '<button type="button" data-i="x" aria-label="Dispensar">×</button>';
+    f.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.i === 'x') { try { localStorage.setItem(CH, '1'); } catch (er) {} f.remove(); }
+      else { var r = document.querySelector('#msheet [data-acao="instalar"]'); if (r) r.click(); }
+    });
+    host.insertBefore(f, host.firstChild);
+  }
+  window.addEventListener('appinstalled', function () { var f = document.getElementById('inst-faixa'); if (f) f.remove(); });
+  var t = 0, iv = setInterval(function () { faixa(); if (document.getElementById('inst-faixa') || ++t > 40) clearInterval(iv); }, 1000);
 })();
