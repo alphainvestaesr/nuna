@@ -268,3 +268,14 @@
   try { document.documentElement.classList.toggle('app-mode', modoEfetivo()); } catch (e) {}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
 })();
+
+/* NuNa · recolher alerta e lista de categorias no modo APP */
+(function () {
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t.closest || !document.documentElement.classList.contains('app-mode')) return;
+    if (t.closest('#agente-nuna > :first-child')) { document.documentElement.classList.toggle('ag-open'); return; }
+    var s = t.closest('.split-donut');
+    if (s && !t.closest('.legend')) s.classList.toggle('lg-open');
+  });
+})();
