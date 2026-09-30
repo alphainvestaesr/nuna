@@ -225,3 +225,18 @@ html.app-mode .inst-faixa{display:flex;align-items:center;gap:8px;background:var
 html.app-mode .inst-faixa span{flex:1;min-width:0}
 html.app-mode .inst-faixa button{flex:none;border:0;border-radius:8px;background:var(--tx);color:var(--bg);font:inherit;font-size:13px;font-weight:600;padding:7px 12px;cursor:pointer}
 html.app-mode .inst-faixa button[data-i="x"]{background:none;color:var(--tx3);font-size:20px;padding:0 6px;line-height:1}
+
+/* categoria da nota e cartao "Notas fiscais do mes" */
+.nres-cat{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 0;font-size:13px;color:var(--tx2);flex:none}
+.nres-cat select{flex:1;max-width:220px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--tx);font:inherit;font-size:13px}
+.nt-card>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:700;font-size:15px}
+.nt-card>summary::-webkit-details-marker{display:none}
+.nt-card>summary::after{content:"";width:8px;height:8px;border-right:2px solid var(--tx3);border-bottom:2px solid var(--tx3);transform:rotate(45deg);transition:transform .15s;margin-left:6px;flex:none}
+.nt-card[open]>summary::after{transform:rotate(-135deg)}
+.nt-card>summary b{margin-left:auto}
+.ntc-corpo{margin-top:10px}
+.ntc-row{margin-bottom:8px}
+.ntc-l{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.ntc-l small{color:var(--tx3);font-size:11px}
+.ntc-bar{height:6px;border-radius:6px;background:var(--border2);margin-top:3px;overflow:hidden}
+.ntc-bar i{display:block;height:100%;border-radius:6px}
