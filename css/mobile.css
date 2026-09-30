@@ -130,3 +130,20 @@ html.app-mode #top-sair{display:none}
 html.app-mode .profsel .prof{padding:7px 10px;border-radius:10px}
 html.app-mode .profsel .prof b{font-size:13px}
 html.app-mode .pills{margin-bottom:8px}
+
+/* cartoes de resumo compactos */
+html.app-mode .kpis{gap:8px;margin-bottom:8px}
+html.app-mode .kpi{padding:9px 10px;border-radius:12px}
+html.app-mode .kpi .val{font-size:17px}
+html.app-mode .kpi .lab{font-size:10.5px}
+html.app-mode .kpi .sub{font-size:10.5px;line-height:1.25}
+/* alerta em uma linha (toca para abrir) */
+html.app-mode:not(.ag-open) #agente-nuna>*:not(:first-child),html.app-mode:not(.ag-open) #agente-nuna>:first-child>span{display:none!important}
+html.app-mode #agente-nuna>:first-child{cursor:pointer;position:relative;padding-right:22px}
+html.app-mode #agente-nuna>:first-child::after{content:"";position:absolute;right:4px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid var(--tx3);border-bottom:2px solid var(--tx3);transform:rotate(45deg);transition:transform .15s}
+html.app-mode.ag-open #agente-nuna>:first-child::after{transform:rotate(-135deg);margin-top:-2px}
+/* grafico de categorias: lista escondida (toque no grafico) */
+html.app-mode .split-donut:not(.lg-open)>.legend{display:none}
+html.app-mode .split-donut>:first-child{cursor:pointer}
+html.app-mode .split-donut:not(.lg-open)::after{content:"Toque no gráfico para ver a lista ▾";display:block;text-align:center;font-size:12px;color:var(--tx3);padding:4px 0 2px}
+html.app-mode .split-donut.lg-open::after{content:"Toque no gráfico para ocultar ▴";display:block;text-align:center;font-size:12px;color:var(--tx3);padding:8px 0 0}
