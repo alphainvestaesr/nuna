@@ -119,3 +119,14 @@ html.app-mode .mbar{align-items:flex-end;overflow:visible}
 }
 .mbar button[data-k="notas"] svg{width:38px;height:38px}
 .mbar button[data-k="notas"].on{background:var(--tx);color:var(--bg)}
+
+/* topo compacto numa linha so (modo APP) */
+html.app-mode .topbar{flex-direction:row!important;align-items:center;flex-wrap:nowrap;gap:8px;margin-bottom:6px}
+html.app-mode .topbar .marca{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;margin:0}
+html.app-mode .marca h1{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.app-mode #top-sessao,html.app-mode .marca .period{display:none}
+html.app-mode #top-acoes{flex:none;display:flex;align-items:center;gap:6px;margin:0}
+html.app-mode #top-sair{display:none}
+html.app-mode .profsel .prof{padding:7px 10px;border-radius:10px}
+html.app-mode .profsel .prof b{font-size:13px}
+html.app-mode .pills{margin-bottom:8px}
