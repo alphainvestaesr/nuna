@@ -312,3 +312,51 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', preparar); else preparar();
 })();
+
+/* NuNa · botao + da barra abre "Acabei de gastar" e "Contribuicao"; filtros das Transacoes */
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  function fechar() { var a = $('macts'), b = $('macts-bg'); if (a) a.classList.remove('open'); if (b) b.classList.remove('open'); }
+  function montar() {
+    if ($('macts')) return;
+    var bg = document.createElement('div'); bg.id = 'macts-bg'; bg.className = 'msheet-bg';
+    var sh = document.createElement('div'); sh.id = 'macts'; sh.className = 'msheet'; sh.setAttribute('role', 'dialog');
+    sh.innerHTML = '<div class="grip"></div>' +
+      '<button class="btn-big" data-a="gasto">+ ACABEI DE GASTAR<span>registrar um gasto agora, sem esperar a fatura</span></button>' +
+      '<button class="btn-big blue" data-a="contrib">CONTRIBUI&Ccedil;&Atilde;O<span>registrar quanto ela p&ocirc;s nas contas conjuntas</span></button>';
+    (($('tela-app')) || document.body).appendChild(bg); (($('tela-app')) || document.body).appendChild(sh);
+    bg.addEventListener('click', fechar);
+    sh.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-a]'); if (!b) return;
+      var alvo = b.dataset.a === 'gasto' ? 'ag-open' : 'ca-abrir';
+      fechar();
+      var s = (window.Auth && Auth.sessao && Auth.sessao()) || {};
+      var ativo = document.querySelector('.prof.on');
+      if (ativo && ativo.dataset.p === 'NuNa' && s.perfil) { var p = document.querySelector('.prof[data-p="' + s.perfil + '"]'); if (p) p.click(); }
+      setTimeout(function () { var o = $(alvo); if (o) o.click(); }, 120);
+    });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.mbar button[data-k="gastei"]');
+    if (!b || !document.documentElement.classList.contains('app-mode')) return;
+    e.stopPropagation(); e.preventDefault();
+    montar();
+    requestAnimationFrame(function () { $('macts').classList.add('open'); $('macts-bg').classList.add('open'); });
+  }, true);
+
+  function filtros() {
+    var i = $('tx-search'); if (!i || $('tx-fbtn')) return;
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'tx-fbtn'; b.textContent = 'Filtros'; i.after(b);
+    function marca() {
+      var t = [].some.call(document.querySelectorAll('#tx-months + div > select'), function (s) { return s.selectedIndex > 0; });
+      b.classList.toggle('tem', t);
+    }
+    b.addEventListener('click', function () { document.documentElement.classList.toggle('tx-filtros'); });
+    document.addEventListener('change', marca); marca();
+  }
+  if (typeof window.renderAll === 'function') {
+    var ra = window.renderAll;
+    window.renderAll = function () { var r = ra.apply(this, arguments); try { filtros(); } catch (e) {} return r; };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', filtros); else filtros();
+})();
