@@ -1,0 +1,112 @@
+/* NuNa · mobile.css — tela enxuta (mes atual em destaque) + modo APP com barra inferior */
+
+/* ---------- 1. tela mais enxuta (todos os tamanhos) ---------- */
+.topbar .period:not(#top-sessao){display:none}
+.theme-lab,.theme-hint{display:none}
+.wrap{padding-block:14px}
+.pills{margin-bottom:10px}
+.kpis{margin-bottom:12px}
+
+/* meses anteriores recolhidos: so o mes atual (e o selecionado) ficam a vista */
+.pills:not(.mp-open) .mp-old{display:none}
+.pill.mp-toggle{border-style:dashed;color:var(--tx3)}
+.pills.mp-open .pill.mp-toggle{color:var(--tx)}
+
+/* cartoes que podem ser recolhidos tocando no titulo */
+.card.mp-fold>h2{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none}
+.card.mp-fold>h2::after{content:"";width:8px;height:8px;border-right:2px solid var(--tx3);border-bottom:2px solid var(--tx3);transform:rotate(45deg);transition:transform .15s;flex:none;margin-right:4px}
+.card.mp-fold.mp-closed>h2{margin-bottom:0}
+.card.mp-fold.mp-closed>h2::after{transform:rotate(-45deg)}
+.card.mp-fold.mp-closed>*:not(h2){display:none!important}
+
+/* ---------- 2. barra inferior (so no modo APP) ---------- */
+.mbar,.msheet,.msheet-bg{display:none}
+html.app-mode nav.tabs{display:none}
+html.app-mode .theme{display:none}
+html.app-mode .topbar{margin-bottom:8px}
+html.app-mode .marca h1{font-size:17px;margin:0}
+html.app-mode .brasao{width:34px;height:34px}
+html.app-mode .wrap{padding:10px 12px calc(96px + env(safe-area-inset-bottom))}
+html.app-mode .card{padding:14px;border-radius:14px}
+html.app-mode .row>.card{flex:1 1 100%}
+html.app-mode .kpis{grid-template-columns:1fr 1fr;gap:10px}
+html.app-mode .kpi{padding:12px}
+html.app-mode .kpi .val{font-size:19px}
+html.app-mode .profsel{gap:6px;margin-bottom:10px}
+html.app-mode .prof{flex:1 1 0;padding:8px 10px}
+html.app-mode .prof span{display:none}
+html.app-mode .pill,html.app-mode .btn,html.app-mode .btn-big{min-height:40px}
+html.app-mode input,html.app-mode select,html.app-mode textarea{font-size:16px}
+html.app-mode .scroll{-webkit-overflow-scrolling:touch}
+
+html.app-mode .mbar{
+  display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;
+  background:var(--card);border-top:1px solid var(--border);
+  padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+  box-shadow:0 -6px 18px rgba(0,0,0,.08);
+}
+.mbar button{
+  flex:1;position:relative;background:none;border:0;color:var(--tx3);cursor:pointer;
+  height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;font:inherit;
+}
+.mbar button svg{width:27px;height:27px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.mbar button svg .fill{fill:currentColor;stroke:none}
+.mbar button.on{color:var(--acc);background:var(--accL)}
+.mbar button:active{transform:scale(.94)}
+.mbar .mb-pin{position:absolute;top:5px;left:calc(50% + 6px);min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--neg);color:#fff;font-size:10px;font-weight:700;line-height:16px;text-align:center}
+.mbar .mb-pin[data-zero="1"]{display:none}
+
+/* ---------- 3. folha "Mais" ---------- */
+html.app-mode .msheet-bg{display:block;position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .18s}
+html.app-mode .msheet-bg.open{opacity:1;pointer-events:auto}
+html.app-mode .msheet{
+  display:block;position:fixed;left:0;right:0;bottom:0;z-index:71;max-height:82vh;overflow:auto;
+  background:var(--bg);border-radius:20px 20px 0 0;border-top:1px solid var(--border);
+  padding:8px 14px calc(18px + env(safe-area-inset-bottom));
+  transform:translateY(105%);transition:transform .2s ease;
+}
+html.app-mode .msheet.open{transform:none}
+.msheet .grip{width:42px;height:4px;border-radius:4px;background:var(--border);margin:4px auto 12px}
+.msheet h4{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin:14px 2px 6px;font-weight:700}
+.msheet .mrow{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:6px;
+  color:var(--tx);font:inherit;font-size:15px;text-align:left;cursor:pointer;min-height:48px;
+}
+.msheet .mrow small{color:var(--tx3);font-size:12px}
+.msheet .mrow .pin{margin-left:6px}
+.msheet .seg{width:100%}
+.msheet .seg button{flex:1;padding:9px 4px;font-size:13px}
+.msheet .mnote{font-size:12.5px;color:var(--tx2);margin:6px 2px}
+
+/* ---------- 4. aba Notas ---------- */
+.nt-acoes{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.nt-big{flex:1 1 220px;display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:14px;border:0;background:var(--tx);color:var(--bg);font:inherit;font-weight:650;font-size:15px;cursor:pointer}
+.nt-big svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nt-big svg .fill{fill:currentColor;stroke:none}
+.nt-manual{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.nt-manual input{flex:1 1 220px;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--tx);font:inherit}
+.nt-nota{border:1px solid var(--border);border-radius:12px;background:var(--card);margin-bottom:8px;overflow:hidden}
+.nt-nota>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.nt-nota>summary::-webkit-details-marker{display:none}
+.nt-nota .nt-loja{font-weight:650;font-size:14.5px;overflow-wrap:anywhere}
+.nt-nota .nt-meta{font-size:12px;color:var(--tx3);margin-top:2px}
+.nt-nota .nt-tot{font-weight:700;white-space:nowrap}
+.nt-corpo{border-top:1px solid var(--border2);padding:8px 14px 12px}
+.nt-item{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border2);font-size:13.5px}
+.nt-item:last-child{border-bottom:0}
+.nt-item small{color:var(--tx3);display:block}
+.nt-tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--accL);color:var(--acc);margin-left:6px}
+.nt-tag.err{background:var(--negL);color:var(--neg)}
+.nt-sub{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.nt-top{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border2);font-size:13.5px}
+
+/* leitor de camera */
+.nt-scan{position:fixed;inset:0;z-index:90;background:#000;display:none;flex-direction:column}
+.nt-scan.open{display:flex}
+.nt-scan video{flex:1;width:100%;min-height:0;object-fit:cover}
+.nt-scan .nt-mira{position:absolute;left:50%;top:44%;width:min(72vw,320px);aspect-ratio:1;transform:translate(-50%,-50%);border:3px solid rgba(255,255,255,.9);border-radius:22px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45);pointer-events:none}
+.nt-scan .nt-dica{position:absolute;left:0;right:0;top:calc(10px + env(safe-area-inset-top));text-align:center;color:#fff;font-size:14px;padding:0 60px}
+.nt-scan .nt-fechar{position:absolute;right:12px;top:calc(8px + env(safe-area-inset-top));width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:22px;cursor:pointer}
+.nt-scan .nt-rodape{padding:14px 16px calc(16px + env(safe-area-inset-bottom));background:#000;color:#fff;text-align:center;font-size:13px}
