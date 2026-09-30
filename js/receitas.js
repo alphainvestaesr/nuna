@@ -77,6 +77,8 @@ function rcRender(){
     var first = p.querySelector('.card'); if (first) first.insertAdjacentElement('beforebegin', host); else p.appendChild(host);
   }
   var eu = rcEu(), pad = rcMesPadrao();
+   if (host.dataset.eu === eu && el('rc-add')) { rcRenderLista(eu); return; }
+   host.dataset.eu = eu;
   var opt = rcMesesDisponiveis().map(function(m){ return '<option value="' + m + '"' + (m === pad ? ' selected' : '') + '>' + mesNome(m) + '</option>'; }).join('');
   var h = '<h3>Receitas do m&ecirc;s &mdash; ' + esc(eu) + '</h3>';
   var form = '<div class="agform">' +
