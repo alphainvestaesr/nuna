@@ -247,3 +247,8 @@ html.app-mode .inst-faixa button[data-i="x"]{background:none;color:var(--tx3);fo
 .nt-up{background:var(--negL);color:var(--neg)}
 .nt-dn{background:rgba(42,157,143,.16);color:#1F7A6F}
 .nt-eq{background:var(--border2);color:var(--tx2)}
+
+/* selo "combina com a fatura" */
+.nt-liga{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;padding:6px 8px;margin-bottom:6px;border-radius:8px;background:var(--accL)}
+.nt-liga.ok{background:rgba(42,157,143,.14)}
+.nt-liga .pill,html.app-mode .nt-liga .pill{flex:none;padding:3px 10px;min-height:30px;font-size:12px}
