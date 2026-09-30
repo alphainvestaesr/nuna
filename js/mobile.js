@@ -147,7 +147,7 @@
       var k = b.dataset.k;
       if (k === 'inicio') abrirAba('overview');
       else if (k === 'gastei') abrirGastei();
-      else if (k === 'notas') abrirAba('notas');
+      else if (k === 'notas') { if (typeof ntAbrirLeitor === 'function') ntAbrirLeitor(); else abrirAba('notas'); return; }
       else if (k === 'trans') abrirAba('transactions');
       else if (k === 'mais') abrirSheet();
       window.scrollTo(0, 0);
@@ -158,7 +158,7 @@
   function marcarAtivo() {
     var bar = $('mbar'); if (!bar) return;
     var t = $('tabs') && $('tabs').querySelector('button.active'), tab = t ? t.dataset.tab : 'overview';
-    var k = tab === 'overview' ? 'inicio' : tab === 'gastei' ? 'gastei' : tab === 'notas' ? 'notas' : tab === 'transactions' ? 'trans' : 'mais';
+    var k = tab === 'overview' ? 'inicio' : tab === 'gastei' ? 'gastei' : tab === 'transactions' ? 'trans' : 'mais';
     [].forEach.call(bar.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.dataset.k === k); });
     var rp = $('rev-pin'), mp = $('mb-pin');
     if (rp && mp) { mp.textContent = rp.textContent; mp.dataset.zero = rp.dataset.zero === '0' ? '0' : '1'; }
@@ -203,6 +203,7 @@
       '<h4>Ir para</h4>' +
       '<button class="mrow" data-go="budget">Orçamento</button>' +
       '<button class="mrow" data-go="review">Revisar' + (rev && rev !== '0' ? '<span class="pin" data-zero="0">' + rev + '</span>' : '') + '</button>' +
+      '<button class="mrow" data-go="notas">Notas fiscais <small>lista e itens</small></button>' +
       '<button class="mrow" data-go="insights">Insights</button>' +
       '<button class="mrow" data-go="mvm">Mês vs Mês <small>histórico</small></button>' +
       '<button class="mrow" data-go="dados">Dados e receitas</button>' +
@@ -223,7 +224,7 @@
   /* ---------- aba Notas (esqueleto: conteudo em notas.js) ---------- */
   function garantirAbaNotas() {
     var tabs = $('tabs'); if (!tabs || tabs.querySelector('[data-tab="notas"]')) return;
-    var b = document.createElement('button'); b.dataset.tab = 'notas'; b.textContent = 'Notas';
+    var b = document.createElement('button'); b.dataset.tab = 'notas'; b.textContent = 'Notas'; b.hidden = true; /* escondida: acesso pelo QR da barra ou por "Mais" */
     var ref = tabs.querySelector('[data-tab="transactions"]');
     if (ref && ref.nextSibling) tabs.insertBefore(b, ref.nextSibling); else tabs.appendChild(b);
     var ins = $('panel-insights');
