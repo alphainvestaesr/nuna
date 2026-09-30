@@ -216,7 +216,7 @@ function ntCarregarZXing() {
 function ntOverlay() {
   var o = document.getElementById('nt-scan'); if (o) return o;
   o = document.createElement('div'); o.id = 'nt-scan'; o.className = 'nt-scan';
-  o.innerHTML = '<video playsinline muted></video><div class="nt-mira"></div><div class="nt-dica">Aponte para o QR Code da nota fiscal</div>' +
+  o.innerHTML = '<video playsinline muted></video><div class="nt-mira"></div><div class="nt-dica">Aponte para o QR Code da nota ou para o código de barras de um produto</div>' +
     '<button class="nt-fechar" aria-label="Fechar">×</button><div class="nt-rodape" id="nt-scan-msg">Abrindo a câmera…</div>';
   document.body.appendChild(o);
   o.querySelector('.nt-fechar').onclick = ntFecharLeitor;
@@ -232,6 +232,8 @@ function ntFecharLeitor() {
 function ntAcertou(texto) {
   if (!NT_LEITOR.aberto) return;
   var r = ntInterpretar(texto);
+  var soNum = String(texto || '').trim();
+  if (!r.chave && /^\d{8,14}$/.test(soNum)) { if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) {} ntFecharLeitor(); ntConsulta(soNum); return; }
   if (!r.chave) { var m = document.getElementById('nt-scan-msg'); if (m) m.textContent = 'Código lido, mas não é uma nota fiscal. Continue procurando…'; return; }
   if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) {}
   ntFecharLeitor();
@@ -261,12 +263,12 @@ function ntAbrirLeitor() {
     var det = null, Z = null, zrd = null, cv = document.createElement('canvas'), inicio = Date.now(), ocupado = false, quadros = 0;
     function motor() { return (det ? 'leitor nativo' : '') + (det && Z ? ' + ' : '') + (Z ? 'ZXing' : '') || 'carregando leitor'; }
     if ('BarcodeDetector' in window) {
-      try { det = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'itf', 'ean_13'] }); } catch (e) { try { det = new BarcodeDetector(); } catch (e2) { det = null; } }
+      try { det = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'itf', 'ean_13', 'ean_8', 'upc_a'] }); } catch (e) { try { det = new BarcodeDetector(); } catch (e2) { det = null; } }
     }
     ntCarregarZXing().then(function (lib) {
       Z = lib;
       var hints = new Map();
-      hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.QR_CODE, Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.ITF, Z.BarcodeFormat.EAN_13]);
+      hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.QR_CODE, Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.ITF, Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A]);
       hints.set(Z.DecodeHintType.TRY_HARDER, true);
       zrd = new Z.MultiFormatReader(); zrd.setHints(hints);
     }).catch(function () { Z = null; });
@@ -302,7 +304,7 @@ function ntLerFoto(e) {
   if ('BarcodeDetector' in window) {
     var img = new Image();
     img.onload = function () {
-      new BarcodeDetector({ formats: ['qr_code', 'code_128', 'itf'] }).detect(img).then(function (rs) {
+      new BarcodeDetector({ formats: ['qr_code', 'code_128', 'itf', 'ean_13', 'ean_8', 'upc_a'] }).detect(img).then(function (rs) {
         fim(); if (rs && rs.length) { NT_LEITOR.aberto = true; ntAcertou(rs[0].rawValue); NT_LEITOR.aberto = false; } else falhou();
       }).catch(falhou);
     };
@@ -411,4 +413,45 @@ function ntCmpHtml(n, i) {
   var cls = r > 0.5 ? 'nt-up' : (r < -0.5 ? 'nt-dn' : 'nt-eq');
   var txt = r > 0.5 ? '▲ +' + r + '%' : (r < -0.5 ? '▼ ' + r + '%' : '= igual');
   return ' <span class="nt-cmp ' + cls + '">' + txt + ' <em>antes ' + brl(a.unit) + (a.loja ? ' · ' + esc(String(a.loja).slice(0, 18)) : '') + '</em></span>';
+}
+
+/* ---------- consulta de preco pelo codigo de barras do produto ---------- */
+function ntConsulta(code) {
+  var k = String(code).replace(/^0+/, '');
+  var abrir = function () {
+    var ach = [];
+    (NT.lista || []).forEach(function (x) {
+      if (x.status !== 'lida') return;
+      (x.itens || []).forEach(function (j) {
+        if (j.ean && String(j.ean).replace(/^0+/, '') === k && +j.unit > 0) ach.push({ t: x.data_emissao || x.criado_em || '', unit: +j.unit, un: j.un || '', loja: x.emitente || '', desc: j.desc });
+      });
+    });
+    ach.sort(function (a, b) { return a.t < b.t ? 1 : -1; });
+    var ult = ach[0], menor = ach.slice().sort(function (a, b) { return a.unit - b.unit; })[0];
+    var dt = function (a) { return a.t ? new Date(a.t).toLocaleDateString('pt-BR') : ''; };
+    var bg = document.getElementById('nres-bg'), sh = document.getElementById('nres');
+    if (!bg) {
+      bg = document.createElement('div'); bg.id = 'nres-bg'; bg.className = 'nres-bg'; document.body.appendChild(bg);
+      sh = document.createElement('div'); sh.id = 'nres'; sh.className = 'nres'; document.body.appendChild(sh);
+    }
+    var fechar = function () { sh.classList.remove('open'); bg.classList.remove('open'); };
+    bg.onclick = fechar;
+    sh.innerHTML = '<div class="grip"></div><div class="nres-cab"><div><div class="nres-loja">' + esc(ult ? ult.desc : 'Produto ainda não comprado') + '</div><div class="nres-meta">Código ' + esc(code) + '</div></div></div>' +
+      (ult ? '<div class="nres-itens" style="border-top:1px solid var(--border2)"><div class="nres-it"><span>Última compra<small>' + esc(dt(ult)) + (ult.loja ? ' · ' + esc(ult.loja) : '') + '</small></span><b>' + brl(ult.unit) + (ult.un ? '/' + esc(ult.un) : '') + '</b></div>' +
+        (menor && menor !== ult ? '<div class="nres-it"><span>Menor preço já pago<small>' + esc(dt(menor)) + (menor.loja ? ' · ' + esc(menor.loja) : '') + '</small></span><b>' + brl(menor.unit) + '</b></div>' : '') + '</div>'
+        : '<p class="note" style="margin:10px 0">Não achei esse código nas suas notas. Depois de comprar e ler a nota, o NuNa passa a comparar.</p>') +
+      (ult ? '<label class="nres-cat">Preço na prateleira <input id="nc-preco" inputmode="decimal" placeholder="0,00" style="flex:1;max-width:120px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--tx);font:inherit;font-size:14px;text-align:right"></label><div id="nc-res" class="nres-meta" style="margin:8px 0;min-height:18px;font-size:13px"></div>' : '') +
+      '<div class="nres-bt" style="margin-top:8px"><button type="button" data-r="outro">Ler outro</button><button type="button" class="pri" data-r="ok">Fechar</button></div>';
+    sh.querySelector('[data-r="ok"]').onclick = fechar;
+    sh.querySelector('[data-r="outro"]').onclick = function () { fechar(); setTimeout(ntAbrirLeitor, 250); };
+    var inp = sh.querySelector('#nc-preco');
+    if (inp) inp.addEventListener('input', function () {
+      var p = parseFloat(String(inp.value).replace(/\./g, '').replace(',', '.')), out = sh.querySelector('#nc-res');
+      if (!(p > 0)) { out.innerHTML = ''; return; }
+      var r = Math.round((p - ult.unit) / ult.unit * 1000) / 10;
+      out.innerHTML = r > 0.5 ? '<span class="nt-cmp nt-up">▲ ' + r + '% mais caro que a última compra</span>' : (r < -0.5 ? '<span class="nt-cmp nt-dn">▼ ' + Math.abs(r) + '% mais barato que a última compra</span>' : '<span class="nt-cmp nt-eq">= igual à última compra</span>');
+    });
+    requestAnimationFrame(function () { sh.classList.add('open'); bg.classList.add('open'); });
+  };
+  (typeof ntCarregar === 'function' ? Promise.resolve(ntCarregar(true)) : Promise.resolve()).then(abrir, abrir);
 }
