@@ -131,6 +131,8 @@ function ntMontar() {
     if (b.dataset.nt === 'rm') ntRemover(n.id);
     else if (b.dataset.nt === 'retry') ntSalvarNota(n.chave, n.url);
     else if (b.dataset.nt === 'conj') ntSetConj(n.chave, !n.conjunta);
+    else if (b.dataset.nt === 'link') ntSetLink(n, b.dataset.tx);
+    else if (b.dataset.nt === 'unlink') ntSetLink(n, null);
   });
 }
 function ntTratar(txt) {
@@ -190,8 +192,8 @@ function ntNotaHtml(n) {
   var nome = n.emitente || (n.cnpj ? 'CNPJ ' + ntFormatCnpj(String(n.cnpj)) : 'Nota ' + String(n.chave).slice(-8));
   var tag = n.status === 'lida' ? '' : '<span class="nt-tag err">itens pendentes</span>';
   return '<details class="nt-nota"><summary><div><div class="nt-loja">' + esc(nome) + tag + '</div>' +
-    '<div class="nt-meta">' + esc(quando) + (n.uf ? ' · ' + esc(n.uf) : '') + ' · ' + itens.length + ' itens' + (n.lida_por ? ' · ' + esc(n.lida_por) : '') + (n.conjunta ? ' · conjunta' : '') + '</div></div>' +
-    '<div class="nt-tot">' + (n.total != null ? brl(+n.total) : '—') + '</div></summary><div class="nt-corpo">' +
+    '<div class="nt-meta">' + esc(quando) + (n.uf ? ' · ' + esc(n.uf) : '') + ' · ' + itens.length + ' itens' + (n.lida_por ? ' · ' + esc(n.lida_por) : '') + (n.conjunta ? ' · conjunta' : '') + (n.tx_ref ? ' · ✓ na fatura' : (ntCombina(n).length ? ' · combina com a fatura' : '')) + '</div></div>' +
+    '<div class="nt-tot">' + (n.total != null ? brl(+n.total) : '—') + '</div></summary><div class="nt-corpo">' + ntLigaHtml(n) +
     (itens.length ? itens.map(function (i) {
       return '<div class="nt-item"><span>' + esc(i.desc) + '<small>' + (Math.round((+i.qtd || 0) * 1000) / 1000) + ' ' + esc(i.un || '') + ' × ' + brl(+i.unit || 0) + ntCmpHtml(n, i) + '</small></span><b>' + brl(+i.total || 0) + '</b></div>';
     }).join('') : '<p class="note" style="margin:0">' + esc(n.erro || 'Sem itens.') + '</p>') +
@@ -454,4 +456,38 @@ function ntConsulta(code) {
     requestAnimationFrame(function () { sh.classList.add('open'); bg.classList.add('open'); });
   };
   (typeof ntCarregar === 'function' ? Promise.resolve(ntCarregar(true)) : Promise.resolve()).then(abrir, abrir);
+}
+
+/* ---------- selo "combina com a fatura" (so informativo; confirma com um toque, nunca soma duas vezes) ---------- */
+function ntTxDia(s) {
+  var m = /^(\d{2})\/(\d{2})\/(\d{2,4})$/.exec(s || ''); if (!m) return null;
+  var y = +m[3]; if (y < 100) y += 2000; return Date.UTC(y, +m[2] - 1, +m[1]);
+}
+function ntCombina(n) {
+  if (typeof allTx !== 'function' || !n.data_emissao) return [];
+  var tot = +n.total || 0, t0 = Date.parse(String(n.data_emissao).slice(0, 10)); if (!(tot > 0) || !isFinite(t0)) return [];
+  try {
+    return allTx().filter(function (t) {
+      if (Math.abs((+t.valor) - tot) > 0.005) return false;
+      var d = ntTxDia(t.data); return d != null && Math.abs(d - t0) <= 5 * 86400000;
+    }).slice(0, 3);
+  } catch (e) { return []; }
+}
+function ntLigaHtml(n) {
+  if (n.tx_ref) {
+    var t = (typeof allTx === 'function' ? allTx() : []).filter(function (x) { return x.id === n.tx_ref; })[0];
+    return '<div class="nt-liga ok"><span>✓ Já está na fatura: ' + esc(t ? t.desc + ' · ' + brl(t.valor) + ' · ' + t.data : 'gasto vinculado') + '</span><button class="pill" data-nt="unlink" data-id="' + esc(n.id) + '">Desfazer</button></div>';
+  }
+  return ntCombina(n).map(function (t) {
+    return '<div class="nt-liga"><span>Combina com: ' + esc(t.desc) + ' · ' + brl(t.valor) + ' · ' + esc(t.data) + '</span><button class="pill" data-nt="link" data-id="' + esc(n.id) + '" data-tx="' + esc(t.id) + '">Confirmar</button></div>';
+  }).join('');
+}
+function ntSetLink(n, txid) {
+  var c = ntCli(); if (!c) return;
+  c.from('notas_fiscais').update({ tx_ref: txid || null }).eq('id', n.id).then(function (r) {
+    if (r && r.error) { flashToast('Não consegui atualizar a ligação.'); return; }
+    n.tx_ref = txid || null;
+    flashToast(txid ? 'Ligada ao gasto da fatura. Nada foi somado de novo.' : 'Ligação desfeita.');
+    try { ntRender(); } catch (e) {}
+  });
 }
