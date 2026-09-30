@@ -312,3 +312,88 @@ function ntLerFoto(e) {
     }).catch(falhou);
   }
 }
+
+/* ---------- categorias das notas + cartao "Notas do mes" (informativo: nao soma nos totais do painel) ---------- */
+var NT_CATS = ['Alimentação', 'Carro', 'Saúde & Bem-estar', 'Comer fora', 'Casa & Utilidades', 'Pets', 'Compras pessoais', 'Lazer & Viagem', 'Outros'];
+var NT_REGRAS = [
+  ['Carro', /posto|combust|gasolin|etanol|diesel|\bgnv\b|ipiranga|petrobras|br mania|lubrific|autope|borracharia|estaciona/i],
+  ['Saúde & Bem-estar', /farmac|drog|pague menos|panvel|ultrafarma|cl[ií]nic|laborat|hospital|[oó]tica|odonto/i],
+  ['Pets', /\bpet\b|ra[cç][aã]o|veterin|agropec|petz|cobasi/i],
+  ['Comer fora', /restaur|lanchon|pizzar|hamburg|padaria|cafeteria|caf[eé]\b|sorvet|churrasc|a[cç]a[ií]|lanche|pastel|tapioca/i],
+  ['Casa & Utilidades', /constru|ferrag|leroy|telha|m[oó]veis|utilidad|lavand|el[eé]trica|tintas/i],
+  ['Alimentação', /atacad|mercad|supermerc|assa[ií]|carrefour|extra\b|p[aã]o de a[cç]|bompre|hiper|mercantil|feira|kitanda|a[cç]ougue|hortifruti|frios|sacol[aã]o|frutas/i],
+  ['Compras pessoais', /magazine|riachuelo|renner|c&a|shopee|calcad|roupa|vestu|boutique|americanas|shein/i]
+];
+function ntCatAuto(n) {
+  var loja = n.emitente || '';
+  for (var i = 0; i < NT_REGRAS.length; i++) if (NT_REGRAS[i][1].test(loja)) return NT_REGRAS[i][0];
+  var itens = (n.itens || []).map(function (x) { return x.desc || ''; }).join(' | ');
+  for (var j = 0; j < NT_REGRAS.length - 1; j++) if (NT_REGRAS[j][1].test(itens)) return NT_REGRAS[j][0];
+  return 'Outros';
+}
+function ntCat(n) {
+  if (n.cat_manual && n.categoria) return n.categoria;
+  if (n.cnpj) {
+    var ap = (NT.lista || []).filter(function (x) { return x.cnpj === n.cnpj && x.cat_manual && x.categoria; })[0];
+    if (ap) return ap.categoria;
+  }
+  return ntCatAuto(n);
+}
+function ntCatHtml(n) {
+  var atual = ntCat(n);
+  return '<label class="nres-cat">Categoria <select class="nres-catsel" data-chave="' + esc(n.chave) + '">' +
+    NT_CATS.map(function (c) { return '<option' + (c === atual ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>';
+}
+function ntSetCat(chave, cat) {
+  var n = (NT.lista || []).filter(function (x) { return x.chave === chave; })[0], c = ntCli(); if (!n || !c) return;
+  var q = c.from('notas_fiscais').update({ categoria: cat, cat_manual: true }).eq('household_id', n.household_id);
+  q = n.cnpj ? q.eq('cnpj', n.cnpj) : q.eq('id', n.id);
+  q.then(function (r) {
+    if (r && r.error) { flashToast('Não consegui guardar a categoria.'); return; }
+    (NT.lista || []).forEach(function (x) { if (n.cnpj ? x.cnpj === n.cnpj : x.id === n.id) { x.categoria = cat; x.cat_manual = true; } });
+    flashToast('Guardei: ' + (n.emitente || 'loja') + ' → ' + cat + '. As próximas notas dessa loja seguem assim.');
+    try { ntCardMes(); } catch (e) {}
+  });
+}
+document.addEventListener('change', function (e) {
+  var s = e.target; if (s && s.classList && s.classList.contains('nres-catsel')) ntSetCat(s.dataset.chave, s.value);
+});
+function ntCardMes() {
+  var ov = document.getElementById('panel-overview'); if (!ov || !window.state) return;
+  var card = document.getElementById('nt-card'), mes = state.mes;
+  var lista = (NT.lista || []).filter(function (n) { return n.status === 'lida' && ntMesDe(n) === mes; });
+  if (!lista.length) { if (card) card.remove(); return; }
+  var ag = {}, tot = 0;
+  lista.forEach(function (n) { var k = ntCat(n), v = +n.total || 0; (ag[k] = ag[k] || { t: 0, q: 0 }); ag[k].t += v; ag[k].q++; tot += v; });
+  var linhas = Object.keys(ag).sort(function (a, b) { return ag[b].t - ag[a].t; });
+  var max = ag[linhas[0]].t || 1;
+  var cor = function (k) { try { return typeof colorOf === 'function' ? colorOf(k) : '#A8A29E'; } catch (e) { return '#A8A29E'; } };
+  var aberto = card ? card.open : false;
+  var html = '<summary><span>Notas fiscais do mês</span><b>' + brl(tot) + '</b></summary><div class="ntc-corpo">' +
+    linhas.map(function (k) {
+      return '<div class="ntc-row"><div class="ntc-l"><span>' + esc(k) + ' <small>' + ag[k].q + (ag[k].q > 1 ? ' notas' : ' nota') + '</small></span><b>' + brl(ag[k].t) + '</b></div>' +
+        '<div class="ntc-bar"><i style="width:' + Math.max(4, Math.round(ag[k].t / max * 100)) + '%;background:' + cor(k) + '"></i></div></div>';
+    }).join('') +
+    '<p class="note" style="margin:8px 0 0">Informativo: vem das notas lidas pelo QR e não soma nos totais acima (a fatura já conta esses gastos).</p></div>';
+  if (!card) {
+    card = document.createElement('details'); card.id = 'nt-card'; card.className = 'card nt-card';
+    var h = [].filter.call(ov.querySelectorAll('h2'), function (x) { return /Gastos por Categoria/i.test(x.textContent); })[0];
+    var ref = h && h.closest('.card');
+    if (ref && ref.parentNode) ref.parentNode.insertBefore(card, ref.nextSibling); else ov.appendChild(card);
+  }
+  card.innerHTML = html; card.open = aberto;
+}
+(function () {
+  if (typeof window.ntRender === 'function') {
+    var r0 = window.ntRender;
+    window.ntRender = function () { var r = r0.apply(this, arguments); try { ntCardMes(); } catch (e) {} return r; };
+  }
+  if (typeof window.renderAll === 'function') {
+    var ra = window.renderAll;
+    window.renderAll = function () {
+      var r = ra.apply(this, arguments);
+      try { ntCarregar().then(function () { ntCardMes(); }); } catch (e) {}
+      return r;
+    };
+  }
+})();
