@@ -154,3 +154,16 @@ html.app-mode .card.mp-f2>.mp-h2x::after{content:"";position:absolute;right:6px;
 html.app-mode .card.mp-f2.mp-f2-closed>.mp-h2x::after{transform:rotate(-45deg);margin-top:-4px}
 html.app-mode .card.mp-f2.mp-f2-closed>*:not(.mp-h2x){display:none!important}
 html.app-mode .card.mp-f2.mp-f2-closed>.mp-h2x{margin-bottom:0}
+
+/* botoes grandes saem do topo: aparecem ao tocar no + da barra */
+html.app-mode #ag-cta{display:none!important}
+html.app-mode #macts .btn-big{margin-bottom:10px;min-height:64px}
+html.app-mode #macts .btn-big:last-child{margin-bottom:4px}
+
+/* filtros das Transacoes: busca + botao Filtros */
+html.app-mode #tx-months+div{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+html.app-mode #tx-months+div>#tx-search{flex:1 1 0;min-width:0}
+html.app-mode #tx-months+div>select{flex:1 1 calc(50% - 4px);min-width:0;display:none}
+html.app-mode.tx-filtros #tx-months+div>select{display:block}
+html.app-mode #tx-fbtn{flex:none;height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--tx);font:inherit;font-size:14px;cursor:pointer}
+html.app-mode.tx-filtros #tx-fbtn,html.app-mode #tx-fbtn.tem{background:var(--tx);color:var(--bg)}
