@@ -279,3 +279,36 @@
     if (s && !t.closest('.legend')) s.classList.toggle('lg-open');
   });
 })();
+
+/* NuNa · blocos da Visao Geral recolhidos no modo APP (lembra a escolha neste aparelho) */
+(function () {
+  var CH = 'nuna_mp_fold2', PADRAO = { caixinha: 1, saldo: 1, divisao: 1 };
+  function ler() { try { return JSON.parse(localStorage.getItem(CH) || '{}') || {}; } catch (e) { return {}; } }
+  function gravar(s) { try { localStorage.setItem(CH, JSON.stringify(s)); } catch (e) {} }
+  function ident(t) {
+    t = (t || '').toLowerCase();
+    if (/caixinha/.test(t)) return 'caixinha';
+    if (/como o saldo/.test(t)) return 'saldo';
+    if (/divis/.test(t)) return 'divisao';
+    return null;
+  }
+  function preparar() {
+    [].forEach.call(document.querySelectorAll('#panel-overview .card'), function (c) {
+      if (c.dataset.mpF2) return;
+      var h = c.querySelector('h2,h3'); if (!h) return;
+      var k = ident(h.textContent); if (!k) return;
+      var cab = h; while (cab.parentNode && cab.parentNode !== c) cab = cab.parentNode;
+      if (cab.parentNode !== c) return;
+      c.dataset.mpF2 = '1'; c.classList.add('mp-f2'); cab.classList.add('mp-h2x');
+      var st = ler(); c.classList.toggle('mp-f2-closed', (k in st) ? !!st[k] : !!PADRAO[k]);
+      cab.addEventListener('click', function () {
+        var f = c.classList.toggle('mp-f2-closed'), s = ler(); s[k] = f ? 1 : 0; gravar(s);
+      });
+    });
+  }
+  if (typeof window.renderAll === 'function') {
+    var ra = window.renderAll;
+    window.renderAll = function () { var r = ra.apply(this, arguments); try { preparar(); } catch (e) {} return r; };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', preparar); else preparar();
+})();
