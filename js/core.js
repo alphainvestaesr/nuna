@@ -121,7 +121,9 @@ function txOf(mes,p){return mesTx(mes).filter(function(t){return inView(t,p) && 
 function allTx(){var a=[];MONTHS.forEach(function(m){DATA.months[m].transactions.forEach(function(t){t._m=m;a.push(t)})});return a;}
 function catKey(t){ return state.perfil==='NuNa' && state.axis==='plano' ? t.grupo : t[state.axis]; }
 function rendaOf(mes,p){var r=DATA.months[mes].receita;
-  return p==='Ana'?r.Ana : p==='Manuela'?r.Manuela : r.Ana+r.Manuela;}
+  return p==='Ana'?r.Ana : p==='Manuela'?r.Manuela : Math.round((r.Ana+r.Manuela-ajusteLiquidoCC(DATA.months[mes]))*100)/100;}
+/* renda do casal: o contracheque entra pelo liquido (vantagens menos descontos); extras e Manuela continuam somando */
+function ajusteLiquidoCC(mm){ return (mm.contracheques||[]).reduce(function(s,c){ var b=c.receita!=null?c.receita:(c.vantagens-(c.compensacoes||0)); return c.liquido!=null?s+(b-c.liquido):s; },0); }
 function gastoOf(mes,p){return txOf(mes,p).reduce(function(s,t){return s+t.valor},0);}
 function splitOf(mes,p){var l=txOf(mes,p);
   return {ind:l.filter(function(t){return !t.grupo}).reduce(function(s,t){return s+t.valor},0),
