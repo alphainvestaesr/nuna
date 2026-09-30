@@ -360,3 +360,13 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', filtros); else filtros();
 })();
+
+/* NuNa · toque no lancamento abre os campos de edicao (cartao) */
+(function () {
+  document.addEventListener('click', function (e) {
+    if (!document.documentElement.classList.contains('app-mode')) return;
+    var tr = e.target.closest && e.target.closest('#tx-months ~ .scroll tbody tr');
+    if (!tr || e.target.closest('select,option,button,a,input,td:nth-child(11)')) return;
+    tr.classList.toggle('tx-open');
+  });
+})();
