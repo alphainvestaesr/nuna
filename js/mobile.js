@@ -459,3 +459,83 @@
   window.addEventListener('appinstalled', function () { var f = document.getElementById('inst-faixa'); if (f) f.remove(); });
   var t = 0, iv = setInterval(function () { faixa(); if (document.getElementById('inst-faixa') || ++t > 40) clearInterval(iv); }, 1000);
 })();
+
+/* NuNa · Orcamento e Revisar no celular: abrem sempre no mes atual, com seletor ‹ mes › */
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  var LONGO = { Jan: 'Janeiro', Fev: 'Fevereiro', Mar: 'Março', Abr: 'Abril', Mai: 'Maio', Jun: 'Junho', Jul: 'Julho', Ago: 'Agosto', Set: 'Setembro', Out: 'Outubro', Nov: 'Novembro', Dez: 'Dezembro' };
+  function app() { return document.documentElement.classList.contains('app-mode'); }
+  function atual() { return (window.mpMesAtual && mpMesAtual()) || MONTHS[MONTHS.length - 1]; }
+  function nomeLongo(m) {
+    if (m === '__all') return 'Todos os meses';
+    var p = String(m).split('/'), ano = p[1] ? '20' + p[1] : '2026';
+    return (LONGO[p[0]] || p[0]) + ' ' + ano;
+  }
+  window.mpNomeMes = nomeLongo;
+
+  /* ‹ Outubro 2026 › — o nome do meio abre a lista de meses do aparelho */
+  function seletor(id, antesDe, valor, comTodos, aoMudar) {
+    var box = $(id);
+    if (!box) {
+      box = document.createElement('div'); box.id = id; box.className = 'mmes';
+      antesDe.parentNode.insertBefore(box, antesDe);
+    }
+    var lista = (comTodos ? ['__all'] : []).concat(MONTHS), i = lista.indexOf(valor);
+    var hoje = atual();
+    box.innerHTML =
+      '<button type="button" class="mmes-seta" data-d="-1" aria-label="Mês anterior"' + (i <= (comTodos ? 1 : 0) ? ' disabled' : '') + '>‹</button>' +
+      '<label class="mmes-nome"><span>' + nomeLongo(valor) + (valor === hoje ? ' <em>mês atual</em>' : '') + '</span>' +
+        '<select aria-label="Escolher mês">' + lista.map(function (m) {
+          return '<option value="' + m + '"' + (m === valor ? ' selected' : '') + '>' + nomeLongo(m) + (m === hoje ? ' (atual)' : '') + '</option>';
+        }).join('') + '</select></label>' +
+      '<button type="button" class="mmes-seta" data-d="1" aria-label="Próximo mês"' + (i < 0 || i >= lista.length - 1 ? ' disabled' : '') + '>›</button>' +
+      (valor !== hoje ? '<button type="button" class="mmes-hoje">Hoje</button>' : '');
+    box.querySelector('select').onchange = function () { aoMudar(this.value); };
+    [].forEach.call(box.querySelectorAll('.mmes-seta'), function (b) {
+      b.onclick = function () { var n = lista[(i < 0 ? lista.indexOf(hoje) : i) + (+b.dataset.d)]; if (n && n !== '__all') aoMudar(n); };
+    });
+    var h = box.querySelector('.mmes-hoje'); if (h) h.onclick = function () { aoMudar(hoje); };
+  }
+  window.mpSeletorMes = seletor;
+
+  /* ao abrir a aba (pela barra, pelo Mais ou pelo menu), volta para o mes atual */
+  var mesOrc = null;
+  window.mpMesOrc = function () { return mesOrc && DATA && DATA.months[mesOrc] ? mesOrc : atual(); };
+  function ligarAbas() {
+    var tabs = $('tabs'); if (!tabs || tabs.dataset.mpMes) return;
+    tabs.dataset.mpMes = '1';
+    tabs.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b || !app()) return;
+      if (b.dataset.tab === 'review') state.revMes = atual();
+      if (b.dataset.tab === 'budget') mesOrc = atual();
+    }, true);
+  }
+
+  /* Revisar: seletor no lugar das pilulas de mes */
+  if (typeof window.renderReview === 'function') {
+    var _rr = window.renderReview;
+    window.renderReview = function () {
+      var r = _rr.apply(this, arguments);
+      try {
+        var pills = $('rev-months');
+        if (app() && pills) seletor('rev-mmes', pills, state.revMes, true, function (m) { state.revMes = m; renderReview(); });
+      } catch (e) { console.warn('mobile/rev-mes', e); }
+      return r;
+    };
+  }
+
+  /* Orcamento: no celular as contas e os status seguem o mes escolhido aqui,
+     sem mexer no mes da tela Inicio */
+  window.mpRenderBudget = function () {
+    if (!app()) { rodarRender('renderBudgetTable'); rodarRender('renderBudgetInsight'); return; }
+    var m = window.mpMesOrc(), antes = state.mes;
+    state.mes = m;
+    try { rodarRender('renderBudgetTable'); rodarRender('renderBudgetInsight'); if (window.mpRenderOrcCel) rodarRender('mpRenderOrcCel'); }
+    finally { state.mes = antes; }
+    var alvo = $('orc-renda') || $('bd-cards');
+    if (alvo) seletor('bd-mmes', alvo, m, false, function (n) { mesOrc = n; mpRenderBudget(); });
+  };
+  if (typeof PANEL_FNS !== 'undefined') PANEL_FNS.budget = ['mpRenderBudget'];
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligarAbas); else ligarAbas();
+})();

@@ -267,3 +267,16 @@ html.app-mode .mtile svg .fill{fill:currentColor;stroke:none}
 html.app-mode .mtile .pin{position:absolute;top:6px;right:8px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--neg);color:#fff;font-size:10.5px;font-style:normal;font-weight:700;line-height:18px;text-align:center}
 html.app-mode .mfoot{display:flex;gap:8px;margin-top:10px}
 html.app-mode .mfoot button{flex:1;min-height:40px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--tx2);font:inherit;font-size:13px;cursor:pointer}
+
+/* seletor de mes ‹ Outubro 2026 › (Orcamento e Revisar no celular) */
+.mmes{display:none}
+html.app-mode .mmes{display:flex;align-items:center;gap:6px;margin:0 0 10px}
+html.app-mode .mmes-seta{flex:none;width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--tx);font:inherit;font-size:24px;line-height:1;cursor:pointer;padding:0 0 3px}
+html.app-mode .mmes-seta:disabled{opacity:.3;cursor:default}
+html.app-mode .mmes-nome{flex:1;min-width:0;position:relative;height:40px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--tx);color:var(--bg);font-weight:700;font-size:15px;cursor:pointer}
+html.app-mode .mmes-nome span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}
+html.app-mode .mmes-nome span::after{content:" ▾";font-size:11px;opacity:.7}
+html.app-mode .mmes-nome em{font-style:normal;font-weight:600;font-size:10.5px;opacity:.75;margin-left:4px;text-transform:uppercase;letter-spacing:.04em}
+html.app-mode .mmes-nome select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+html.app-mode .mmes-hoje{flex:none;height:40px;padding:0 10px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--acc);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+html.app-mode #rev-months{display:none}
