@@ -588,7 +588,7 @@
     return '<div class="mr-grp' + (ab ? ' open' : '') + '">' +
       '<div class="mr-it mr-gh">' +
         '<div class="mr-l" data-abre="' + esc(k) + '">' +
-          '<div class="mr-meta">' + g.l.length + ' lançamentos iguais · toque para ver</div>' +
+          '<div class="mr-meta">' + g.l.length + ' iguais · toque para ver</div>' +
           '<div class="mr-desc">' + esc(g.l[0].desc) + '</div>' +
           '<div class="mr-cat">' + (cs.length === 1 ? esc(cs[0]) : cs.length + ' categorias diferentes') + '</div>' +
         '</div>' +

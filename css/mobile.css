@@ -287,10 +287,10 @@ html.app-mode #mrev{display:block}
 html.app-mode #panel-review .scroll,html.app-mode #rev-head,html.app-mode #rev-count{display:none}
 html.app-mode #panel-review .card{padding:12px}
 html.app-mode #panel-review .card>h2{margin-bottom:10px}
-html.app-mode #rev-mmes+div{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px!important}
+html.app-mode #rev-months+div{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px!important}
 html.app-mode #rev-search{flex:1 1 100%!important;min-width:0}
 html.app-mode #rev-perfil{flex:1 1 0;min-width:0}
-html.app-mode #rev-all{flex:1 1 0;min-width:0;min-height:40px;padding:0 10px;font-size:13.5px}
+html.app-mode #rev-all{flex:1 1 0;min-width:0;min-height:40px;padding:0 8px;font-size:12.5px;line-height:1.15}
 .mr-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px}
 .mr-head span{color:var(--tx3);font-size:13px}
 .mr-pct{font-size:12px;color:var(--pos);font-weight:700;white-space:nowrap}
