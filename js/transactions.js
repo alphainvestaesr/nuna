@@ -117,14 +117,21 @@ if(!revVisivel(t))return;
 }
 function renderRevMonthPills(){ var n=el('rev-months'); if(!n) return;
   monthPills(n,state.revMes,function(m){state.revMes=m;renderReview();},true); }
+/* a tabela monta 40 linhas por vez (cada linha tem 4 menus); "Carregar mais" traz mais 40 */
+var REV_PASSO=40, revLimite=REV_PASSO, revFiltroAnt='';
+function revApp(){ return document.documentElement.classList.contains('app-mode'); }
 function renderReview(){
   var list=revList(), tb=el('rev-table').querySelector('tbody');
+  var filtro=state.revMes+'|'+el('rev-search').value+'|'+el('rev-perfil').value;
+  if(filtro!==revFiltroAnt){ revFiltroAnt=filtro; revLimite=REV_PASSO; }
   renderRevMonthPills();
   var todos=state.revMes==='__all', nomeMes=todos?'todos os meses':(typeof mesNome==='function'?mesNome(state.revMes):state.revMes);
   var total=allTx().filter(revVisivel).length, pend=allTx().filter(function(t){return t.revisar&&revVisivel(t)}).length;
   el('rev-pin').textContent=pend; el('rev-pin').dataset.zero = pend===0?'1':'0';
   el('rev-head').innerHTML='Cerca de <b>'+Math.round(pend/total*100)+'%</b> dos lan&ccedil;amentos ('+pend+' de '+total+') foram categorizados automaticamente e ainda esperam sua confer&ecirc;ncia. Corrija a categoria se estiver errada e marque <b>Conferido</b> &mdash; a marca&ccedil;&atilde;o &eacute; salva automaticamente e os pr&oacute;ximos meses j&aacute; aprendem com ela. Aqui aparecem s&oacute; os seus lan&ccedil;amentos e os conjuntos.';
-  tb.innerHTML=list.slice(0,400).map(function(t){
+  /* no celular a lista enxuta (mobile.js) substitui a tabela: nao monta os menus escondidos */
+  var vis=revApp()?[]:list.slice(0,revLimite);
+  tb.innerHTML=vis.map(function(t){
     return '<tr data-id="'+t._m+'|'+t.id+'">'+
       '<td style="white-space:nowrap">'+t.data+(todos?'<br><span style="font-size:11px;color:var(--tx3)">fatura '+esc(t._m)+'</span>':'')+'</td>'+
       '<td title="'+esc(t.raw)+'">'+esc(t.desc)+(t.possivelDup?' <span class="badge b-warn">poss. dup.</span>':'')+'</td>'+
@@ -136,8 +143,9 @@ function renderReview(){
       '<td><select class="c-tipo">'+tipoOpts(t.tipo)+'</select></td>'+
       '<td class="num">'+brl(t.valor)+'</td>'+
       '<td style="text-align:center"><input type="checkbox" class="c-rev" style="width:17px;height:17px;accent-color:var(--pos)"></td></tr>';}).join('');
-  el('rev-count').innerHTML='<b>'+list.length+'</b> lan&ccedil;amentos aguardando confer&ecirc;ncia em <b>'+nomeMes+'</b>'+(list.length>400?' (mostrando os 400 maiores)':'')+
-    ' &middot; total '+brl(list.reduce(function(s,t){return s+t.valor},0));
+  el('rev-count').innerHTML='<b>'+list.length+'</b> lan&ccedil;amentos aguardando confer&ecirc;ncia em <b>'+nomeMes+'</b>'+(list.length>vis.length?' (mostrando os '+vis.length+' maiores)':'')+
+    ' &middot; total '+brl(list.reduce(function(s,t){return s+t.valor},0))+
+    (list.length>vis.length?' <button type="button" class="pill" id="rev-mais">Carregar mais '+Math.min(REV_PASSO,list.length-vis.length)+'</button>':'');
   el('ins-rev').textContent = pend===0
     ? '"Tudo conferido. Cada correcao sua vira regra para os proximos meses."'
     : '"'+pend+' lancamentos ainda no automatico. Os 10 maiores somam '+brl(list.slice(0,10).reduce(function(s,t){return s+t.valor},0))+' - comece por eles."';
@@ -151,8 +159,14 @@ function wireReview(){
     applyEdit(tr,e.target);
     if(e.target.classList.contains('c-rev')&&e.target.checked){t.revisar=false;salvarOverride(t);renderReview();renderAll(true);return;}
     renderAll(true); renderReview();});
+  el('rev-count').addEventListener('click',function(e){
+    if(!e.target.closest('#rev-mais'))return; revLimite+=REV_PASSO; renderReview();});
   el('rev-all').addEventListener('click',function(){
-    var l=revList(); l.forEach(function(t){t.revisar=false; salvarOverride(t)});
+    /* so as linhas que estao na tela */
+    var l=revApp()&&typeof mpRevVisiveis==='function' ? mpRevVisiveis()
+      : [].map.call(el('rev-table').querySelectorAll('tbody tr[data-id]'),function(tr){return findTx(tr.dataset.id)}).filter(function(t){return t&&t.revisar});
+    if(!l.length){ flashToast('Nenhum lancamento visivel para confirmar.'); return; }
+    l.forEach(function(t){t.revisar=false; salvarOverride(t)});
     flashToast(l.length+' lancamentos marcados como conferidos.'); renderReview(); renderAll(true);});
 }
 
