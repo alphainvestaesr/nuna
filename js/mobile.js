@@ -113,6 +113,8 @@
     gastei: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v9M7.5 12h9"/></svg>',
     notas: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect class="fill" x="5.2" y="5.2" width="2.6" height="2.6"/><rect class="fill" x="16.2" y="5.2" width="2.6" height="2.6"/><rect class="fill" x="5.2" y="16.2" width="2.6" height="2.6"/><path d="M14 14h2.5v2.5H14zM18.5 14H21M14 19h2.5M18.5 17.5V21M21 17.5V21"/></svg>',
     trans: '<svg viewBox="0 0 24 24"><path d="M8.5 6.5H20M8.5 12H20M8.5 17.5H20"/><circle class="fill" cx="4.3" cy="6.5" r="1.2"/><circle class="fill" cx="4.3" cy="12" r="1.2"/><circle class="fill" cx="4.3" cy="17.5" r="1.2"/></svg>',
+    orc: '<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
+    mais2: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
     mais: '<svg viewBox="0 0 24 24"><circle class="fill" cx="5.5" cy="12" r="1.7"/><circle class="fill" cx="12" cy="12" r="1.7"/><circle class="fill" cx="18.5" cy="12" r="1.7"/></svg>'
   };
   window.NUNA_ICONE_QR = ICONES.notas;
@@ -129,25 +131,29 @@
     setTimeout(function () { var o = $('ag-open'); if (o) o.click(); }, 80);
   }
 
+  function lerQR() { if (typeof ntAbrirLeitor === 'function') ntAbrirLeitor(); else abrirAba('notas'); }
+  window.mpLerQR = lerQR;
+
   function montarBarra() {
     if ($('mbar')) return;
     var host = $('tela-app') || document.body;
     var bar = document.createElement('nav');
     bar.id = 'mbar'; bar.className = 'mbar'; bar.setAttribute('aria-label', 'Navegação rápida');
+    /* Inicio · Transacoes · (+) · Orcamento · Mais — nome embaixo de cada icone */
     bar.innerHTML =
-      '<button data-k="inicio" aria-label="Início" title="Início">' + ICONES.inicio + '</button>' +
-      '<button data-k="gastei" aria-label="Acabei de gastar" title="Acabei de gastar">' + ICONES.gastei + '</button>' +
-      '<button data-k="notas" aria-label="Notas fiscais (QR Code)" title="Notas fiscais">' + ICONES.notas + '</button>' +
-      '<button data-k="trans" aria-label="Transações" title="Transações">' + ICONES.trans + '</button>' +
-      '<button data-k="mais" aria-label="Mais" title="Mais">' + ICONES.mais + '<span class="mb-pin" id="mb-pin" data-zero="1">0</span></button>';
+      '<button data-k="inicio">' + ICONES.inicio + '<span class="mb-lab">Início</span></button>' +
+      '<button data-k="trans">' + ICONES.trans + '<span class="mb-lab">Transações</span></button>' +
+      '<button data-k="gastei" aria-label="Novo gasto">' + ICONES.mais2 + '</button>' +
+      '<button data-k="orc">' + ICONES.orc + '<span class="mb-lab">Orçamento</span></button>' +
+      '<button data-k="mais">' + ICONES.mais + '<span class="mb-lab">Mais</span><span class="mb-pin" id="mb-pin" data-zero="1">0</span></button>';
     host.appendChild(bar);
     bar.addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
       var k = b.dataset.k;
       if (k === 'inicio') abrirAba('overview');
       else if (k === 'gastei') abrirGastei();
-      else if (k === 'notas') { if (typeof ntAbrirLeitor === 'function') ntAbrirLeitor(); else abrirAba('notas'); return; }
       else if (k === 'trans') abrirAba('transactions');
+      else if (k === 'orc') abrirAba('budget');
       else if (k === 'mais') abrirSheet();
       window.scrollTo(0, 0);
     });
@@ -157,7 +163,7 @@
   function marcarAtivo() {
     var bar = $('mbar'); if (!bar) return;
     var t = $('tabs') && $('tabs').querySelector('button.active'), tab = t ? t.dataset.tab : 'overview';
-    var k = tab === 'overview' ? 'inicio' : tab === 'gastei' ? 'gastei' : tab === 'transactions' ? 'trans' : 'mais';
+    var k = tab === 'overview' ? 'inicio' : tab === 'gastei' ? 'gastei' : tab === 'transactions' ? 'trans' : tab === 'budget' ? 'orc' : 'mais';
     [].forEach.call(bar.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.dataset.k === k); });
     var rp = $('rev-pin'), mp = $('mb-pin');
     if (rp && mp) { mp.textContent = rp.textContent; mp.dataset.zero = rp.dataset.zero === '0' ? '0' : '1'; }
@@ -174,6 +180,7 @@
       if (b.dataset.go) { fecharSheet(); abrirAba(b.dataset.go); window.scrollTo(0, 0); }
       else if (b.dataset.modo) { lsSet(LS.modo, b.dataset.modo); aplicarModo(); }
       else if (b.dataset.acao === 'instalar') instalar();
+      else if (b.dataset.acao === 'qr') { fecharSheet(); lerQR(); }
       else if (b.dataset.acao === 'sair') { fecharSheet(); var s = $('top-sair'); if (s) s.click(); }
       else if (b.dataset.acao === 'tema') { var t = document.querySelector('#theme-sel [data-t="' + b.dataset.t + '"]'); if (t) t.click(); atualizarSheet(); }
     });
@@ -203,9 +210,9 @@
       '<div class="grip"></div>' +
       (instalado ? '' : '<button class="mrow mrow-inst" data-acao="instalar">Instalar o NuNa neste aparelho <small>' + (promptInstalar ? 'toque para instalar' : (ios() ? 'iPhone/iPad' : 'menu do navegador')) + '</small></button>') +
       '<div class="mgrid">' +
-        tile('mvm', 'Mês vs Mês', '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>') +
-        tile('budget', 'Orçamento', '<path d="M4 7h16v12H4z"/><path d="M4 7l2-3h12l2 3M15 13h2"/>') +
         tile('review', 'Revisar', '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>', (rev && rev !== '0') ? rev : '') +
+        tile('mvm', 'Mês vs Mês', '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>') +
+        '<button class="mtile" data-acao="qr">' + ICONES.notas + '<span>Ler nota (QR)</span></button>' +
         tile('insights', 'Insights', '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.3 1 2.5h6c0-1.2.3-1.8 1-2.5A6 6 0 0 0 12 3z"/>') +
         tile('dados', 'Dados', '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>') +
         tile('notas', 'Notas', '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>') +
@@ -317,11 +324,13 @@
     var sh = document.createElement('div'); sh.id = 'macts'; sh.className = 'msheet'; sh.setAttribute('role', 'dialog');
     sh.innerHTML = '<div class="grip"></div>' +
       '<button class="btn-big" data-a="gasto">+ ACABEI DE GASTAR<span>registrar um gasto agora, sem esperar a fatura</span></button>' +
-      '<button class="btn-big blue" data-a="contrib">CONTRIBUI&Ccedil;&Atilde;O<span>registrar quanto ela p&ocirc;s nas contas conjuntas</span></button>';
+      '<button class="btn-big blue" data-a="contrib">CONTRIBUI&Ccedil;&Atilde;O<span>registrar quanto ela p&ocirc;s nas contas conjuntas</span></button>' +
+      '<button class="btn-big" data-a="qr">LER NOTA (QR)<span>c&acirc;mera para a nota fiscal</span></button>';
     (($('tela-app')) || document.body).appendChild(bg); (($('tela-app')) || document.body).appendChild(sh);
     bg.addEventListener('click', fechar);
     sh.addEventListener('click', function (e) {
       var b = e.target.closest('button[data-a]'); if (!b) return;
+      if (b.dataset.a === 'qr') { fechar(); if (window.mpLerQR) mpLerQR(); return; }
       var alvo = b.dataset.a === 'gasto' ? 'ag-open' : 'ca-abrir';
       fechar();
       var s = (window.Auth && Auth.sessao && Auth.sessao()) || {};
