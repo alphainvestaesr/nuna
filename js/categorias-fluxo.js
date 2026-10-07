@@ -318,22 +318,7 @@
     };
   }
 
-  /* 3: PREVIA da migracao da Manuela (so leitura). Cada uma ve so os proprios lancamentos. */
-  var MIGRA = { Manuela: { 'Uber': 'Transporte › Uber/99', 'Terreno': '(a definir — tipo Terreno)' } };
-  function linhasMigracao(perfil) {
-    var regra = MIGRA[perfil] || {}, out = [];
-    MONTHS.forEach(function (m) {
-      ((DATA.months[m] || {}).transactions || []).forEach(function (t) {
-        if (t.perfil !== perfil || t.grupo || !regra[t.plano]) return;
-        out.push({ id: t.uid || t.id, mes: m, data: t.data, desc: t.desc, valor: t.valor, atual: t.plano, nova: regra[t.plano], origem: 'fatura' });
-      });
-    });
-    ((typeof AG !== 'undefined' && AG.itens) || []).forEach(function (i) {
-      if (i.perfil !== perfil || i.divisao === 'CONJUNTA' || !regra[i.categoria]) return;
-      out.push({ id: i.id, mes: (typeof agMesNoDash === 'function' ? agMesNoDash(i.data) : ''), data: i.data, desc: i.desc, valor: i.valor, atual: i.categoria, nova: regra[i.categoria], origem: 'Acabei de gastar' });
-    });
-    return out;
-  }
+  /* 3: a migracao da Manuela (Uber e Terreno) fica em migracao-manuela.js, com lista e OK */
   function dcIndividuais(perfil) {
     var out = [];
     MONTHS.forEach(function (m) { ((DATA.months[m] || {}).transactions || []).forEach(function (t) {
@@ -341,34 +326,19 @@
     }); });
     return out;
   }
-  window.catPreviaMigracao = linhasMigracao;
   function renderPrevia() {
     var pn = document.getElementById('panel-dados'); if (!pn || !DATA) return;
     var box = document.getElementById('cat-previa');
     if (!box) { box = document.createElement('div'); box.id = 'cat-previa'; box.className = 'card'; pn.insertBefore(box, pn.firstChild); }
     var eu = ((window.Auth && Auth.sessao && Auth.sessao()) || {}).perfil;
-    var h = '<h2>Categorias — prévia, nada foi aplicado</h2>';
-    if (eu !== 'Manuela') {
-      h += '<p class="note" style="margin:0 0 10px">A lista de migração da Manuela (Uber → Transporte › Uber/99 e Terreno) só aparece quando <b>a Manuela</b> entra no NuNa — cada uma vê só os próprios lançamentos.</p>';
-    } else {
-      var l = linhasMigracao('Manuela');
-      h += '<p class="note" style="margin:0 0 10px"><b>' + l.length + '</b> lançamentos seriam migrados. Nada muda até a aprovação.</p>' +
-        '<div class="scroll"><table><thead><tr><th>id</th><th>Mês</th><th>Data</th><th>Descrição</th><th class="num">Valor</th><th>Categoria atual</th><th>Categoria nova</th><th>Origem</th></tr></thead><tbody>' +
-        l.map(function (x) { return '<tr><td style="font-size:11px">' + esc(x.id) + '</td><td>' + esc(x.mes) + '</td><td>' + esc(x.data) + '</td><td>' + esc(x.desc) + '</td><td class="num">' + brl(+x.valor || 0) + '</td><td>' + esc(x.atual) + '</td><td>' + esc(x.nova) + '</td><td>' + esc(x.origem) + '</td></tr>'; }).join('') +
-        '</tbody></table></div><button class="pill" id="cat-previa-copiar" style="margin-top:10px">Copiar lista</button>';
-    }
+    if (!eu) { box.remove(); return; }
+    var h = '<h2>Categorias — verificação</h2>';
     if (eu) {
       var dc = dcIndividuais(eu);
       h += '<p class="note" style="margin:12px 0 0">Verificação: <b>' + dc.length + '</b> lançamento(s) individual(is) de ' + esc(eu) + ' com "Despesa conjunta"' +
         (dc.length ? ': ' + dc.map(function (x) { return esc(x.mes + ' · ' + x.desc + ' · ' + brl(+x.valor || 0)); }).join('; ') + '. Corrija pelo Revisar ou Transações.' : ' ✓') + '</p>';
     }
     box.innerHTML = h;
-    var b = document.getElementById('cat-previa-copiar');
-    if (b) b.onclick = function () {
-      var txt = ['id\tmês\tdata\tdescrição\tvalor\tcategoria atual\tcategoria nova\torigem'].concat(linhasMigracao('Manuela').map(function (x) {
-        return [x.id, x.mes, x.data, x.desc, String(x.valor).replace('.', ','), x.atual, x.nova, x.origem].join('\t'); })).join('\n');
-      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { flashToast('Lista copiada.'); }, function () { flashToast('Não consegui copiar; tire um print.'); });
-    };
   }
   if (typeof window.renderDados === 'function') {
     var _rd = window.renderDados;

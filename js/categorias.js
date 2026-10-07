@@ -41,6 +41,11 @@ var CAT_POR_TIPO = {
   'Conta telefonica': ['Conta telefonica'], 'Terreno': ['Terreno']
 };
 
+/* por perfil, quando a categoria existe na lista dela (Manuela, depois da migracao) */
+var CAT_POR_TIPO_PERFIL = {
+  Manuela: { 'Uber / transporte': ['Transporte', 'Uber/99'], 'Terreno': ['Patrimônio'] }
+};
+
 var CAT_SUBS = { Ana: {}, Manuela: {}, NuNa: {} };
 var CAT_CORES = {};
 
@@ -162,7 +167,8 @@ function catAplicar() {
   MONTHS.forEach(function (m) {
     DATA.months[m].transactions.forEach(function (t) {
       if (!CAT_CATCHALL[t.plano]) return;
-      var alvo = CAT_POR_TIPO[t.tipo] || ['Outros'], lista = catLista(t.perfil);
+      var lista = catLista(t.perfil), alvo = ((CAT_POR_TIPO_PERFIL[t.perfil] || {})[t.tipo]);
+      if (!alvo || lista.indexOf(alvo[0]) < 0) alvo = CAT_POR_TIPO[t.tipo] || ['Outros'];
       if (lista.indexOf(alvo[0]) < 0) alvo = ['Outros'];
       t.plano = alvo[0];
       if (!t.grupo && !t.sub && alvo[1]) t.sub = alvo[1];
