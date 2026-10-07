@@ -7,6 +7,40 @@
    de R$ 100 no mesmo posto sao compras distintas). Na duvida,
    marca para revisao — nunca descarta nem duplica em silencio.
    ============================================================ */
+/* ============================================================
+   REGRAS POR DESCRICAO — usadas so na importacao de fatura, nos
+   lancamentos NOVOS (os ja importados nao sao reescritos).
+   Para editar: cada regra tem
+     padrao    expressao procurada na descricao (maiusculas/minusculas tanto faz)
+     exceto    (opcional) se tambem casar com isto, a regra nao vale
+     tipo      tipo que o lancamento recebe
+     categoria (opcional) categoria › subtipo por perfil; so e usada se a
+               categoria existir na lista daquele perfil, senao fica "Outros"
+   Vale a primeira regra que casar. O lancamento continua indo para Revisar.
+   ============================================================ */
+var REGRAS_DESCRICAO = [
+  { nome: 'Uber (corrida)', padrao: /\bUBER\b/i, exceto: /UBER\s*\*?\s*EATS/i, tipo: 'Uber / transporte',
+    categoria: { Ana: ['Carro', 'Uber/99'], Manuela: ['Transporte', 'Uber/99'] } },
+  { nome: '99 (corrida)', padrao: /\b99\s*(APP|POP|TAXI|TAXIS|RIDE|TECNOLOGIA|\*)/i, exceto: /99\s*PAY|99\s*FOOD/i, tipo: 'Uber / transporte',
+    categoria: { Ana: ['Carro', 'Uber/99'], Manuela: ['Transporte', 'Uber/99'] } },
+  { nome: 'Disney+', padrao: /DISNEY/i, tipo: 'Streaming', categoria: { Ana: ['Lazer & Viagem', 'Streaming'], Manuela: ['Lazer & Viagem', 'Streaming'] } },
+  { nome: 'Netflix', padrao: /NETFLIX/i, tipo: 'Streaming', categoria: { Ana: ['Lazer & Viagem', 'Streaming'], Manuela: ['Lazer & Viagem', 'Streaming'] } },
+  { nome: 'Amazon Prime', padrao: /AMAZON\s*PRIME|PRIME\s*VIDEO|PRIMEVIDEO/i, tipo: 'Streaming', categoria: { Ana: ['Lazer & Viagem', 'Streaming'], Manuela: ['Lazer & Viagem', 'Streaming'] } },
+  { nome: 'Spotify', padrao: /SPOTIFY/i, tipo: 'Streaming', categoria: { Ana: ['Lazer & Viagem', 'Streaming'], Manuela: ['Lazer & Viagem', 'Streaming'] } },
+  { nome: 'HBO / Max', padrao: /\bHBO|\bMAX\s*(\.COM|STREAMING|ASSINATURA)|^MAX\b|WARNER\s*BROS/i, tipo: 'Streaming', categoria: { Ana: ['Lazer & Viagem', 'Streaming'], Manuela: ['Lazer & Viagem', 'Streaming'] } }
+];
+/* devolve { tipo, plano, sub, regra } ou null */
+function classificarDescricao(desc, perfil) {
+  for (var i = 0; i < REGRAS_DESCRICAO.length; i++) {
+    var r = REGRAS_DESCRICAO[i];
+    if (!r.padrao.test(desc) || (r.exceto && r.exceto.test(desc))) continue;
+    var c = (r.categoria || {})[perfil], lista = typeof catLista === 'function' ? catLista(perfil) : [];
+    var ok = c && lista.indexOf(c[0]) >= 0;
+    return { tipo: r.tipo, plano: ok ? c[0] : 'Outros', sub: ok ? (c[1] || '') : '', regra: r.nome };
+  }
+  return null;
+}
+
 var CSV = (function () {
   var MES_LABEL = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
@@ -112,10 +146,11 @@ var CSV = (function () {
       if (porChave[chave] <= jaTem) { duplicados.push({ desc: r.desc, valor: r.valor, data: dataBR(r.iso) }); return; }
       var ord = (ordinais[chave] || 0) + (porChave[chave] - jaTem);
       var uid = 'csv-' + hashCurto(chave + '#' + ord);
+      var cl = classificarDescricao(r.desc, perfil) || { tipo: 'Outros', plano: 'Outros', sub: '', regra: null };
       novos.push({
         mes: mes, data: dataBR(r.iso), perfil: perfil, raw: r.desc, desc: r.desc,
-        tipo: 'Outros', grupo: null, plano: 'Outros', sub: '',
-        planoOrig: 'Outros', grupoOrig: null,
+        tipo: cl.tipo, grupo: null, plano: cl.plano, sub: cl.sub, regraDescricao: cl.regra,
+        planoOrig: cl.plano, grupoOrig: null,
         valor: Math.round(r.valor * 100) / 100, fonte: fonte, cartao: '-',
         fonteLabel: fonte, fontePendente: !r.fonte && !opcoes.fonte,
         revisar: true, status: '', divisao: 'INDIVIDUAL', contrib: false,

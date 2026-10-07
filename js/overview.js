@@ -171,7 +171,7 @@ function renderDonut(){
   donutChart=new Chart(ctx,{type:'doughnut',
     data:{labels:arr.map(function(a){return a[0]}),datasets:[{data:arr.map(function(a){return a[1]}),backgroundColor:arr.map(function(a){return colorOf(a[0])}),borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:function(c){return c.label+': '+brl(c.raw)}}}}}});
+      tooltip:{callbacks:{label:function(c){return rotuloExib(c.label)+': '+brl(c.raw)}}}}}});
 }
 function caixaCasal(mes){
   return rendaOf(mes,'Ana')+rendaOf(mes,'Manuela') - gastoOf(mes,'Ana') - gastoOf(mes,'Manuela');
@@ -702,7 +702,7 @@ function orcMelhora(){
   var old=el('bd-total'); if(old)old.remove();
   var somaB=0, somaMes={}, somaMed=0;
   [].forEach.call(tbl.tBodies[0].rows,function(r){
-    var cat=r.cells[0].textContent.trim(), b=+B[cat]||0, g=tot[cat]||0;
+    var cat=rotuloGuardado(r.cells[0].textContent.trim()), b=+B[cat]||0, g=tot[cat]||0;
     r.style.display=((p!=='NuNa'&&ORC_FORA[cat])||(!b&&!MONTHS.some(function(m){ return (TM[m][cat]||0)>0; })))?'none':'';
     [].forEach.call(r.cells,function(c,i){ if(i>=ini&&i<fim)c.style.opacity=mesAberto(MONTHS[i-ini])?'.5':''; });
     var tem=MONTHS.some(function(m){ return (TM[m][cat]||0)>0; }), st;

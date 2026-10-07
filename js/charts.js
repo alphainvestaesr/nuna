@@ -67,7 +67,7 @@ function renderCategoryTrend(){
   var series=MONTHS.map(function(m){return txOf(m,state.perfil).filter(function(t){return catKey(t)===state.trendCat}).reduce(function(s,t){return s+t.valor},0)});
   if(trendChart)trendChart.destroy();
   trendChart=new Chart(ctx,{type:'line',
-    data:{labels:MONTHS,datasets:[{label:state.trendCat,data:series,borderColor:colorOf(state.trendCat),backgroundColor:colorOf(state.trendCat)+'22',fill:true,tension:.3,pointRadius:4}]},
+    data:{labels:MONTHS,datasets:[{label:rotuloExib(state.trendCat),data:series,borderColor:colorOf(state.trendCat),backgroundColor:colorOf(state.trendCat)+'22',fill:true,tension:.3,pointRadius:4}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return brl(c.raw)}}}},
       scales:{y:{ticks:{callback:function(v){return brl(v)},font:{size:10}},grid:{color:'rgba(128,128,128,.15)'}},x:{grid:{display:false}}}}});
 }
