@@ -532,7 +532,7 @@
     state.mes = m;
     try { rodarRender('renderBudgetTable'); rodarRender('renderBudgetInsight'); if (window.mpRenderOrcCel) rodarRender('mpRenderOrcCel'); }
     finally { state.mes = antes; }
-    var alvo = $('orc-renda') || $('bd-cards');
+    var alvo = $('mbd') || $('orc-renda') || $('bd-cards');
     if (alvo) seletor('bd-mmes', alvo, m, false, function (n) { mesOrc = n; mpRenderBudget(); });
   };
   if (typeof PANEL_FNS !== 'undefined') PANEL_FNS.budget = ['mpRenderBudget'];
@@ -693,4 +693,78 @@
       return r;
     };
   }
+})();
+
+/* NuNa · Orcamento no celular: um cartao por categoria com barra e status do mes escolhido.
+   Toque no cartao para mudar a meta. Mesmas regras de status do computador. */
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  var aberto = null;
+  var COR = { ok: 'var(--pos)', warn: '#d49a1e', bad: 'var(--neg)', neu: 'var(--tx3)' };
+  function num(v) { return parseFloat(String(v).replace(/\./g, '').replace(',', '.')) || 0; }
+  window.mpRenderOrcCel = function () {
+    var panel = $('panel-budget'); if (!panel || !DATA) return;
+    var host = $('mbd');
+    if (!host) {
+      host = document.createElement('div'); host.id = 'mbd';
+      panel.insertBefore(host, panel.firstChild);
+      host.addEventListener('click', function (e) {
+        if (e.target.closest('.mo-ed')) return;
+        var c = e.target.closest('[data-cat]'); if (!c) return;
+        aberto = aberto === c.dataset.cat ? null : c.dataset.cat; mpRenderBudget();
+        if (aberto) { var i = host.querySelector('.mo-ed input'); if (i) i.focus(); }
+      });
+      host.addEventListener('change', function (e) {
+        var i = e.target.closest('.mo-ed input'); if (!i) return;
+        var p = state.perfil; DATA.budgets[p] = DATA.budgets[p] || {};
+        DATA.budgets[p][i.dataset.c] = num(i.value); salvarOrcamentos();
+        flashToast('Meta de ' + i.dataset.c + ': ' + brl(num(i.value)) + ' por mês.');
+        aberto = null; mpRenderBudget();
+      });
+    }
+    var p = state.perfil, m = state.mes, B = (DATA.budgets && DATA.budgets[p]) || {};
+    var T = typeof agtTotais === 'function' ? agtTotais(m, p) : {};
+    var frac = typeof agtFrac === 'function' ? agtFrac(m) : 1;
+    var prev = typeof mesPrevisao === 'function' && mesPrevisao(m);
+    var FIX = window.ORC_FIXAS || {}, MET = window.ORC_METAS || {}, FORA = window.ORC_FORA || {};
+    var cats = {}; Object.keys(B).forEach(function (c) { if (+B[c]) cats[c] = 1; }); Object.keys(T).forEach(function (c) { if (T[c]) cats[c] = 1; });
+    var linhas = [], cont = { ok: 0, warn: 0, bad: 0 }, somaB = 0, somaG = 0;
+    Object.keys(cats).forEach(function (c) {
+      if (p !== 'NuNa' && FORA[c]) return;
+      var b = +B[c] || 0, g = T[c] || 0, pct = b ? g / b : (g ? 9 : 0), st, lab;
+      if (prev) { st = 'neu'; lab = 'previsão'; }
+      else if (MET[c]) { st = g >= b && b ? 'ok' : 'warn'; lab = g >= b && b ? 'meta atingida' : 'guardando'; }
+      else if (FIX[c]) { st = 'neu'; lab = 'fixa'; }
+      else if (!b) { st = g ? 'warn' : 'neu'; lab = 'sem meta'; }
+      else if (pct > 1) { st = 'bad'; lab = 'estourou'; }
+      else if (pct >= 0.9 || (frac !== null && frac < 1 && pct > frac + 0.15)) { st = 'warn'; lab = 'atenção'; }
+      else { st = 'ok'; lab = 'no alvo'; }
+      if (!prev && !MET[c] && !FIX[c] && b) cont[st]++;
+      if (!MET[c]) { somaB += b; somaG += g; }
+      linhas.push({ c: c, b: b, g: g, pct: pct, st: st, lab: lab, ord: st === 'bad' ? 3 : st === 'warn' ? 2 : st === 'ok' ? 1 : 0 });
+    });
+    linhas.sort(function (x, y) { return (y.ord - x.ord) || (y.pct - x.pct) || (y.g - x.g); });
+    var ptot = somaB ? somaG / somaB : 0, stTot = ptot > 1 ? 'bad' : ptot >= 0.9 ? 'warn' : 'ok';
+    var marca = frac !== null && frac < 1 ? '<s style="left:' + (frac * 100).toFixed(1) + '%" title="hoje"></s>' : '';
+    var h = '<div class="mo-tot">' +
+      '<div class="mo-tl"><span>Gasto em ' + mpNomeMes(m).split(' ')[0] + '</span><b>' + brl(somaG) + '</b></div>' +
+      '<div class="mo-tl mo-sub"><span>de ' + brl(somaB) + ' orçados</span><span style="color:' + COR[stTot] + '">' +
+        (somaB ? (somaG <= somaB ? 'sobram ' + brl(somaB - somaG) : 'passou ' + brl(somaG - somaB)) : '') + '</span></div>' +
+      '<div class="mo-bar big"><i style="width:' + Math.min(100, ptot * 100).toFixed(1) + '%;background:' + COR[stTot] + '"></i>' + marca + '</div>' +
+      (prev ? '<div class="mo-chips"><span>Mês de previsão: só parcelas já comprometidas</span></div>' :
+      '<div class="mo-chips"><span class="ok">' + cont.ok + ' no alvo</span><span class="warn">' + cont.warn + ' atenção</span><span class="bad">' + cont.bad + ' estourou</span></div>') +
+      (marca ? '<div class="mo-hoje">A linha marca o dia de hoje no mês.</div>' : '') +
+      '</div>';
+    h += linhas.map(function (l) {
+      var w = l.b ? Math.min(100, l.pct * 100) : (l.g ? 100 : 0);
+      var resto = l.b ? (l.g <= l.b ? 'sobram ' + brl(l.b - l.g) : 'passou ' + brl(l.g - l.b)) : 'toque para definir uma meta';
+      return '<div class="mo-c' + (aberto === l.c ? ' open' : '') + '" data-cat="' + esc(l.c) + '">' +
+        '<div class="mo-l1"><span class="mo-nome"><i style="background:' + colorOf(l.c) + '"></i>' + esc(l.c) + '</span><span class="mo-st mo-' + l.st + '">' + l.lab + '</span></div>' +
+        '<div class="mo-bar"><i style="width:' + w.toFixed(1) + '%;background:' + COR[l.st] + '"></i>' + (l.b ? marca : '') + '</div>' +
+        '<div class="mo-l2"><span><b>' + brl(l.g) + '</b>' + (l.b ? ' de ' + brl(l.b) : '') + '</span><span>' + (l.b ? Math.round(l.pct * 100) + '% · ' : '') + resto + '</span></div>' +
+        (aberto === l.c ? '<label class="mo-ed">Meta por mês (R$)<input type="text" inputmode="decimal" data-c="' + esc(l.c) + '" value="' + l.b.toFixed(2).replace('.', ',') + '"></label>' : '') +
+      '</div>';
+    }).join('') || '<p class="note">Sem gastos nem metas neste mês.</p>';
+    host.innerHTML = h;
+  };
 })();
