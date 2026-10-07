@@ -617,7 +617,9 @@
     '</div>';
   }
 
-  var ULT = [];
+  var ULT = [], VIS = [];
+  /* lancamentos que estao na tela (para "Confirmar todos os visiveis") */
+  window.mpRevVisiveis = function () { return VIS.filter(function (t) { return t.revisar; }); };
   function montar() {
     var host = $('mrev'), tabela = $('rev-table');
     if (!tabela) return;
@@ -627,7 +629,7 @@
       ligar(host);
     }
     if (ultimoMes !== state.revMes) { ultimoMes = state.revMes; limite = 40; }
-    var list = revList(); ULT = list;
+    var list = revList(); ULT = list; VIS = [];
     /* cabecalho: quanto falta no mes */
     var ms = state.revMes === '__all' ? MONTHS : [state.revMes], noMes = 0;
     ms.forEach(function (m) { if (DATA.months[m]) DATA.months[m].transactions.forEach(function (t) { if (revVisivel(t)) noMes++; }); });
@@ -652,6 +654,7 @@
       ent.sort(function (a, b) { return b.v - a.v; });
     } else ent = list.map(function (t) { return { t: t, v: t.valor }; });
     var vis = ent.slice(0, limite);
+    vis.forEach(function (e) { VIS = VIS.concat(e.l || [e.t]); });
     h += vis.map(function (e) { return e.l ? grupo(e) : item(e.t); }).join('');
     if (ent.length > limite) h += '<button type="button" class="mr-mais">Mostrar mais ' + Math.min(40, ent.length - limite) + ' (faltam ' + (ent.length - limite) + ')</button>';
     host.innerHTML = h;

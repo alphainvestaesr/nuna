@@ -176,7 +176,41 @@ var CSV = (function () {
     Store.set(K.IMPORTADOS, guardados);
     return guardados.length;
   }
-  return { ler: ler, preparar: preparar, aplicar: aplicar, sugerirFonte: sugerirFonte, religar: religar };
+  /* Corrige lancamentos "real-" da base que ficaram com o mesmo id.
+     Em cada grupo de id repetido o 1o lancamento fica com o id antigo; os
+     demais ganham id novo no padrao do importador: hashCurto(dedupKey + '#' + ordinal).
+     Ids "real-" que nao se repetem e ids de outras origens ("csv-" etc.) nao mudam.
+     idsEmUso: ids que ja existem fora da base (importados), para nao colidir.
+     Devolve a lista de trocas [{mes, antigo, novo}]; altera a base no lugar. */
+  function corrigirIdsRepetidos(base, idsEmUso) {
+    var meses = (base && base.monthOrder) || [], grupos = {}, ordem = [], usados = {};
+    (idsEmUso || []).forEach(function (u) { usados[u] = 1; });
+    meses.forEach(function (m) {
+      ((base.months[m] || {}).transactions || []).forEach(function (t) {
+        var id = t.uid || t.id;
+        if (id) usados[id] = 1;
+        if (!/^real-/.test(String(id || ''))) return;
+        if (!grupos[id]) { grupos[id] = []; ordem.push(id); }
+        grupos[id].push({ mes: m, t: t });
+      });
+    });
+    var trocas = [];
+    ordem.forEach(function (antigo) {
+      grupos[antigo].slice(1).forEach(function (g) {
+        var t = g.t, ord = t.ordinal || 1;
+        var novo = 'real-' + hashCurto(t.dedupKey + '#' + ord);
+        /* dois lancamentos com mesma chave E mesmo ordinal dariam o mesmo hash:
+           avanca o ordinal ate achar um id livre */
+        while (usados[novo]) { ord++; novo = 'real-' + hashCurto(t.dedupKey + '#' + ord); }
+        usados[novo] = 1;
+        t.uid = novo; t.id = novo; t.ordinal = ord;
+        trocas.push({ mes: g.mes, antigo: antigo, novo: novo });
+      });
+    });
+    return trocas;
+  }
+  return { ler: ler, preparar: preparar, aplicar: aplicar, sugerirFonte: sugerirFonte, religar: religar,
+           corrigirIdsRepetidos: corrigirIdsRepetidos, hashCurto: hashCurto };
 })();
 
 /* ---------- cartoes e contas: lista viva ----------

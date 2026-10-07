@@ -287,7 +287,9 @@ var Store = (function () {
     if (!ctx.householdId) return Promise.resolve(false);
     if (recarregando) { pedido = true; return Promise.resolve(false); }
     recarregando = true;
-    return carregarTudo().then(function () {
+    /* grava antes o que ainda esta na fila: senao a leitura do banco
+       sobrescreve no cache uma edicao feita ha menos de 400ms */
+    return descarregarAgora().then(carregarTudo).then(function () {
       recarregando = false;
       if (pedido) { pedido = false; return recarregar(); }
       ouvintes.forEach(function (f) { try { f(); } catch (e) { erro(e); } });
