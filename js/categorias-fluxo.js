@@ -66,10 +66,26 @@
     var _ca = window.catAplicar;
     window.catAplicar = function () {
       var r = _ca.apply(this, arguments);
-      try { ajustarCatalogo(); ajustarLancamentos(); } catch (e) { console.warn('categorias/fluxo', e); }
+      try { ajustarCatalogo(); ajustarLancamentos(); ajustarGastos(); } catch (e) { console.warn('categorias/fluxo', e); }
       return r;
     };
   }
+  /* gastos do ACABEI DE GASTAR: a categoria antiga passa a valer como a nova
+     em toda a tela (relatorio do Agente, tabela Hoje, parcelas futuras).
+     So na memoria e so os individuais de cada perfil; o conjunto nao muda. */
+  function ajustarGastos() {
+    if (typeof AG === 'undefined' || !AG.itens) return;
+    AG.itens.forEach(function (i) {
+      if (i.divisao === 'CONJUNTA') return;
+      var r = remapDe(i.perfil, i.categoria); if (!r) return;
+      i.categoria = r[0]; if (!i.sub) i.sub = r[1];
+    });
+  }
+  window.catAjustarGastos = ajustarGastos;
+  ['agInit', 'agRenderAll', 'parcProjetar'].forEach(function (nome) {
+    var f = window[nome]; if (typeof f !== 'function') return;
+    window[nome] = function () { try { ajustarGastos(); } catch (e) {} var r = f.apply(this, arguments); try { ajustarGastos(); } catch (e) {} return r; };
+  });
   /* gastos do ACABEI DE GASTAR com categoria antiga aparecem com a nova */
   if (typeof window.agTxDeItem === 'function') {
     var _tx = window.agTxDeItem;
