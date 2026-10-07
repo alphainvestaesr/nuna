@@ -539,3 +539,158 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligarAbas); else ligarAbas();
 })();
+
+/* NuNa · Revisar no celular: lista enxuta para dar conta de centenas de pendentes.
+   - iguais agrupados (ex.: 7x iFood) com um toque para conferir o grupo todo
+   - um toque no ✓ confere; "Desfazer" no aviso
+   - toque no lancamento abre os campos para corrigir
+   - mostra 40 por vez (a tela nao trava) */
+(function () {
+  var $ = function (i) { return document.getElementById(i); };
+  var abertos = {}, limite = 40, agrupar = true, ultimoMes = null;
+  function app() { return document.documentElement.classList.contains('app-mode'); }
+  function chaveDesc(t) {
+    return String(t.desc || t.raw || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/\(\d+\/\d+\)/g, '').replace(/[0-9*#.\-\/]+/g, ' ').replace(/\s+/g, ' ').trim() || '?';
+  }
+  function dia(t) { return String(t.data || '').slice(0, 5); }
+  function catDe(t) { return t.grupo ? 'Conjunto · ' + t.grupo + (t.sub ? ' › ' + t.sub : '') : (t.plano || 'sem categoria') + (t.sub ? ' › ' + t.sub : ''); }
+  function fonteCurta(t) { return String(t.fonteLabel || '').replace(/^Cartao\s+/i, '').replace(/\s*\((Ana|Manuela)\)$/, ''); }
+  function chave(t) { return t._m + '|' + t.id; }
+
+  function editor(t) {
+    return '<div class="mr-ed">' +
+      '<label>Divisão<select class="c-dv"><option value="INDIVIDUAL"' + (t.divisao === 'INDIVIDUAL' ? ' selected' : '') + '>Individual</option><option value="CONJUNTA"' + (t.divisao === 'CONJUNTA' ? ' selected' : '') + '>Conjunta</option></select></label>' +
+      (t.divisao === 'CONJUNTA'
+        ? '<label>Grupo do conjunto<select class="c-grupo" data-perfil="NuNa" data-vazio="1">' + catOptsHTML('NuNa', t.grupo, t.grupo ? t.sub : '', { novo: true, vazio: true }) + '</select></label>'
+        : '') +
+      '<label>Categoria de ' + esc(t.perfil) + '<select class="c-plano" data-perfil="' + esc(t.perfil) + '">' + catOptsHTML(t.perfil, t.plano, t.grupo ? '' : t.sub, { novo: true }) + '</select></label>' +
+      '<label>Tipo<select class="c-tipo">' + tipoOpts(t.tipo) + '</select></label>' +
+      '<div class="mr-raw">' + esc(t.raw || '') + ' · ' + esc(t.fonteLabel || '') + '</div>' +
+      '</div>';
+  }
+  function item(t, noGrupo) {
+    var k = chave(t), ab = !!abertos[k];
+    return '<div class="mr-it' + (ab ? ' open' : '') + '" data-id="' + esc(k) + '">' +
+      '<div class="mr-l" data-abre="' + esc(k) + '">' +
+        '<div class="mr-meta">' + dia(t) + ' · ' + esc(fonteCurta(t)) + (t.perfil ? ' · ' + esc(t.perfil) : '') + (t.possivelDup ? ' · <b class="mr-dup">poss. dup.</b>' : '') + '</div>' +
+        (noGrupo ? '' : '<div class="mr-desc">' + esc(t.desc) + '</div>') +
+        '<div class="mr-cat">' + esc(catDe(t)) + ' <span>✎</span></div>' +
+      '</div>' +
+      '<div class="mr-r"><b>' + brl(t.valor) + '</b><button type="button" class="mr-ok" data-ok="' + esc(k) + '" aria-label="Conferido">✓</button></div>' +
+      (ab ? editor(t) : '') +
+    '</div>';
+  }
+  function grupo(g) {
+    var k = 'g:' + g.k, ab = !!abertos[k], tot = g.l.reduce(function (s, t) { return s + t.valor; }, 0);
+    var cats = {}; g.l.forEach(function (t) { cats[catDe(t)] = 1; });
+    var cs = Object.keys(cats), mesmoPerfil = g.l.every(function (t) { return t.perfil === g.l[0].perfil; });
+    return '<div class="mr-grp' + (ab ? ' open' : '') + '">' +
+      '<div class="mr-it mr-gh">' +
+        '<div class="mr-l" data-abre="' + esc(k) + '">' +
+          '<div class="mr-meta">' + g.l.length + ' lançamentos iguais · toque para ver</div>' +
+          '<div class="mr-desc">' + esc(g.l[0].desc) + '</div>' +
+          '<div class="mr-cat">' + (cs.length === 1 ? esc(cs[0]) : cs.length + ' categorias diferentes') + '</div>' +
+        '</div>' +
+        '<div class="mr-r"><b>' + brl(tot) + '</b><button type="button" class="mr-ok mr-okg" data-okg="' + esc(g.k) + '" aria-label="Conferir os ' + g.l.length + '">✓ ' + g.l.length + '</button></div>' +
+      '</div>' +
+      (ab ? '<div class="mr-gcorpo">' +
+        (mesmoPerfil ? '<label class="mr-todos" data-grp="' + esc(g.k) + '">Categoria para os ' + g.l.length + '<select class="mr-gcat" data-perfil="' + esc(g.l[0].perfil) + '"><option value="">escolher…</option>' + catOptsHTML(g.l[0].perfil, '', '', {}) + '</select></label>' : '') +
+        g.l.map(function (t) { return item(t, true); }).join('') + '</div>' : '') +
+    '</div>';
+  }
+
+  var ULT = [];
+  function montar() {
+    var host = $('mrev'), tabela = $('rev-table');
+    if (!tabela) return;
+    if (!host) {
+      host = document.createElement('div'); host.id = 'mrev';
+      var sc = tabela.closest('.scroll') || tabela; sc.parentNode.insertBefore(host, sc);
+      ligar(host);
+    }
+    if (ultimoMes !== state.revMes) { ultimoMes = state.revMes; limite = 40; }
+    var list = revList(); ULT = list;
+    /* cabecalho: quanto falta no mes */
+    var ms = state.revMes === '__all' ? MONTHS : [state.revMes], noMes = 0;
+    ms.forEach(function (m) { if (DATA.months[m]) DATA.months[m].transactions.forEach(function (t) { if (revVisivel(t)) noMes++; }); });
+    var feitos = Math.max(0, noMes - list.length), pct = noMes ? Math.round(feitos / noMes * 100) : 100;
+    var tot = list.reduce(function (s, t) { return s + t.valor; }, 0);
+    var h = '<div class="mr-head"><div><b>' + list.length + '</b> a conferir <span>· ' + brl(tot) + '</span></div><div class="mr-pct">' + pct + '% conferido</div></div>' +
+      '<div class="mr-bar"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="mr-modo"><button type="button" data-modo="g" class="' + (agrupar ? 'on' : '') + '">Agrupar iguais</button><button type="button" data-modo="v" class="' + (agrupar ? '' : 'on') + '">Maiores primeiro</button></div>';
+    if (!list.length) {
+      host.innerHTML = h + '<div class="mr-vazio">Tudo conferido ' + (state.revMes === '__all' ? '' : 'em ' + mpNomeMes(state.revMes)) + ' ✓</div>';
+      return;
+    }
+    var ent = [];
+    if (agrupar) {
+      var gs = {}, ordem = [];
+      list.forEach(function (t) { var k = chaveDesc(t); if (!gs[k]) { gs[k] = []; ordem.push(k); } gs[k].push(t); });
+      ordem.forEach(function (k) {
+        var l = gs[k];
+        if (l.length > 1) ent.push({ k: k, l: l, v: l.reduce(function (s, t) { return s + t.valor; }, 0) });
+        else ent.push({ t: l[0], v: l[0].valor });
+      });
+      ent.sort(function (a, b) { return b.v - a.v; });
+    } else ent = list.map(function (t) { return { t: t, v: t.valor }; });
+    var vis = ent.slice(0, limite);
+    h += vis.map(function (e) { return e.l ? grupo(e) : item(e.t); }).join('');
+    if (ent.length > limite) h += '<button type="button" class="mr-mais">Mostrar mais ' + Math.min(40, ent.length - limite) + ' (faltam ' + (ent.length - limite) + ')</button>';
+    host.innerHTML = h;
+  }
+
+  function conferir(lista) {
+    lista.forEach(function (t) { t.revisar = false; salvarOverride(t); });
+    desfazerAviso(lista);
+    renderReview(); renderAll(true);
+  }
+  var avisoT = null;
+  function desfazerAviso(lista) {
+    var a = $('mr-toast'); if (a) a.remove(); clearTimeout(avisoT);
+    a = document.createElement('div'); a.id = 'mr-toast'; a.className = 'mr-toast';
+    a.innerHTML = '<span>' + (lista.length === 1 ? 'Conferido: ' + esc(lista[0].desc) : lista.length + ' lançamentos conferidos') + '</span><button type="button">Desfazer</button>';
+    a.querySelector('button').onclick = function () {
+      lista.forEach(function (t) { t.revisar = true; salvarOverride(t); });
+      a.remove(); renderReview(); renderAll(true);
+    };
+    document.body.appendChild(a);
+    avisoT = setTimeout(function () { a.remove(); }, 5000);
+  }
+  function ligar(host) {
+    host.addEventListener('click', function (e) {
+      var b;
+      if ((b = e.target.closest('[data-ok]'))) { var t = findTx(b.dataset.ok); if (!t) return; var it = b.closest('.mr-it'); it.classList.add('saindo'); setTimeout(function () { conferir([t]); }, 160); return; }
+      if ((b = e.target.closest('[data-okg]'))) { var l = ULT.filter(function (t) { return chaveDesc(t) === b.dataset.okg; }); b.closest('.mr-grp').classList.add('saindo'); setTimeout(function () { conferir(l); }, 160); return; }
+      if ((b = e.target.closest('[data-modo]'))) { agrupar = b.dataset.modo === 'g'; limite = 40; montar(); return; }
+      if (e.target.closest('.mr-mais')) { limite += 40; montar(); return; }
+      if (e.target.closest('.mr-ed,.mr-todos')) return;
+      if ((b = e.target.closest('[data-abre]'))) { var k = b.dataset.abre; if (abertos[k]) delete abertos[k]; else abertos[k] = 1; montar(); }
+    });
+    host.addEventListener('change', function (e) {
+      var s = e.target;
+      if (s.classList.contains('mr-gcat')) {
+        if (!s.value || s.value === '__novo__') return;
+        var k = s.closest('[data-grp]').dataset.grp;
+        var alvo = { value: s.value, classList: { contains: function (c) { return c === 'c-plano'; } } };
+        var l = ULT.filter(function (t) { return chaveDesc(t) === k; });
+        l.forEach(function (t) { applyEdit({ dataset: { id: chave(t) } }, alvo); });
+        flashToast('Categoria trocada em ' + l.length + ' lançamentos.');
+        renderReview(); renderAll(true);
+        return;
+      }
+      var it = s.closest('.mr-it'); if (!it) return;
+      applyEdit(it, s);
+      renderReview(); renderAll(true);
+    });
+  }
+
+  if (typeof window.renderReview === 'function') {
+    var _rr = window.renderReview;
+    window.renderReview = function () {
+      var r = _rr.apply(this, arguments);
+      try { if (app()) montar(); } catch (e) { console.warn('mobile/revisar', e); }
+      return r;
+    };
+  }
+})();

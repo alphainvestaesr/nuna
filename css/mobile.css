@@ -280,3 +280,50 @@ html.app-mode .mmes-nome em{font-style:normal;font-weight:600;font-size:10.5px;o
 html.app-mode .mmes-nome select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
 html.app-mode .mmes-hoje{flex:none;height:40px;padding:0 10px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--acc);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
 html.app-mode #rev-months{display:none}
+
+/* Revisar no celular: lista enxuta, iguais agrupados, ✓ com um toque */
+#mrev{display:none}
+html.app-mode #mrev{display:block}
+html.app-mode #panel-review .scroll,html.app-mode #rev-head,html.app-mode #rev-count{display:none}
+html.app-mode #panel-review .card{padding:12px}
+html.app-mode #panel-review .card>h2{margin-bottom:10px}
+html.app-mode #rev-mmes+div{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px!important}
+html.app-mode #rev-search{flex:1 1 100%!important;min-width:0}
+html.app-mode #rev-perfil{flex:1 1 0;min-width:0}
+html.app-mode #rev-all{flex:1 1 0;min-width:0;min-height:40px;padding:0 10px;font-size:13.5px}
+.mr-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:15px}
+.mr-head span{color:var(--tx3);font-size:13px}
+.mr-pct{font-size:12px;color:var(--pos);font-weight:700;white-space:nowrap}
+.mr-bar{height:6px;border-radius:6px;background:var(--border2);margin:6px 0 10px;overflow:hidden}
+.mr-bar i{display:block;height:100%;background:var(--pos);border-radius:6px;transition:width .3s}
+.mr-modo{display:flex;gap:6px;margin-bottom:10px}
+.mr-modo button{flex:1;height:34px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--tx2);font:inherit;font-size:13px;cursor:pointer}
+.mr-modo button.on{background:var(--tx);color:var(--bg);border-color:var(--tx);font-weight:650}
+.mr-it{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;border:1px solid var(--border);border-radius:12px;background:var(--card);padding:8px 8px 8px 12px;margin-bottom:6px;transition:opacity .16s,transform .16s}
+.mr-it.saindo,.mr-grp.saindo{opacity:0;transform:translateX(40px)}
+.mr-l{min-width:0;cursor:pointer}
+.mr-meta{font-size:11.5px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mr-dup{color:var(--neg);font-weight:700}
+.mr-desc{font-weight:650;font-size:14px;overflow-wrap:anywhere;margin:1px 0}
+.mr-cat{display:inline-block;font-size:12px;color:var(--acc);background:var(--accL);border-radius:999px;padding:2px 9px;margin-top:2px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mr-cat span{opacity:.7;margin-left:2px}
+.mr-r{display:flex;align-items:center;gap:8px}
+.mr-r b{font-size:14px;white-space:nowrap}
+.mr-ok{flex:none;min-width:44px;height:44px;border-radius:12px;border:2px solid var(--pos);background:transparent;color:var(--pos);font:inherit;font-size:20px;font-weight:800;cursor:pointer;padding:0 8px}
+.mr-ok:active{background:var(--pos);color:#fff}
+.mr-okg{font-size:15px;background:var(--pos);color:#fff}
+.mr-ed{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px dashed var(--border2);padding-top:8px;margin-top:4px}
+.mr-ed label,.mr-todos{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--tx3)}
+.mr-ed select,.mr-todos select{width:100%;min-width:0}
+.mr-raw{grid-column:1/-1;font-size:11px;color:var(--tx3);overflow-wrap:anywhere}
+.mr-grp{margin-bottom:6px;transition:opacity .16s,transform .16s}
+.mr-grp>.mr-gh{margin-bottom:0;border-left:4px solid var(--pos)}
+.mr-grp.open>.mr-gh{border-radius:12px 12px 0 0}
+.mr-gcorpo{border:1px solid var(--border);border-top:0;border-radius:0 0 12px 12px;padding:8px 6px 2px;background:var(--bg)}
+.mr-gcorpo .mr-it{margin-bottom:6px}
+.mr-todos{margin:0 4px 8px}
+.mr-mais{display:block;width:100%;min-height:44px;border-radius:12px;border:1px dashed var(--border);background:none;color:var(--tx);font:inherit;font-size:14px;cursor:pointer;margin-top:4px}
+.mr-vazio{text-align:center;padding:28px 10px;color:var(--pos);font-weight:700;font-size:16px}
+.mr-toast{position:fixed;left:12px;right:12px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:80;display:flex;align-items:center;gap:10px;background:var(--tx);color:var(--bg);border-radius:12px;padding:10px 12px;font-size:13.5px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.mr-toast span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mr-toast button{flex:none;border:0;background:none;color:var(--acc);font:inherit;font-weight:800;font-size:14px;cursor:pointer}
