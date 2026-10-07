@@ -314,38 +314,79 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', preparar); else preparar();
 })();
 
-/* NuNa · botao + da barra abre "Acabei de gastar" e "Contribuicao"; filtros das Transacoes */
+/* NuNa · botao + da barra: abre na hora o formulario de gasto (o mesmo da aba
+   Acabei de Gastar, emprestado para a folha) com o valor ja em foco.
+   Atalhos no topo: Ler nota (QR) e Contribuicao. Filtros das Transacoes. */
 (function () {
   var $ = function (i) { return document.getElementById(i); };
-  function fechar() { var a = $('macts'), b = $('macts-bg'); if (a) a.classList.remove('open'); if (b) b.classList.remove('open'); }
+  var marcador = null, card = null;
+  function devolver() {
+    if (card && marcador && marcador.parentNode) { marcador.parentNode.insertBefore(card, marcador); marcador.remove(); }
+    marcador = null; if (card) card.classList.remove('mq-det');
+  }
+  function fechar() {
+    var a = $('macts'), b = $('macts-bg'); if (a) a.classList.remove('open'); if (b) b.classList.remove('open');
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    setTimeout(function () { if (!$('macts') || !$('macts').classList.contains('open')) devolver(); }, 220);
+  }
+  window.mpFecharGasto = fechar;
   function montar() {
     if ($('macts')) return;
+    var host = $('tela-app') || document.body;
     var bg = document.createElement('div'); bg.id = 'macts-bg'; bg.className = 'msheet-bg';
-    var sh = document.createElement('div'); sh.id = 'macts'; sh.className = 'msheet'; sh.setAttribute('role', 'dialog');
+    var sh = document.createElement('div'); sh.id = 'macts'; sh.className = 'msheet'; sh.setAttribute('role', 'dialog'); sh.setAttribute('aria-label', 'Novo gasto');
     sh.innerHTML = '<div class="grip"></div>' +
-      '<button class="btn-big" data-a="gasto">+ ACABEI DE GASTAR<span>registrar um gasto agora, sem esperar a fatura</span></button>' +
-      '<button class="btn-big blue" data-a="contrib">CONTRIBUI&Ccedil;&Atilde;O<span>registrar quanto ela p&ocirc;s nas contas conjuntas</span></button>' +
-      '<button class="btn-big" data-a="qr">LER NOTA (QR)<span>c&acirc;mera para a nota fiscal</span></button>';
-    (($('tela-app')) || document.body).appendChild(bg); (($('tela-app')) || document.body).appendChild(sh);
+      '<div class="mq-top"><b>Novo gasto</b>' +
+        '<button type="button" data-a="qr">' + (window.NUNA_ICONE_QR || '') + 'Ler nota</button>' +
+        '<button type="button" data-a="contrib">Contribuição</button>' +
+        '<button type="button" data-a="x" aria-label="Fechar">×</button></div>' +
+      '<div id="mq-form"></div>' +
+      '<button type="button" class="mq-mais" data-a="det">Mais detalhes (data, parcelas, divisão…)</button>';
+    host.appendChild(bg); host.appendChild(sh);
     bg.addEventListener('click', fechar);
     sh.addEventListener('click', function (e) {
       var b = e.target.closest('button[data-a]'); if (!b) return;
-      if (b.dataset.a === 'qr') { fechar(); if (window.mpLerQR) mpLerQR(); return; }
-      var alvo = b.dataset.a === 'gasto' ? 'ag-open' : 'ca-abrir';
-      fechar();
-      var s = (window.Auth && Auth.sessao && Auth.sessao()) || {};
-      var ativo = document.querySelector('.prof.on');
-      if (ativo && ativo.dataset.p === 'NuNa' && s.perfil) { var p = document.querySelector('.prof[data-p="' + s.perfil + '"]'); if (p) p.click(); }
-      setTimeout(function () { var o = $(alvo); if (o) o.click(); }, 120);
+      var a = b.dataset.a;
+      if (a === 'x') return fechar();
+      if (a === 'det') { if (card) card.classList.toggle('mq-det'); b.textContent = card && card.classList.contains('mq-det') ? 'Menos detalhes' : 'Mais detalhes (data, parcelas, divisão…)'; return; }
+      if (a === 'qr') { fechar(); if (window.mpLerQR) mpLerQR(); return; }
+      if (a === 'contrib') {
+        fechar();
+        var s = (window.Auth && Auth.sessao && Auth.sessao()) || {};
+        var ativo = document.querySelector('.prof.on');
+        if (ativo && ativo.dataset.p === 'NuNa' && s.perfil) { var p = document.querySelector('.prof[data-p="' + s.perfil + '"]'); if (p) p.click(); }
+        setTimeout(function () { var o = $('ca-abrir'); if (o) o.click(); window.scrollTo(0, 0); }, 120);
+      }
     });
+  }
+  function abrir() {
+    montar();
+    var desc = $('ag-desc'); card = card || (desc && desc.closest('.card'));
+    if (card && !marcador) {
+      marcador = document.createComment('form-gasto'); card.parentNode.insertBefore(marcador, card);
+      $('mq-form').appendChild(card);
+    }
+    var bt = document.querySelector('#macts .mq-mais'); if (bt) bt.textContent = 'Mais detalhes (data, parcelas, divisão…)';
+    $('macts').classList.add('open'); $('macts-bg').classList.add('open');
+    /* foco dentro do proprio toque: no iPhone e o que faz o teclado abrir */
+    var v = $('ag-valor'); if (v) try { v.focus({ preventScroll: true }); } catch (e) { v.focus(); }
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('.mbar button[data-k="gastei"]');
     if (!b || !document.documentElement.classList.contains('app-mode')) return;
     e.stopPropagation(); e.preventDefault();
-    montar();
-    requestAnimationFrame(function () { $('macts').classList.add('open'); $('macts-bg').classList.add('open'); });
+    abrir();
   }, true);
+  /* gasto salvo: fecha a folha */
+  if (typeof window.agSalvarItem === 'function') {
+    var _si = window.agSalvarItem;
+    window.agSalvarItem = function () {
+      var r = _si.apply(this, arguments);
+      var sh = $('macts');
+      if (sh && sh.classList.contains('open')) Promise.resolve(r).then(function () { fechar(); });
+      return r;
+    };
+  }
 
   function filtros() {
     var i = $('tx-search'); if (!i || $('tx-fbtn')) return;
@@ -434,30 +475,6 @@
     novo.__res = 1; window.ntSalvarNota = novo;
   }
   ligar(); document.addEventListener('DOMContentLoaded', ligar); window.addEventListener('load', ligar);
-})();
-
-/* NuNa · convite para instalar o app neste aparelho (faixa no topo; pode dispensar) */
-(function () {
-  var CH = 'nuna.instbanner';
-  function standalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
-  function ios() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
-  function dispensado() { try { return localStorage.getItem(CH) === '1'; } catch (e) { return false; } }
-  function faixa() {
-    if (document.getElementById('inst-faixa') || standalone() || dispensado()) return;
-    if (!document.documentElement.classList.contains('app-mode')) return;
-    var host = document.getElementById('tela-app'); if (!host || host.hidden) return;
-    var f = document.createElement('div'); f.id = 'inst-faixa'; f.className = 'inst-faixa';
-    f.innerHTML = '<span>' + (ios() ? 'Para instalar: toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.' : 'Instale o NuNa no seu aparelho para abrir como app.') + '</span>' +
-      (ios() ? '' : '<button type="button" data-i="ok">Instalar</button>') + '<button type="button" data-i="x" aria-label="Dispensar">×</button>';
-    f.addEventListener('click', function (e) {
-      var b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.i === 'x') { try { localStorage.setItem(CH, '1'); } catch (er) {} f.remove(); }
-      else { var r = document.querySelector('#msheet [data-acao="instalar"]'); if (r) r.click(); }
-    });
-    host.insertBefore(f, host.firstChild);
-  }
-  window.addEventListener('appinstalled', function () { var f = document.getElementById('inst-faixa'); if (f) f.remove(); });
-  var t = 0, iv = setInterval(function () { faixa(); if (document.getElementById('inst-faixa') || ++t > 40) clearInterval(iv); }, 1000);
 })();
 
 /* NuNa · Orcamento e Revisar no celular: abrem sempre no mes atual, com seletor ‹ mes › */

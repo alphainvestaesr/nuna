@@ -163,8 +163,6 @@ html.app-mode .card.mp-f2.mp-f2-closed>.mp-h2x{margin-bottom:0}
 
 /* botoes grandes saem do topo: aparecem ao tocar no + da barra */
 html.app-mode #ag-cta{display:none!important}
-html.app-mode #macts .btn-big{margin-bottom:10px;min-height:64px}
-html.app-mode #macts .btn-big:last-child{margin-bottom:4px}
 
 /* filtros das Transacoes: busca + botao Filtros */
 html.app-mode #tx-months+div{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -173,13 +171,6 @@ html.app-mode #tx-months+div>select{flex:1 1 calc(50% - 4px);min-width:0;display
 html.app-mode.tx-filtros #tx-months+div>select{display:block}
 html.app-mode #tx-fbtn{flex:none;height:40px;padding:0 14px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--tx);font:inherit;font-size:14px;cursor:pointer}
 html.app-mode.tx-filtros #tx-fbtn,html.app-mode #tx-fbtn.tem{background:var(--tx);color:var(--bg)}
-
-/* botoes do + lado a lado, compactos */
-html.app-mode #macts{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
-html.app-mode #macts .grip{flex:1 1 100%;margin:4px auto 6px}
-html.app-mode #macts .btn-big{flex:1 1 0;min-width:0;min-height:0;margin:0;padding:10px;font-size:13px;line-height:1.2;text-align:center}
-html.app-mode #macts .btn-big:last-child{margin:0}
-html.app-mode #macts .btn-big span{font-size:10.5px;margin-top:2px}
 
 /* Transacoes: cada lancamento vira um cartao compacto (toque para editar) */
 html.app-mode #tx-months~.scroll{overflow:visible}
@@ -226,11 +217,6 @@ html.app-mode #tx-months~.scroll td select{width:100%}
 .nres-alerta{background:var(--negL);color:var(--neg);border:1px solid var(--neg);border-radius:10px;padding:10px 12px;font-weight:700;font-size:14px;margin:2px 0 10px;flex:none}
 html.app-mode .msheet .mrow-inst{background:var(--tx);color:var(--bg);border-color:var(--tx);font-weight:650}
 html.app-mode .msheet .mrow-inst small{color:inherit;opacity:.8}
-.inst-faixa{display:none}
-html.app-mode .inst-faixa{display:flex;align-items:center;gap:8px;background:var(--accL);border:1px solid var(--border);border-radius:12px;padding:8px 10px;margin:0 0 8px;font-size:12.5px;color:var(--tx)}
-html.app-mode .inst-faixa span{flex:1;min-width:0}
-html.app-mode .inst-faixa button{flex:none;border:0;border-radius:8px;background:var(--tx);color:var(--bg);font:inherit;font-size:13px;font-weight:600;padding:7px 12px;cursor:pointer}
-html.app-mode .inst-faixa button[data-i="x"]{background:none;color:var(--tx3);font-size:20px;padding:0 6px;line-height:1}
 
 /* categoria da nota e cartao "Notas fiscais do mes" */
 .nres-cat{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 0;font-size:13px;color:var(--tx2);flex:none}
@@ -363,3 +349,28 @@ html.app-mode #orc-renda{margin-top:14px!important;background:var(--card)}
 .mo-l2 b{color:var(--tx);font-size:13px}
 .mo-ed{display:flex;flex-direction:column;gap:4px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border2);font-size:11.5px;color:var(--tx3);cursor:default}
 .mo-ed input{width:100%;text-align:right}
+
+/* + : formulario de gasto direto na folha (valor primeiro, resto em "Mais detalhes") */
+html.app-mode #macts{padding-top:6px}
+.mq-top{display:flex;align-items:center;gap:6px;margin:0 0 10px}
+.mq-top b{flex:1;font-size:17px}
+.mq-top button{flex:none;display:flex;align-items:center;gap:5px;height:34px;padding:0 11px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--tx);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.mq-top button svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9}
+.mq-top button svg .fill{fill:currentColor;stroke:none}
+.mq-top button[data-a="x"]{width:34px;padding:0;justify-content:center;font-size:20px;color:var(--tx3)}
+#mq-form .card{border:0;background:none;box-shadow:none;padding:0;margin:0}
+#mq-form .card>h2,#mq-form #ag-status-db,#mq-form #ag-clear{display:none}
+#mq-form .agform{display:flex!important;flex-direction:column;gap:8px}
+#mq-form .agform label{order:5}
+#mq-form .agform label:has(#ag-valor){order:1}
+#mq-form .agform label:has(#ag-desc){order:2}
+#mq-form .agform label:has(#ag-cat){order:3}
+#mq-form .agform label:has(#ag-fonte){order:4}
+#mq-form:not(:has(.mq-det)) .agform label:has(#ag-data),#mq-form:not(:has(.mq-det)) .agform label:has(#ag-obs),
+#mq-form:not(:has(.mq-det)) .agform label:has(#ag-parc),#mq-form:not(:has(.mq-det)) .agform label:has(#ag-perfil),
+#mq-form:not(:has(.mq-det)) .agform label:has(#ag-div),#mq-form:not(:has(.mq-det)) .agform label:has(#ag-grupo){display:none}
+#mq-form #ag-valor{font-size:26px!important;font-weight:700;height:54px;text-align:right}
+#mq-form #ag-sugestao,#mq-form #ag-parc-info{font-size:12px;margin:6px 0 0}
+#mq-form #ag-save{width:100%;min-height:50px;font-size:16px}
+#mq-form #ag-save+.pill{display:none}
+.mq-mais{display:block;width:100%;margin-top:8px;background:none;border:0;color:var(--tx3);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:6px}
