@@ -1,0 +1,13 @@
+{
+ "duracao": 20.4,
+ "desktop": {
+  "frames": 150,
+  "largura": 960,
+  "altura": 560
+ },
+ "mobile": {
+  "frames": 110,
+  "largura": 640,
+  "altura": 373
+ }
+}
