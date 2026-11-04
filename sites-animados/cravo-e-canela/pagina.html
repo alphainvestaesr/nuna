@@ -1,0 +1,464 @@
+<title>Cravo &amp; Canela</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cravo & Canela, loja de produtos naturais. Role a página e acompanhe a Cravinho.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Josefin+Sans:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: palco fixo 9:16 controlado pela rolagem; no celular ocupa a tela, no computador fica à direita com o texto à esquerda. Um mundo claro só, porque os quadros têm fundo branco de estúdio. */
+:root {
+  --paper: #ffffff;
+  --mist: #f2f5ef;
+  --leaf: #1f5130;
+  --leaf-soft: #e3ece2;
+  --gold: #c8962c;
+  --canela: #8a4a25;
+  --ink: #1c2a20;
+  --ink-soft: #55635a;
+  --line: #dfe6dc;
+  --display: 'Instrument Serif', 'Georgia', serif;
+  --brand: 'Josefin Sans', 'Trebuchet MS', sans-serif;
+  --body: 'Figtree', -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+html { scroll-behavior: auto; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; overflow-x: hidden; }
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Carregamento */
+#loader { position: fixed; inset: 0; z-index: 100; background: var(--paper); display: grid; place-items: center; transition: opacity .7s ease, filter .7s ease; }
+#loader.out { opacity: 0; filter: blur(8px); pointer-events: none; }
+.loader-box { display: grid; justify-items: center; gap: 18px; }
+.loader-box img { width: min(46vw, 220px); height: auto; animation: breathe 2.4s ease-in-out infinite; }
+.loader-bar { width: 150px; height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.loader-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--leaf), var(--gold)); transition: width .2s ease; }
+.loader-pct { font-family: var(--brand); font-size: 11px; letter-spacing: .28em; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+@keyframes breathe { 50% { transform: scale(1.04); } }
+
+/* Palco */
+.story { position: relative; height: 1150vh; }
+.sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--paper); }
+#film, #dust { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#dust { pointer-events: none; }
+#logo { position: absolute; left: 0; top: 0; width: 100px; height: auto; transform-origin: 0 0; will-change: transform, opacity; pointer-events: none; }
+
+/* Textos sobre o palco */
+.beat { position: absolute; z-index: 5; opacity: 0; transform: translateY(14px); filter: blur(6px); transition: opacity .6s ease, transform .6s ease, filter .6s ease; pointer-events: none; }
+.beat.on { opacity: 1; transform: none; filter: none; pointer-events: auto; }
+.eyebrow { font-family: var(--brand); font-weight: 600; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--leaf); }
+.beat h2 { font-family: var(--display); font-weight: 400; font-size: clamp(34px, 9vw, 64px); line-height: 1.02; margin: 6px 0 0; color: var(--ink); text-wrap: balance; }
+.beat h2 em { color: var(--leaf); }
+.beat p { margin: 10px 0 0; color: var(--ink-soft); font-size: 15px; max-width: 34ch; }
+
+.beat.card { left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: min(calc(100% - 32px), 420px); transform: translate(-50%, 14px); padding: 16px 18px 18px; background: rgba(255, 255, 255, .78); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); border: 1px solid rgba(31, 81, 48, .10); border-radius: 18px; box-shadow: 0 10px 40px rgba(28, 42, 32, .10); }
+.beat.card.on { transform: translate(-50%, 0); }
+.beat.card h2 { font-size: clamp(30px, 8.4vw, 44px); }
+
+.beat.intro { left: 0; right: 0; bottom: calc(10vh + env(safe-area-inset-bottom, 0px)); text-align: center; transform: translateY(10px); }
+.beat.intro.on { transform: none; }
+.intro .eyebrow { color: var(--canela); }
+.hint { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 18px; font-family: var(--brand); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--ink-soft); }
+.hint span { width: 1px; height: 34px; background: linear-gradient(var(--leaf), transparent); animation: drip 1.8s ease-in-out infinite; transform-origin: top; }
+@keyframes drip { 0% { transform: scaleY(0); } 60% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 12px 18px; border-radius: 999px; background: var(--leaf); color: #fff; font-family: var(--brand); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; }
+.btn:focus-visible, .copy:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* Marcadores de capítulo */
+.chapters { position: absolute; z-index: 6; right: calc(10px + env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); display: grid; gap: 10px; }
+.chapters i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: background .4s, transform .4s; }
+.chapters i.on { background: var(--gold); transform: scale(1.5); }
+
+/* Computador: palco à direita, texto à esquerda */
+@media (min-aspect-ratio: 4/5) {
+  .beat.card { left: max(6vw, 32px); bottom: auto; top: 50%; width: min(38vw, 460px); transform: translate(0, calc(-50% + 14px)); background: transparent; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0; }
+  .beat.card.on { transform: translate(0, -50%); }
+  .beat.card h2 { font-size: clamp(44px, 4.6vw, 76px); }
+  .beat p { font-size: 17px; }
+  .beat.intro { bottom: 8vh; }
+}
+
+/* Seções depois da história */
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.inner { max-width: 1080px; margin: 0 auto; }
+section.block { padding-block: clamp(64px, 12vw, 120px); }
+section.block h3 { font-family: var(--display); font-weight: 400; font-size: clamp(36px, 7vw, 60px); line-height: 1.04; margin: 8px 0 0; text-wrap: balance; }
+section.block h3 em { color: var(--leaf); }
+.lead { font-size: 18px; color: var(--ink-soft); max-width: 58ch; margin: 16px 0 0; }
+
+.sisters { display: grid; grid-template-columns: 1fr; gap: 28px; align-items: center; }
+.sisters img { width: 100%; max-width: 360px; height: auto; justify-self: center; }
+@media (min-width: 760px) { .sisters { grid-template-columns: 1.1fr .9fr; } }
+
+.shelf { background: var(--mist); }
+.shelf-grid { margin-top: 36px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.jar { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 6px; align-content: start; }
+.jar b { font-family: var(--brand); font-weight: 700; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--leaf); }
+.jar span { color: var(--ink-soft); font-size: 15px; }
+.jar small { font-family: var(--brand); font-size: 11px; letter-spacing: .2em; color: var(--canela); text-transform: uppercase; }
+
+.frames { margin-top: 36px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.frames figure { margin: 0; border-radius: 14px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); }
+.frames img { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; object-fit: cover; transition: transform .6s ease; }
+.frames figure:hover img { transform: scale(1.03); }
+.frames figcaption { font-family: var(--brand); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); padding: 10px 12px; }
+@media (max-width: 520px) { .frames { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .frames figcaption { font-size: 9px; padding: 8px; letter-spacing: .12em; } }
+
+.visit { background: var(--leaf); color: #f3f7f1; }
+.visit .eyebrow { color: #e9c776; }
+.visit h3 em { color: #e9c776; }
+.visit .lead { color: #cfe0d2; }
+.info { margin-top: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.info div { border: 1px solid rgba(243, 247, 241, .18); border-radius: 16px; padding: 18px; display: grid; gap: 6px; min-width: 0; }
+.info small { font-family: var(--brand); font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: #e9c776; }
+.info strong { font-weight: 500; font-size: 17px; overflow-wrap: anywhere; user-select: all; }
+.todo { display: inline-block; margin-top: 2px; font-size: 12px; color: #1c2a20; background: #e9c776; border-radius: 6px; padding: 2px 8px; justify-self: start; }
+.copy { justify-self: start; margin-top: 4px; font: 600 12px/1 var(--brand); letter-spacing: .14em; text-transform: uppercase; color: #f3f7f1; background: transparent; border: 1px solid rgba(243, 247, 241, .35); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+
+footer { padding-block: 36px; border-top: 1px solid var(--line); }
+footer .inner { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: baseline; }
+footer b { font-family: var(--brand); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--leaf); }
+footer span { font-size: 13px; color: var(--ink-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .beat, #loader { transition: none; }
+  .hint span, .loader-box img { animation: none; }
+}
+</style>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="loader-box">
+    <img src="logo.webp" alt="Cravo &amp; Canela">
+    <div class="loader-bar"><i id="bar"></i></div>
+    <div class="loader-pct" id="pct">0%</div>
+  </div>
+</div>
+
+<main>
+  <section class="story" id="story" aria-label="A história da Cravinho">
+    <div class="sticky">
+      <canvas id="film" aria-hidden="true"></canvas>
+      <img id="logo" src="logo.webp" alt="Logo Cravo &amp; Canela">
+      <canvas id="dust" aria-hidden="true"></canvas>
+
+      <div class="beat intro" data-from="0" data-to="0.055">
+        <div class="eyebrow">Produtos naturais</div>
+        <div class="hint">Role devagar<span></span></div>
+      </div>
+
+      <div class="beat card" data-from="0.10" data-to="0.21">
+        <div class="eyebrow">A Cravinho chegou</div>
+        <h2>Tudo começa com <em>um sopro.</em></h2>
+      </div>
+
+      <div class="beat card" data-from="0.27" data-to="0.40">
+        <div class="eyebrow">Da logo para a prateleira</div>
+        <h2>Ervas, chás, grãos e <em>especiarias.</em></h2>
+        <p>Tudo o que está na nossa logo, você encontra na loja.</p>
+      </div>
+
+      <div class="beat card" data-from="0.48" data-to="0.60">
+        <div class="eyebrow">O nome da casa</div>
+        <h2>Cravo e canela, <em>direto na xícara.</em></h2>
+      </div>
+
+      <div class="beat card" data-from="0.67" data-to="0.79">
+        <div class="eyebrow">Pausa pro chá</div>
+        <h2>Sinta <em>esse cheiro.</em></h2>
+        <p>Chás e blends pra acordar, acalmar e aquecer.</p>
+      </div>
+
+      <div class="beat card" data-from="0.87" data-to="1.01">
+        <div class="eyebrow">Cravo &amp; Canela</div>
+        <h2>Revigore <em>o seu dia.</em></h2>
+        <a class="btn" href="#visite">Venha nos visitar ↓</a>
+      </div>
+
+      <nav class="chapters" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></nav>
+    </div>
+  </section>
+
+  <section class="block wrap" id="nos">
+    <div class="inner sisters">
+      <div>
+        <div class="eyebrow">Quem somos</div>
+        <h3>Duas irmãs, uma loja e <em>muito chá.</em></h3>
+        <p class="lead">A Cravo &amp; Canela é a nossa loja de produtos naturais. Uma de nós cuida da loja e do atendimento. A outra cuida das redes, das fotos e de tudo que chega até você por aqui. E a Cravinho é a mascote que representa a gente.</p>
+      </div>
+      <img src="galeria/cena-4-tomando-cha.webp" alt="A Cravinho tomando chá de cravo e canela" loading="lazy">
+    </div>
+  </section>
+
+  <section class="block wrap shelf" id="loja">
+    <div class="inner">
+      <div class="eyebrow">Na loja</div>
+      <h3>O que você <em>encontra aqui.</em></h3>
+      <div class="shelf-grid">
+        <div class="jar"><small>Pra xícara</small><b>Chás e ervas</b><span>Ervas a granel e blends pra cada momento do dia.</span></div>
+        <div class="jar"><small>Pra cozinha</small><b>Especiarias</b><span>Cravo, canela, cúrcuma, pimentas e temperos.</span></div>
+        <div class="jar"><small>Pro dia a dia</small><b>Grãos e farinhas</b><span>Sementes, castanhas, farinhas e cereais.</span></div>
+        <div class="jar"><small>Pro corpo</small><b>Naturais</b><span>Suplementos, óleos e produtos naturais.</span></div>
+      </div>
+      <div class="frames">
+        <figure><img src="galeria/cena-2b-explosao-aberta.webp" alt="A Cravinho sopra e os ingredientes da logo se espalham" loading="lazy"><figcaption>O sopro</figcaption></figure>
+        <figure><img src="galeria/cena-3-giro-com-xicara.webp" alt="A Cravinho gira com a xícara enquanto cravo e canela caem dentro" loading="lazy"><figcaption>O giro</figcaption></figure>
+        <figure><img src="galeria/cena-4-tomando-cha.webp" alt="A Cravinho toma o chá de olhos fechados" loading="lazy"><figcaption>O chá</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="block wrap visit" id="visite">
+    <div class="inner">
+      <div class="eyebrow">Visite a loja</div>
+      <h3>Passa aqui pra <em>tomar um chá</em> com a gente.</h3>
+      <p class="lead">Atendimento na loja física e pelo WhatsApp.</p>
+      <div class="info">
+        <div><small>Endereço</small><strong id="i-end">Rua, número, bairro, cidade</strong><span class="todo">a preencher</span></div>
+        <div><small>Horário</small><strong>Seg a sex, 00h às 00h · Sáb, 00h às 00h</strong><span class="todo">a preencher</span></div>
+        <div><small>WhatsApp</small><strong id="i-zap">(00) 00000-0000</strong><button class="copy" type="button" id="copy-zap" data-copy="i-zap">Copiar número</button></div>
+        <div><small>Instagram</small><strong>@cravoecanela</strong><span class="todo">confirmar</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <div class="inner">
+    <b>Cravo &amp; Canela</b>
+    <span>Produtos naturais · com a Cravinho</span>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const FRAME_COUNT = 255;
+  const SRC = i => 'quadros/q' + String(i + 1).padStart(3, '0') + '.webp';
+  const IMG_W = 540, IMG_H = 960;
+  // Círculo de ingredientes no 1º quadro da explosão (fração do quadro)
+  const CIRCLE = { cx: 0.52, cy: 0.205, w: 0.80 };
+  // Mapa rolagem → quadro. Trechos mais planos = pausas para ler.
+  const KEYS = [
+    [0.000, 0], [0.060, 0], [0.165, 11], [0.215, 14],
+    [0.270, 30], [0.300, 44], [0.380, 60], [0.430, 76],
+    [0.500, 112], [0.535, 124], [0.590, 130], [0.650, 160],
+    [0.690, 180], [0.770, 188], [0.820, 198], [0.880, 232], [1.000, 254]
+  ];
+  const CHAPTERS = [0, 0.10, 0.27, 0.48, 0.67, 0.87];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const story = document.getElementById('story');
+  const film = document.getElementById('film'), fctx = film.getContext('2d');
+  const dust = document.getElementById('dust'), dctx = dust.getContext('2d');
+  const logo = document.getElementById('logo');
+  const beats = [...document.querySelectorAll('.beat')];
+  const dots = [...document.querySelectorAll('.chapters i')];
+
+  // ---------- quadros ----------
+  const frames = new Array(FRAME_COUNT);
+  let loaded = 0;
+  function load(i) {
+    return new Promise(res => {
+      if (frames[i]) return res();
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => { frames[i] = im; loaded++; progress(); res(); };
+      im.onerror = () => res();
+      im.src = SRC(i);
+    });
+  }
+  const bar = document.getElementById('bar'), pct = document.getElementById('pct');
+  let critical = [];
+  for (let i = 0; i < FRAME_COUNT; i += 6) critical.push(i);
+  critical.push(FRAME_COUNT - 1);
+  function progress() {
+    const p = Math.min(1, loaded / critical.length);
+    bar.style.width = (p * 100).toFixed(0) + '%';
+    pct.textContent = Math.round(p * 100) + '%';
+  }
+  function nearest(i) {
+    if (frames[i]) return frames[i];
+    for (let d = 1; d < FRAME_COUNT; d++) {
+      if (frames[i - d]) return frames[i - d];
+      if (frames[i + d]) return frames[i + d];
+    }
+    return null;
+  }
+
+  // ---------- geometria ----------
+  let W = 0, H = 0, DPR = 1, stage = { x: 0, y: 0, w: 0, h: 0 }, wide = false;
+  function resize() {
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = film.clientWidth; H = film.clientHeight;
+    for (const c of [film, dust]) { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); }
+    wide = W / H > 0.8;
+    if (!wide) {
+      const s = Math.max(W / IMG_W, H / IMG_H);
+      stage.w = IMG_W * s; stage.h = IMG_H * s;
+      stage.x = (W - stage.w) / 2; stage.y = Math.min(0, (H - stage.h) / 2);
+    } else {
+      stage.h = H; stage.w = H * IMG_W / IMG_H;
+      stage.x = Math.min(W - stage.w - W * 0.04, Math.max(W * 0.5, W * 0.62 - stage.w / 2)); stage.y = 0;
+    }
+    buildDust();
+    render(true);
+  }
+
+  // ---------- poeira das letras ----------
+  let particles = [];
+  function buildDust() {
+    if (!logo.complete || !logo.naturalWidth) return;
+    const size = 220, c = document.createElement('canvas');
+    c.width = c.height = size;
+    const x = c.getContext('2d');
+    x.drawImage(logo, 0, 0, size, size);
+    let data;
+    try { data = x.getImageData(0, 0, size, size).data; } catch (e) { particles = []; return; }
+    const out = [];
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let py = Math.floor(size * 0.33); py < size * 0.63; py += 2) {
+      for (let px = Math.floor(size * 0.2); px < size * 0.82; px += 2) {
+        const k = (py * size + px) * 4;
+        if (data[k] > 238 && data[k + 1] > 238 && data[k + 2] > 238 && data[k + 3] > 200) {
+          const a = rnd() * Math.PI * 2;
+          out.push({
+            u: px / size, v: py / size,
+            dx: Math.cos(a) * (0.6 + rnd()), dy: Math.sin(a) * (0.6 + rnd()) - 0.9 - rnd() * 0.6,
+            r: 0.8 + rnd() * 1.6, d: rnd() * 0.35,
+            c: rnd() < 0.55 ? '#d9a93c' : rnd() < 0.6 ? '#f3e2b0' : '#9a5a2e'
+          });
+        }
+      }
+    }
+    particles = out;
+  }
+
+  // ---------- utilidades ----------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const seg = (p, a, b) => clamp((p - a) / (b - a), 0, 1);
+  function frameAt(p) {
+    for (let k = 1; k < KEYS.length; k++) {
+      if (p <= KEYS[k][0]) {
+        const [p0, f0] = KEYS[k - 1], [p1, f1] = KEYS[k];
+        return lerp(f0, f1, (p - p0) / (p1 - p0 || 1));
+      }
+    }
+    return FRAME_COUNT - 1;
+  }
+  function rawProgress() {
+    const r = story.getBoundingClientRect();
+    return clamp(-r.top / (r.height - innerHeight), 0, 1);
+  }
+
+  // ---------- desenho ----------
+  let sp = 0, frameF = 0, last = { p: -1, f: -1 };
+  function render(force) {
+    const p = sp;
+    const ff = frameF;
+    if (!force && Math.abs(p - last.p) < 1e-5 && Math.abs(ff - last.f) < 1e-3) return;
+    last = { p, f: ff };
+
+    // Cravinho sobe de baixo da tela
+    const rise = easeIO(seg(p, 0.045, 0.15));
+    const lift = (1 - rise) * stage.h * 0.55;
+    fctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    fctx.fillStyle = '#ffffff';
+    fctx.fillRect(0, 0, W, H);
+    const i0 = Math.floor(ff), t = ff - i0;
+    const a = nearest(i0), b = nearest(Math.min(FRAME_COUNT - 1, i0 + 1));
+    fctx.globalAlpha = rise < 0.001 ? 0 : clamp(rise * 1.6, 0, 1);
+    if (a) fctx.drawImage(a, stage.x, stage.y + lift, stage.w, stage.h);
+    if (b && b !== a && t > 0.02) { fctx.globalAlpha *= t; fctx.drawImage(b, stage.x, stage.y + lift, stage.w, stage.h); }
+    fctx.globalAlpha = 1;
+    if (wide) {
+      const g = fctx.createLinearGradient(stage.x - 2, 0, stage.x + stage.w * 0.12, 0);
+      g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      fctx.fillStyle = g; fctx.fillRect(stage.x - 2, 0, stage.w * 0.12 + 2, H);
+      const g2 = fctx.createLinearGradient(stage.x + stage.w * 0.88, 0, stage.x + stage.w + 2, 0);
+      g2.addColorStop(0, 'rgba(255,255,255,0)'); g2.addColorStop(1, 'rgba(255,255,255,1)');
+      fctx.fillStyle = g2; fctx.fillRect(stage.x + stage.w * 0.88, 0, stage.w * 0.12 + 2, H);
+    }
+
+    // Logo: centro da tela → posição do círculo
+    const startSize = Math.min(W * (wide ? 0.42 : 0.82), H * 0.52);
+    const sx = (W - startSize) / 2, sy = (H - startSize) / 2 - H * (wide ? 0.04 : 0.06);
+    const endSize = stage.w * CIRCLE.w;
+    const ex = stage.x + stage.w * CIRCLE.cx - endSize / 2;
+    const ey = stage.y + stage.h * CIRCLE.cy - endSize / 2;
+    const m = easeIO(seg(p, 0.05, 0.16));
+    const size = lerp(startSize, endSize, m);
+    const lx = lerp(sx, ex, m), ly = lerp(sy, ey, m);
+    const fade = seg(p, 0.172, 0.21);
+    logo.style.transform = `translate(${lx}px, ${ly}px) scale(${size / 100})`;
+    logo.style.opacity = (1 - easeIO(fade)).toFixed(3);
+
+    // Letras viram poeira dourada
+    dctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    dctx.clearRect(0, 0, W, H);
+    const blow = seg(p, 0.168, 0.26);
+    if (blow > 0 && blow < 1 && particles.length) {
+      const reach = stage.w * 0.55;
+      for (const q of particles) {
+        const tt = clamp((blow - q.d * 0.5) / (1 - q.d * 0.5), 0, 1);
+        if (tt <= 0) continue;
+        const e = ease(tt);
+        const x0 = lx + q.u * size, y0 = ly + q.v * size;
+        const x = x0 + q.dx * e * reach * 0.6, y = y0 + q.dy * e * reach * 0.5 + tt * tt * reach * 0.25;
+        dctx.globalAlpha = (1 - tt) * 0.95;
+        dctx.fillStyle = q.c;
+        dctx.beginPath(); dctx.arc(x, y, q.r * (1 - tt * 0.5) * (W > 700 ? 1.3 : 1), 0, Math.PI * 2); dctx.fill();
+      }
+      dctx.globalAlpha = 1;
+    }
+
+    // Textos e capítulos
+    for (const el of beats) {
+      const on = p >= +el.dataset.from && p < +el.dataset.to;
+      el.classList.toggle('on', on);
+    }
+    let ch = 0; CHAPTERS.forEach((c, k) => { if (p >= c - 0.01) ch = k; });
+    dots.forEach((d, k) => d.classList.toggle('on', k === ch));
+  }
+
+  function tick() {
+    const target = rawProgress();
+    sp += (target - sp) * (reduce ? 1 : 0.14);
+    if (Math.abs(target - sp) < 0.00005) sp = target;
+    const tf = frameAt(sp);
+    frameF += (tf - frameF) * (reduce ? 1 : 0.22);
+    if (Math.abs(tf - frameF) < 0.01) frameF = tf;
+    render(false);
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- copiar ----------
+  document.querySelectorAll('.copy').forEach(btn => btn.addEventListener('click', () => {
+    const el = document.getElementById(btn.dataset.copy);
+    const txt = el.textContent.trim();
+    const done = () => { const o = btn.textContent; btn.textContent = 'Copiado'; setTimeout(() => btn.textContent = o, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, () => { getSelection().selectAllChildren(el); });
+    } else { getSelection().selectAllChildren(el); }
+  }));
+
+  // ---------- início ----------
+  async function start() {
+    const go = () => { resize(); };
+    if (logo.complete) go(); else logo.addEventListener('load', go, { once: true });
+    addEventListener('resize', resize);
+    await Promise.all(critical.map(load));
+    document.getElementById('loader').classList.add('out');
+    sp = rawProgress(); frameF = frameAt(sp);
+    render(true);
+    requestAnimationFrame(tick);
+    for (let i = 0; i < FRAME_COUNT; i += 8) {
+      const batch = [];
+      for (let j = i; j < Math.min(FRAME_COUNT, i + 8); j++) batch.push(load(j));
+      await Promise.all(batch);
+    }
+  }
+  start();
+})();
+</script>
