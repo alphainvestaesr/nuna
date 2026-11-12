@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cravo &amp; Canela Links</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Cravo & Canela, produtos naturais: como chegar, catálogo, WhatsApp e Instagram.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Josefin+Sans:wght@500;600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: palco fixo 9:16 controlado pela rolagem; no celular ocupa a tela, no computador fica à direita com o texto à esquerda. Um mundo claro só, porque os quadros têm fundo branco de estúdio. */
+:root {
+  --paper: #ffffff;
+  --mist: #f2f5ef;
+  --leaf: #1f5130;
+  --leaf-soft: #e3ece2;
+  --gold: #c8962c;
+  --canela: #8a4a25;
+  --ink: #1c2a20;
+  --ink-soft: #55635a;
+  --line: #dfe6dc;
+  --display: 'Instrument Serif', 'Georgia', serif;
+  --brand: 'Josefin Sans', 'Trebuchet MS', sans-serif;
+  --body: 'Figtree', -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+html { scroll-behavior: auto; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; overflow-x: hidden; }
+*, *::before, *::after { box-sizing: border-box; }
+
+/* Carregamento */
+#loader { position: fixed; inset: 0; z-index: 100; background: var(--paper); display: grid; place-items: center; transition: opacity .7s ease, filter .7s ease; }
+#loader.out { opacity: 0; filter: blur(8px); pointer-events: none; }
+.loader-box { display: grid; justify-items: center; gap: 18px; }
+.loader-box img { width: min(46vw, 220px); height: auto; animation: breathe 2.4s ease-in-out infinite; }
+.loader-bar { width: 150px; height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.loader-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--leaf), var(--gold)); transition: width .2s ease; }
+.loader-pct { font-family: var(--brand); font-size: 11px; letter-spacing: .28em; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+@keyframes breathe { 50% { transform: scale(1.04); } }
+
+/* Palco */
+.story { position: relative; height: 620vh; }
+.sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--paper); }
+#film, #dust { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#dust { pointer-events: none; }
+#logo { position: absolute; left: 0; top: 0; width: 100px; height: auto; transform-origin: 0 0; will-change: transform, opacity; pointer-events: none; }
+
+/* Textos sobre o palco */
+.beat { position: absolute; z-index: 5; opacity: 0; transform: translateY(14px); filter: blur(6px); transition: opacity .6s ease, transform .6s ease, filter .6s ease; pointer-events: none; }
+.beat.on { opacity: 1; transform: none; filter: none; pointer-events: auto; }
+.eyebrow { font-family: var(--brand); font-weight: 600; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: var(--leaf); }
+.beat h2 { font-family: var(--display); font-weight: 400; font-size: clamp(34px, 9vw, 64px); line-height: 1.02; margin: 6px 0 0; color: var(--ink); text-wrap: balance; }
+.beat h2 em { color: var(--leaf); }
+.beat p { margin: 10px 0 0; color: var(--ink-soft); font-size: 15px; max-width: 34ch; }
+
+.beat.card { left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); width: min(calc(100% - 32px), 420px); transform: translate(-50%, 14px); padding: 16px 18px 18px; background: rgba(255, 255, 255, .78); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); border: 1px solid rgba(31, 81, 48, .10); border-radius: 18px; box-shadow: 0 10px 40px rgba(28, 42, 32, .10); }
+.beat.card.on { transform: translate(-50%, 0); }
+.beat.card h2 { font-size: clamp(30px, 8.4vw, 44px); }
+
+.beat.intro { left: 0; right: 0; bottom: calc(10vh + env(safe-area-inset-bottom, 0px)); text-align: center; transform: translateY(10px); }
+.beat.intro.on { transform: none; }
+.intro .eyebrow { color: var(--canela); }
+.hint { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 18px; font-family: var(--brand); font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--ink-soft); }
+.hint span { width: 1px; height: 34px; background: linear-gradient(var(--leaf), transparent); animation: drip 1.8s ease-in-out infinite; transform-origin: top; }
+@keyframes drip { 0% { transform: scaleY(0); } 60% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 12px 18px; border-radius: 999px; background: var(--leaf); color: #fff; font-family: var(--brand); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; }
+.btn:focus-visible, .copy:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* Celular: nas cenas de perto o texto sobe, pra não tapar a xícara */
+@media (max-aspect-ratio: 4/5) {
+  .beat.card.top { bottom: auto; top: calc(16px + env(safe-area-inset-top, 0px)); }
+}
+
+/* Marcadores de capítulo */
+.chapters { position: absolute; z-index: 6; right: calc(10px + env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); display: grid; gap: 10px; }
+.chapters i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: background .4s, transform .4s; }
+.chapters i.on { background: var(--gold); transform: scale(1.5); }
+
+/* Computador: palco à direita, texto à esquerda */
+@media (min-aspect-ratio: 4/5) {
+  .beat.card { left: max(6vw, 32px); bottom: auto; top: 50%; width: min(38vw, 460px); transform: translate(0, calc(-50% + 14px)); background: transparent; border: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0; }
+  .beat.card.on { transform: translate(0, -50%); }
+  .beat.card h2 { font-size: clamp(44px, 4.6vw, 76px); }
+  .beat p { font-size: 17px; }
+  .beat.intro { bottom: 8vh; }
+}
+
+/* Seções depois da história */
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.inner { max-width: 1080px; margin: 0 auto; }
+section.block { padding-block: clamp(64px, 12vw, 120px); }
+section.block h3 { font-family: var(--display); font-weight: 400; font-size: clamp(36px, 7vw, 60px); line-height: 1.04; margin: 8px 0 0; text-wrap: balance; }
+section.block h3 em { color: var(--leaf); }
+.lead { font-size: 18px; color: var(--ink-soft); max-width: 58ch; margin: 16px 0 0; }
+
+.sisters { display: grid; grid-template-columns: 1fr; gap: 28px; align-items: center; }
+.sisters img { width: 100%; max-width: 360px; height: auto; justify-self: center; }
+@media (min-width: 760px) { .sisters { grid-template-columns: 1.1fr .9fr; } }
+
+.shelf { background: var(--mist); }
+.shelf-grid { margin-top: 36px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.jar { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 6px; align-content: start; }
+.jar b { font-family: var(--brand); font-weight: 700; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--leaf); }
+.jar span { color: var(--ink-soft); font-size: 15px; }
+.jar small { font-family: var(--brand); font-size: 11px; letter-spacing: .2em; color: var(--canela); text-transform: uppercase; }
+
+.frames { margin-top: 36px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.frames figure { margin: 0; border-radius: 14px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); }
+.frames img { display: block; width: 100%; height: auto; aspect-ratio: 9 / 16; object-fit: cover; transition: transform .6s ease; }
+.frames figure:hover img { transform: scale(1.03); }
+.frames figcaption { font-family: var(--brand); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-soft); padding: 10px 12px; }
+@media (max-width: 520px) { .frames { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .frames figcaption { font-size: 9px; padding: 8px; letter-spacing: .12em; } }
+
+.visit { background: var(--leaf); color: #f3f7f1; }
+.visit .eyebrow { color: #e9c776; }
+.visit h3 em { color: #e9c776; }
+.visit .lead { color: #cfe0d2; }
+.info { margin-top: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.info div { border: 1px solid rgba(243, 247, 241, .18); border-radius: 16px; padding: 18px; display: grid; gap: 6px; min-width: 0; }
+.info small { font-family: var(--brand); font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: #e9c776; }
+.info strong { font-weight: 500; font-size: 17px; overflow-wrap: anywhere; user-select: all; }
+.todo { display: inline-block; margin-top: 2px; font-size: 12px; color: #1c2a20; background: #e9c776; border-radius: 6px; padding: 2px 8px; justify-self: start; }
+.copy { justify-self: start; margin-top: 4px; font: 600 12px/1 var(--brand); letter-spacing: .14em; text-transform: uppercase; color: #f3f7f1; background: transparent; border: 1px solid rgba(243, 247, 241, .35); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+
+footer { padding-block: 36px; border-top: 1px solid var(--line); }
+footer .inner { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: baseline; }
+footer b { font-family: var(--brand); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--leaf); }
+footer span { font-size: 13px; color: var(--ink-soft); }
+
+/* Faixa correndo no topo */
+.ticker { background: var(--leaf); color: #f3e2b0; height: 34px; overflow: hidden; display: flex; align-items: center; }
+.ticker-track { display: flex; white-space: nowrap; animation: corre 32s linear infinite; }
+.ticker-track span { font-family: var(--brand); font-weight: 600; font-size: 11px; letter-spacing: .26em; text-transform: uppercase; padding-right: 8px; }
+@keyframes corre { to { transform: translateX(-50%); } }
+
+/* Atalho para os links durante a história */
+.skip { position: fixed; z-index: 20; top: calc(46px + env(safe-area-inset-top, 0px)); right: calc(14px + env(safe-area-inset-right, 0px)); padding: 9px 14px; border-radius: 99px; background: rgba(255, 255, 255, .86); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--line); color: var(--leaf); font: 600 12px/1 var(--body); text-decoration: none; transition: opacity .4s; }
+.skip.hide { opacity: 0; pointer-events: none; }
+
+/* Página de links */
+.links { padding-block: 56px 72px; background: radial-gradient(120% 60% at 50% 0%, var(--leaf-soft), var(--paper) 70%); }
+.lk { max-width: 440px; margin: 0 auto; display: grid; justify-items: center; text-align: center; gap: 10px; }
+.lk-logo { width: 120px; height: auto; }
+.lk h1 { font-family: var(--display); font-weight: 400; font-size: clamp(40px, 11vw, 56px); line-height: 1; margin: 6px 0 0; }
+.lk h1 em { color: var(--gold); }
+.lk-tag { margin: 0; color: var(--ink-soft); }
+.lk-status { margin: 4px 0 0; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; font-size: 14px; color: var(--ink); }
+.lk-status .dot { width: 8px; height: 8px; border-radius: 50%; background: #3fa45b; box-shadow: 0 0 0 4px rgba(63, 164, 91, .18); }
+.lk-status .todo, .lk .todo { font-size: 11px; color: var(--ink); background: #f0d898; border-radius: 6px; padding: 2px 7px; }
+
+.btns { width: 100%; display: grid; gap: 14px; margin-top: 18px; }
+.cta { position: relative; overflow: hidden; isolation: isolate; display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 22px; border-radius: 99px; font: 600 17px/1.15 var(--body); letter-spacing: -.01em; text-decoration: none; text-align: left; transition: transform .3s; }
+.cta::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(110deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, .38) 50%, rgba(255, 255, 255, 0) 70%); transform: translateX(-120%); animation: brilho 4.5s ease-in-out infinite; }
+.cta:nth-child(2)::after { animation-delay: .5s; }
+.cta:nth-child(3)::after { animation-delay: 1s; }
+.cta:nth-child(4)::after { animation-delay: 1.5s; }
+.cta:nth-child(5)::after { animation-delay: 2s; }
+@keyframes brilho { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
+.cta:hover { transform: translateY(-2px); }
+.cta:active { transform: translateY(1px) scale(.99); }
+.cta:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.cta .ic { width: 24px; height: 24px; flex: none; }
+.cta .go { width: 20px; height: 20px; flex: none; margin-left: auto; transition: transform .3s; }
+.cta:hover .go { transform: translateX(3px); }
+.cta .tx { display: grid; gap: 2px; min-width: 0; }
+.cta small { font: 500 12px/1.2 var(--body); opacity: .82; letter-spacing: 0; }
+.cta.main { background: var(--leaf); color: #fff; min-height: 68px; box-shadow: 0 14px 30px -14px rgba(31, 81, 48, .75), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.cta.pulse { animation: pisca 1.6s ease-in-out infinite; }
+@keyframes pisca {
+  0% { box-shadow: 0 0 0 0 rgba(31, 81, 48, .42), 0 18px 40px -16px rgba(31, 81, 48, .8), inset 0 1px 0 rgba(255, 255, 255, .25); }
+  70%, 100% { box-shadow: 0 0 0 14px rgba(31, 81, 48, 0), 0 18px 40px -16px rgba(31, 81, 48, .8), inset 0 1px 0 rgba(255, 255, 255, .25); }
+}
+.cta.gold { background: var(--gold); color: #fff; box-shadow: 0 14px 30px -14px rgba(200, 150, 44, .85), inset 0 1px 0 rgba(255, 255, 255, .3); }
+.cta.light { background: #fff; color: var(--leaf); border: 1px solid var(--line); box-shadow: 0 18px 36px -18px rgba(28, 42, 32, .35); }
+.cta.light::after { background: linear-gradient(110deg, rgba(200, 150, 44, 0) 30%, rgba(200, 150, 44, .16) 50%, rgba(200, 150, 44, 0) 70%); }
+.cta.ghost { background: transparent; color: var(--leaf); border: 1.5px solid var(--leaf); }
+.cta.ghost::after { background: linear-gradient(110deg, rgba(31, 81, 48, 0) 30%, rgba(31, 81, 48, .10) 50%, rgba(31, 81, 48, 0) 70%); }
+
+.lk-addr, .lk-cat { width: 100%; margin-top: 18px; padding: 18px; border-radius: 18px; background: var(--paper); border: 1px solid var(--line); display: grid; gap: 6px; justify-items: center; }
+.lk-addr small, .lk-cat small { font-family: var(--brand); font-weight: 600; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--canela); }
+.lk-addr strong { font-weight: 500; overflow-wrap: anywhere; user-select: all; }
+.lk-cat p { margin: 0; color: var(--ink-soft); font-size: 15px; }
+.lk-addr .copy { color: var(--leaf); border-color: var(--line); }
+
+/* Botão flutuante do WhatsApp */
+.float { position: fixed; z-index: 30; right: calc(14px + env(safe-area-inset-right, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 8px; border-radius: 99px; background: var(--ink); color: #fff; font: 600 12px/1.15 var(--body); text-decoration: none; box-shadow: 0 14px 30px -12px rgba(0, 0, 0, .5); opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .4s, transform .4s; }
+.float.show { opacity: 1; transform: none; pointer-events: auto; }
+.float-ic { width: 36px; height: 36px; border-radius: 50%; background: #3fa45b; display: grid; place-items: center; }
+.float-ic svg { width: 20px; height: 20px; }
+.lk-foot { padding-block: 24px 88px; text-align: center; font-size: 13px; color: var(--ink-soft); border-top: 1px solid var(--line); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cta, .cta::after, .ticker-track { animation: none !important; }
+  .beat, #loader { transition: none; }
+  .hint span, .loader-box img { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="loader-box">
+    <img src="../cravo-e-canela/logo.webp" alt="Cravo &amp; Canela">
+    <div class="loader-bar"><i id="bar"></i></div>
+    <div class="loader-pct" id="pct">0%</div>
+  </div>
+</div>
+
+<main>
+  <div class="ticker" aria-hidden="true"><div class="ticker-track"><span>Chás e ervas · Especiarias · Grãos e farinhas · Naturais · Cravo &amp; Canela · </span><span>Chás e ervas · Especiarias · Grãos e farinhas · Naturais · Cravo &amp; Canela · </span><span>Chás e ervas · Especiarias · Grãos e farinhas · Naturais · Cravo &amp; Canela · </span><span>Chás e ervas · Especiarias · Grãos e farinhas · Naturais · Cravo &amp; Canela · </span></div></div>
+  <a class="skip" id="skip" href="#links">Pular para os links ↓</a>
+  <section class="story" id="story" aria-label="A história da Cravinho">
+    <div class="sticky">
+      <canvas id="film" aria-hidden="true"></canvas>
+      <img id="logo" src="../cravo-e-canela/logo.webp" alt="Logo Cravo &amp; Canela">
+      <canvas id="dust" aria-hidden="true"></canvas>
+
+      <div class="beat intro" data-from="0" data-to="0.055">
+        <div class="eyebrow">Produtos naturais</div>
+        <div class="hint">Role devagar<span></span></div>
+      </div>
+
+      <div class="beat card" data-from="0.10" data-to="0.21">
+        <div class="eyebrow">A Cravinho chegou</div>
+        <h2>Tudo começa com <em>um sopro.</em></h2>
+      </div>
+
+      <div class="beat card top" data-from="0.80" data-to="1.01">
+        <div class="eyebrow">Cravo &amp; Canela</div>
+        <h2>Revigore <em>o seu dia.</em></h2>
+        <a class="btn" href="#links">Ver nossos links ↓</a>
+      </div>
+
+      <nav class="chapters" aria-hidden="true"><i></i><i></i><i></i></nav>
+    </div>
+  </section>
+
+  <section class="links wrap" id="links">
+    <div class="lk">
+      <img class="lk-logo" src="../cravo-e-canela/logo.webp" alt="Cravo &amp; Canela" width="120" height="106">
+      <h1>Cravo <em>&amp;</em> Canela</h1>
+      <p class="lk-tag">Produtos naturais: chás, ervas, especiarias e grãos.</p>
+      <p class="lk-status"><span class="dot" aria-hidden="true"></span>Seg a sáb · 00h às 00h <span class="todo">a preencher</span></p>
+
+      <nav class="btns" aria-label="Links da Cravo &amp; Canela">
+        <a class="cta main pulse" href="https://www.google.com/maps/search/?api=1&amp;query=Cravo%20e%20Canela%20produtos%20naturais" target="_blank" rel="noopener">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+          <span class="tx">Como chegar<small>Abre o GPS na porta da loja</small></span>
+          <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="cta gold" href="https://wa.me/" target="_blank" rel="noopener">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c.3 2.2 2.3 4.2 4.5 4.5l1-1.2 2 1-.4 1.6c-3.9.2-7.2-3.1-7-7l1.6-.4 1 2z"/></svg>
+          <span class="tx">Pedir pelo WhatsApp</span>
+          <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="cta light" href="#catalogo">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h6"/></svg>
+          <span class="tx">Ver catálogo</span>
+          <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="cta light" href="https://www.instagram.com/" target="_blank" rel="noopener">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8" fill="currentColor"/></svg>
+          <span class="tx">Instagram</span>
+          <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="cta ghost" href="https://claude.ai/artifact/WstnkpedV2ToqCXqUg9nXt" target="_blank" rel="noopener">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c8 0 14-6 14-14-8 0-14 6-14 14z"/><path d="M5 19l7-7"/></svg>
+          <span class="tx">Conheça nosso site</span>
+          <svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </nav>
+
+      <div class="lk-addr">
+        <small>Endereço</small>
+        <strong id="addr">Rua, número, bairro, cidade</strong>
+        <button class="copy" type="button" id="copy-addr" data-copy="addr">Copiar endereço</button>
+      </div>
+
+      <div class="lk-cat" id="catalogo">
+        <small>Catálogo</small>
+        <p>O catálogo atualizado entra aqui em breve.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<a class="float" id="float" href="https://wa.me/" target="_blank" rel="noopener" aria-label="Fale com a gente pelo WhatsApp">
+  <span class="float-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/></svg></span>
+  <span>Fale com<br>a gente</span>
+</a>
+
+<footer class="wrap lk-foot">
+  <span>Cravo &amp; Canela · Produtos naturais · com a Cravinho</span>
+</footer>
+
+
+<script>
+(() => {
+  const FRAME_COUNT = 183;
+  const SRC = i => '../cravo-e-canela/quadros/q' + String(i + 1).padStart(3, '0') + '.webp';
+  const IMG_W = 540, IMG_H = 960;
+  let RATIO = 795 / 900; // altura/largura da logo sem fundo
+  // Círculo de ingredientes no 1º quadro da explosão (fração do quadro)
+  const CIRCLE = { cx: 0.52, cy: 0.205, w: 0.76 };
+  // Mapa rolagem → quadro. Trechos mais planos = pausas para ler.
+  const KEYS = [
+    [0.000, 0], [0.060, 0], [0.160, 13], [0.215, 18],
+    [0.270, 38], [0.300, 52], [0.370, 68], [0.430, 92],
+    [0.450, 93], [0.475, 98], [0.535, 118], [0.590, 128], [0.605, 130],
+    [0.625, 131], [0.645, 136], [0.700, 140], [0.710, 141],
+    [0.730, 142], [0.800, 160], [0.860, 172], [1.000, 182]
+  ];
+  // Passagens entre vídeos, cobertas por chuva de especiarias, vapor e brilho
+  const CUTS = [
+    { at: 0.440, kind: 'rain', veil: 0.80 },
+    { at: 0.615, kind: 'steam', veil: 0.80 },
+    { at: 0.720, kind: 'steam', veil: 0.85 }
+  ];
+  const CUT_W = 0.022;
+  const CHAPTERS = [0, 0.10, 0.80];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const story = document.getElementById('story');
+  const film = document.getElementById('film'), fctx = film.getContext('2d');
+  const dust = document.getElementById('dust'), dctx = dust.getContext('2d');
+  const logo = document.getElementById('logo');
+  const beats = [...document.querySelectorAll('.beat')];
+  const dots = [...document.querySelectorAll('.chapters i')];
+
+  // ---------- quadros ----------
+  const frames = new Array(FRAME_COUNT);
+  let loaded = 0;
+  function load(i) {
+    return new Promise(res => {
+      if (frames[i]) return res();
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => { frames[i] = im; loaded++; progress(); res(); };
+      im.onerror = () => res();
+      im.src = SRC(i);
+    });
+  }
+  const bar = document.getElementById('bar'), pct = document.getElementById('pct');
+  let critical = [];
+  for (let i = 0; i < FRAME_COUNT; i += 6) critical.push(i);
+  critical.push(FRAME_COUNT - 1);
+  function progress() {
+    const p = Math.min(1, loaded / critical.length);
+    bar.style.width = (p * 100).toFixed(0) + '%';
+    pct.textContent = Math.round(p * 100) + '%';
+  }
+  function nearest(i) {
+    if (frames[i]) return frames[i];
+    for (let d = 1; d < FRAME_COUNT; d++) {
+      if (frames[i - d]) return frames[i - d];
+      if (frames[i + d]) return frames[i + d];
+    }
+    return null;
+  }
+
+  // ---------- geometria ----------
+  let W = 0, H = 0, DPR = 1, stage = { x: 0, y: 0, w: 0, h: 0 }, wide = false;
+  function resize() {
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = film.clientWidth; H = film.clientHeight;
+    for (const c of [film, dust]) { c.width = Math.round(W * DPR); c.height = Math.round(H * DPR); }
+    wide = W / H > 0.8;
+    if (!wide) {
+      const s = Math.max(W / IMG_W, H / IMG_H);
+      stage.w = IMG_W * s; stage.h = IMG_H * s;
+      stage.x = (W - stage.w) / 2; stage.y = Math.min(0, (H - stage.h) / 2);
+    } else {
+      stage.h = H; stage.w = H * IMG_W / IMG_H;
+      stage.x = Math.min(W - stage.w - W * 0.04, Math.max(W * 0.5, W * 0.62 - stage.w / 2)); stage.y = 0;
+    }
+    buildDust();
+    render(true);
+  }
+
+  // ---------- poeira das letras ----------
+  let particles = [];
+  function buildDust() {
+    if (!logo.complete || !logo.naturalWidth) return;
+    RATIO = logo.naturalHeight / logo.naturalWidth;
+    const size = 240, sh = Math.round(size * RATIO), c = document.createElement('canvas');
+    c.width = size; c.height = sh;
+    const x = c.getContext('2d');
+    x.drawImage(logo, 0, 0, size, sh);
+    let data;
+    try { data = x.getImageData(0, 0, size, sh).data; } catch (e) { particles = []; return; }
+    const out = [];
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let py = Math.floor(sh * 0.28); py < sh * 0.65; py += 2) {
+      for (let px = Math.floor(size * 0.17); px < size * 0.84; px += 2) {
+        const k = (py * size + px) * 4;
+        if (data[k] > 238 && data[k + 1] > 238 && data[k + 2] > 238 && data[k + 3] > 200) {
+          const a = rnd() * Math.PI * 2;
+          out.push({
+            u: px / size, v: py / sh,
+            dx: Math.cos(a) * (0.6 + rnd()), dy: Math.sin(a) * (0.6 + rnd()) - 0.9 - rnd() * 0.6,
+            r: 0.8 + rnd() * 1.6, d: rnd() * 0.35,
+            c: rnd() < 0.55 ? '#d9a93c' : rnd() < 0.6 ? '#f3e2b0' : '#9a5a2e'
+          });
+        }
+      }
+    }
+    particles = out;
+  }
+
+  // ---------- partículas das passagens ----------
+  const WIPE = [];
+  (() => {
+    let seed = 11; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 240; i++) {
+      const t = r();
+      WIPE.push({
+        x: r(), y: r(), v: r() * 0.5, ph: r() * 6.28, rot: r() * 6.28, spin: (r() - 0.5) * 6,
+        a: 0.55 + r() * 0.45, s: 0.6 + r() * 0.9,
+        type: t < 0.38 ? 'dust' : t < 0.6 ? 'clove' : t < 0.78 ? 'cinnamon' : t < 0.92 ? 'leaf' : 'petal'
+      });
+    }
+  })();
+  function drawBit(kind, s, x, y, u) {
+    const sc = s.s * (W > 700 ? 1.4 : 1);
+    if (kind === 'steam') {
+      const rr = 26 * sc;
+      const g = dctx.createRadialGradient(x, y, 0, x, y, rr);
+      g.addColorStop(0, s.type === 'dust' ? 'rgba(232,190,90,.55)' : 'rgba(255,255,255,.9)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      dctx.fillStyle = g; dctx.beginPath(); dctx.arc(x, y, rr, 0, 6.29); dctx.fill();
+      return;
+    }
+    if (kind === 'spark' || s.type === 'dust') {
+      dctx.fillStyle = s.ph > 3 ? '#e2b44a' : '#f6e3a8';
+      dctx.beginPath(); dctx.arc(x, y, 2.2 * sc, 0, 6.29); dctx.fill();
+      return;
+    }
+    dctx.save(); dctx.translate(x, y); dctx.rotate(s.rot + u * s.spin);
+    if (s.type === 'clove') {
+      dctx.fillStyle = '#5a2f1c';
+      dctx.fillRect(-1.6 * sc, 0, 3.2 * sc, 13 * sc);
+      dctx.beginPath(); dctx.arc(0, 0, 4.2 * sc, 0, 6.29); dctx.fill();
+    } else if (s.type === 'cinnamon') {
+      dctx.fillStyle = '#9a5a2e';
+      dctx.fillRect(-3 * sc, -14 * sc, 6 * sc, 28 * sc);
+      dctx.fillStyle = '#7a4322';
+      dctx.fillRect(-0.8 * sc, -14 * sc, 1.6 * sc, 28 * sc);
+    } else if (s.type === 'leaf') {
+      dctx.fillStyle = '#4f8a3c';
+      dctx.beginPath(); dctx.ellipse(0, 0, 5 * sc, 11 * sc, 0, 0, 6.29); dctx.fill();
+    } else {
+      dctx.fillStyle = s.ph > 3 ? '#e98a2b' : '#d9539a';
+      dctx.beginPath(); dctx.ellipse(0, 0, 4 * sc, 7 * sc, 0, 0, 6.29); dctx.fill();
+    }
+    dctx.restore();
+  }
+
+  // ---------- utilidades ----------
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const seg = (p, a, b) => clamp((p - a) / (b - a), 0, 1);
+  function frameAt(p) {
+    for (let k = 1; k < KEYS.length; k++) {
+      if (p <= KEYS[k][0]) {
+        const [p0, f0] = KEYS[k - 1], [p1, f1] = KEYS[k];
+        return lerp(f0, f1, (p - p0) / (p1 - p0 || 1));
+      }
+    }
+    return FRAME_COUNT - 1;
+  }
+  function rawProgress() {
+    const r = story.getBoundingClientRect();
+    return clamp(-r.top / (r.height - innerHeight), 0, 1);
+  }
+
+  // ---------- desenho ----------
+  let sp = 0, frameF = 0, last = { p: -1, f: -1 };
+  function render(force) {
+    const p = sp;
+    const ff = frameF;
+    if (!force && Math.abs(p - last.p) < 1e-5 && Math.abs(ff - last.f) < 1e-3) return;
+    last = { p, f: ff };
+
+    // Cravinho sobe de baixo da tela
+    const rise = easeIO(seg(p, 0.045, 0.15));
+    const lift = (1 - rise) * stage.h * 0.55;
+    fctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    fctx.fillStyle = '#ffffff';
+    fctx.fillRect(0, 0, W, H);
+    const i0 = Math.floor(ff), t = ff - i0;
+    const a = nearest(i0), b = nearest(Math.min(FRAME_COUNT - 1, i0 + 1));
+    fctx.globalAlpha = rise < 0.001 ? 0 : clamp(rise * 1.6, 0, 1);
+    if (a) fctx.drawImage(a, stage.x, stage.y + lift, stage.w, stage.h);
+    if (b && b !== a && t > 0.02) { fctx.globalAlpha *= t; fctx.drawImage(b, stage.x, stage.y + lift, stage.w, stage.h); }
+    fctx.globalAlpha = 1;
+    if (wide) {
+      const g = fctx.createLinearGradient(stage.x - 2, 0, stage.x + stage.w * 0.12, 0);
+      g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      fctx.fillStyle = g; fctx.fillRect(stage.x - 2, 0, stage.w * 0.12 + 2, H);
+      const g2 = fctx.createLinearGradient(stage.x + stage.w * 0.88, 0, stage.x + stage.w + 2, 0);
+      g2.addColorStop(0, 'rgba(255,255,255,0)'); g2.addColorStop(1, 'rgba(255,255,255,1)');
+      fctx.fillStyle = g2; fctx.fillRect(stage.x + stage.w * 0.88, 0, stage.w * 0.12 + 2, H);
+    }
+
+    // Logo: centro da tela → posição do círculo
+    const startSize = Math.min(W * (wide ? 0.42 : 0.82), H * 0.52);
+    const sx = (W - startSize) / 2, sy = (H - startSize * RATIO) / 2 - H * (wide ? 0.04 : 0.06);
+    const endSize = stage.w * CIRCLE.w;
+    const ex = stage.x + stage.w * CIRCLE.cx - endSize / 2;
+    const ey = stage.y + stage.h * CIRCLE.cy - endSize * RATIO / 2;
+    const m = easeIO(seg(p, 0.05, 0.16));
+    const size = lerp(startSize, endSize, m);
+    const lx = lerp(sx, ex, m), ly = lerp(sy, ey, m);
+    const fade = seg(p, 0.172, 0.21);
+    logo.style.transform = `translate(${lx}px, ${ly}px) scale(${size / 100})`;
+    logo.style.opacity = (1 - easeIO(fade)).toFixed(3);
+
+    // Letras viram poeira dourada
+    dctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    dctx.clearRect(0, 0, W, H);
+    const blow = seg(p, 0.168, 0.26);
+    if (blow > 0 && blow < 1 && particles.length) {
+      const reach = stage.w * 0.55;
+      for (const q of particles) {
+        const tt = clamp((blow - q.d * 0.5) / (1 - q.d * 0.5), 0, 1);
+        if (tt <= 0) continue;
+        const e = ease(tt);
+        const x0 = lx + q.u * size, y0 = ly + q.v * size * RATIO;
+        const x = x0 + q.dx * e * reach * 0.6, y = y0 + q.dy * e * reach * 0.5 + tt * tt * reach * 0.25;
+        dctx.globalAlpha = (1 - tt) * 0.95;
+        dctx.fillStyle = q.c;
+        dctx.beginPath(); dctx.arc(x, y, q.r * (1 - tt * 0.5) * (W > 700 ? 1.3 : 1), 0, Math.PI * 2); dctx.fill();
+      }
+      dctx.globalAlpha = 1;
+    }
+
+    // Passagens: chuva de especiarias, vapor e brilho cobrindo a troca de vídeo
+    for (const cut of CUTS) {
+      const d = (p - cut.at) / CUT_W;
+      if (Math.abs(d) >= 1) continue;
+      const k = 1 - Math.abs(d);
+      const u = (d + 1) / 2;
+      const kk = easeIO(k);
+      dctx.globalAlpha = kk * cut.veil;
+      const vg = dctx.createRadialGradient(W / 2, H * 0.5, 0, W / 2, H * 0.5, Math.max(W, H) * 0.75);
+      vg.addColorStop(0, cut.kind === 'rain' ? '#fffdf6' : '#fff8e8');
+      vg.addColorStop(1, '#ffffff');
+      dctx.fillStyle = vg; dctx.fillRect(0, 0, W, H);
+      for (const s of WIPE) {
+        let x, y;
+        if (cut.kind === 'rain') { x = s.x * W; y = (s.y - 0.35 + u * (1.1 + s.v)) * H; }
+        else if (cut.kind === 'steam') { x = (s.x + Math.sin(u * 6 + s.ph) * 0.04) * W; y = (s.y + 0.35 - u * (1.0 + s.v)) * H; }
+        else { x = (s.x + (s.x - 0.5) * u * 0.3) * W; y = (s.y + (s.y - 0.5) * u * 0.3) * H; }
+        dctx.globalAlpha = kk * s.a;
+        drawBit(cut.kind, s, x, y, u);
+      }
+    }
+    dctx.globalAlpha = 1;
+
+    // Textos e capítulos
+    for (const el of beats) {
+      const on = p >= +el.dataset.from && p < +el.dataset.to;
+      el.classList.toggle('on', on);
+    }
+    skip.classList.toggle('hide', linksVisible || p > 0.76);
+    let ch = 0; CHAPTERS.forEach((c, k) => { if (p >= c - 0.01) ch = k; });
+    dots.forEach((d, k) => d.classList.toggle('on', k === ch));
+  }
+
+  function tick() {
+    const target = rawProgress();
+    sp += (target - sp) * (reduce ? 1 : 0.14);
+    if (Math.abs(target - sp) < 0.00005) sp = target;
+    const tf = frameAt(sp);
+    frameF += (tf - frameF) * (reduce ? 1 : 0.22);
+    if (Math.abs(tf - frameF) < 0.01) frameF = tf;
+    render(false);
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- copiar ----------
+  document.querySelectorAll('.copy').forEach(btn => btn.addEventListener('click', () => {
+    const el = document.getElementById(btn.dataset.copy);
+    const txt = el.textContent.trim();
+    const done = () => { const o = btn.textContent; btn.textContent = 'Copiado'; setTimeout(() => btn.textContent = o, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, () => { getSelection().selectAllChildren(el); });
+    } else { getSelection().selectAllChildren(el); }
+  }));
+
+  // ---------- links: atalho e botão flutuante ----------
+  const skip = document.getElementById('skip'), float = document.getElementById('float');
+  const linksEl = document.getElementById('links');
+  let linksVisible = false;
+  if ('IntersectionObserver' in window && linksEl) {
+    new IntersectionObserver(([e]) => {
+      linksVisible = e.isIntersecting;
+      float.classList.toggle('show', e.isIntersecting);
+    }, { threshold: 0.12 }).observe(linksEl);
+  }
+
+  // ---------- início ----------
+  async function start() {
+    const go = () => { resize(); };
+    if (logo.complete) go(); else logo.addEventListener('load', go, { once: true });
+    addEventListener('resize', resize);
+    await Promise.all(critical.map(load));
+    document.getElementById('loader').classList.add('out');
+    sp = rawProgress(); frameF = frameAt(sp);
+    render(true);
+    requestAnimationFrame(tick);
+    for (let i = 0; i < FRAME_COUNT; i += 8) {
+      const batch = [];
+      for (let j = i; j < Math.min(FRAME_COUNT, i + 8); j++) batch.push(load(j));
+      await Promise.all(batch);
+    }
+  }
+  start();
+})();
+</script>
+</body>
+</html>
