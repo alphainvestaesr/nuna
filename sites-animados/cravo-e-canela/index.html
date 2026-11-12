@@ -41,7 +41,7 @@ body { background: var(--paper); color: var(--ink); font-family: var(--body); fo
 @keyframes breathe { 50% { transform: scale(1.04); } }
 
 /* Palco */
-.story { position: relative; height: 1150vh; }
+.story { position: relative; height: 1000vh; }
 .sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--paper); }
 #film, #dust { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #dust { pointer-events: none; }
@@ -68,6 +68,11 @@ body { background: var(--paper); color: var(--ink); font-family: var(--body); fo
 
 .btn { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 12px 18px; border-radius: 999px; background: var(--leaf); color: #fff; font-family: var(--brand); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; text-decoration: none; }
 .btn:focus-visible, .copy:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* Celular: nas cenas de perto o texto sobe, pra não tapar a xícara */
+@media (max-aspect-ratio: 4/5) {
+  .beat.card.top { bottom: auto; top: calc(16px + env(safe-area-inset-top, 0px)); }
+}
 
 /* Marcadores de capítulo */
 .chapters { position: absolute; z-index: 6; right: calc(10px + env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); display: grid; gap: 10px; }
@@ -158,24 +163,24 @@ footer span { font-size: 13px; color: var(--ink-soft); }
         <h2>Tudo começa com <em>um sopro.</em></h2>
       </div>
 
-      <div class="beat card" data-from="0.27" data-to="0.40">
+      <div class="beat card" data-from="0.26" data-to="0.40">
         <div class="eyebrow">Da logo para a prateleira</div>
         <h2>Ervas, chás, grãos e <em>especiarias.</em></h2>
         <p>Tudo o que está na nossa logo, você encontra na loja.</p>
       </div>
 
-      <div class="beat card" data-from="0.48" data-to="0.60">
+      <div class="beat card top" data-from="0.475" data-to="0.60">
         <div class="eyebrow">O nome da casa</div>
         <h2>Cravo e canela, <em>direto na xícara.</em></h2>
       </div>
 
-      <div class="beat card" data-from="0.67" data-to="0.79">
+      <div class="beat card top" data-from="0.635" data-to="0.705">
         <div class="eyebrow">Pausa pro chá</div>
         <h2>Sinta <em>esse cheiro.</em></h2>
         <p>Chás e blends pra acordar, acalmar e aquecer.</p>
       </div>
 
-      <div class="beat card" data-from="0.87" data-to="1.01">
+      <div class="beat card top" data-from="0.82" data-to="1.01">
         <div class="eyebrow">Cravo &amp; Canela</div>
         <h2>Revigore <em>o seu dia.</em></h2>
         <a class="btn" href="#visite">Venha nos visitar ↓</a>
@@ -192,7 +197,7 @@ footer span { font-size: 13px; color: var(--ink-soft); }
         <h3>Duas irmãs, uma loja e <em>muito chá.</em></h3>
         <p class="lead">A Cravo &amp; Canela é a nossa loja de produtos naturais. Uma de nós cuida da loja e do atendimento. A outra cuida das redes, das fotos e de tudo que chega até você por aqui. E a Cravinho é a mascote que representa a gente.</p>
       </div>
-      <img src="galeria/cena-4-tomando-cha.webp" alt="A Cravinho tomando chá de cravo e canela" loading="lazy">
+      <img src="galeria/cena-5-renovada.webp" alt="A Cravinho sorrindo com o chá de cravo e canela" loading="lazy">
     </div>
   </section>
 
@@ -208,8 +213,8 @@ footer span { font-size: 13px; color: var(--ink-soft); }
       </div>
       <div class="frames">
         <figure><img src="galeria/cena-2b-explosao-aberta.webp" alt="A Cravinho sopra e os ingredientes da logo se espalham" loading="lazy"><figcaption>O sopro</figcaption></figure>
-        <figure><img src="galeria/cena-3-giro-com-xicara.webp" alt="A Cravinho gira com a xícara enquanto cravo e canela caem dentro" loading="lazy"><figcaption>O giro</figcaption></figure>
-        <figure><img src="galeria/cena-4-tomando-cha.webp" alt="A Cravinho toma o chá de olhos fechados" loading="lazy"><figcaption>O chá</figcaption></figure>
+        <figure><img src="galeria/cena-3-xicara.webp" alt="Cravo e canela caem na xícara da Cravinho" loading="lazy"><figcaption>A xícara</figcaption></figure>
+        <figure><img src="galeria/cena-5-renovada.webp" alt="A Cravinho renovada depois do chá" loading="lazy"><figcaption>O chá</figcaption></figure>
       </div>
     </div>
   </section>
@@ -238,19 +243,28 @@ footer span { font-size: 13px; color: var(--ink-soft); }
 
 <script>
 (() => {
-  const FRAME_COUNT = 255;
+  const FRAME_COUNT = 183;
   const SRC = i => 'quadros/q' + String(i + 1).padStart(3, '0') + '.webp';
   const IMG_W = 540, IMG_H = 960;
+  let RATIO = 795 / 900; // altura/largura da logo sem fundo
   // Círculo de ingredientes no 1º quadro da explosão (fração do quadro)
-  const CIRCLE = { cx: 0.52, cy: 0.205, w: 0.80 };
+  const CIRCLE = { cx: 0.52, cy: 0.205, w: 0.76 };
   // Mapa rolagem → quadro. Trechos mais planos = pausas para ler.
   const KEYS = [
-    [0.000, 0], [0.060, 0], [0.165, 11], [0.215, 14],
-    [0.270, 30], [0.300, 44], [0.380, 60], [0.430, 76],
-    [0.500, 112], [0.535, 124], [0.590, 130], [0.650, 160],
-    [0.690, 180], [0.770, 188], [0.820, 198], [0.880, 232], [1.000, 254]
+    [0.000, 0], [0.060, 0], [0.160, 13], [0.215, 18],
+    [0.270, 38], [0.300, 52], [0.370, 68], [0.430, 92],
+    [0.450, 93], [0.475, 98], [0.535, 118], [0.590, 128], [0.605, 130],
+    [0.625, 131], [0.645, 136], [0.700, 140], [0.710, 141],
+    [0.730, 142], [0.800, 160], [0.860, 172], [1.000, 182]
   ];
-  const CHAPTERS = [0, 0.10, 0.27, 0.48, 0.67, 0.87];
+  // Passagens entre vídeos, cobertas por chuva de especiarias, vapor e brilho
+  const CUTS = [
+    { at: 0.440, kind: 'rain', veil: 0.80 },
+    { at: 0.615, kind: 'steam', veil: 0.80 },
+    { at: 0.720, kind: 'steam', veil: 0.85 }
+  ];
+  const CUT_W = 0.022;
+  const CHAPTERS = [0, 0.10, 0.26, 0.475, 0.635, 0.82];
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const story = document.getElementById('story');
@@ -314,21 +328,22 @@ footer span { font-size: 13px; color: var(--ink-soft); }
   let particles = [];
   function buildDust() {
     if (!logo.complete || !logo.naturalWidth) return;
-    const size = 220, c = document.createElement('canvas');
-    c.width = c.height = size;
+    RATIO = logo.naturalHeight / logo.naturalWidth;
+    const size = 240, sh = Math.round(size * RATIO), c = document.createElement('canvas');
+    c.width = size; c.height = sh;
     const x = c.getContext('2d');
-    x.drawImage(logo, 0, 0, size, size);
+    x.drawImage(logo, 0, 0, size, sh);
     let data;
-    try { data = x.getImageData(0, 0, size, size).data; } catch (e) { particles = []; return; }
+    try { data = x.getImageData(0, 0, size, sh).data; } catch (e) { particles = []; return; }
     const out = [];
     let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let py = Math.floor(size * 0.33); py < size * 0.63; py += 2) {
-      for (let px = Math.floor(size * 0.2); px < size * 0.82; px += 2) {
+    for (let py = Math.floor(sh * 0.28); py < sh * 0.65; py += 2) {
+      for (let px = Math.floor(size * 0.17); px < size * 0.84; px += 2) {
         const k = (py * size + px) * 4;
         if (data[k] > 238 && data[k + 1] > 238 && data[k + 2] > 238 && data[k + 3] > 200) {
           const a = rnd() * Math.PI * 2;
           out.push({
-            u: px / size, v: py / size,
+            u: px / size, v: py / sh,
             dx: Math.cos(a) * (0.6 + rnd()), dy: Math.sin(a) * (0.6 + rnd()) - 0.9 - rnd() * 0.6,
             r: 0.8 + rnd() * 1.6, d: rnd() * 0.35,
             c: rnd() < 0.55 ? '#d9a93c' : rnd() < 0.6 ? '#f3e2b0' : '#9a5a2e'
@@ -337,6 +352,54 @@ footer span { font-size: 13px; color: var(--ink-soft); }
       }
     }
     particles = out;
+  }
+
+  // ---------- partículas das passagens ----------
+  const WIPE = [];
+  (() => {
+    let seed = 11; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 240; i++) {
+      const t = r();
+      WIPE.push({
+        x: r(), y: r(), v: r() * 0.5, ph: r() * 6.28, rot: r() * 6.28, spin: (r() - 0.5) * 6,
+        a: 0.55 + r() * 0.45, s: 0.6 + r() * 0.9,
+        type: t < 0.38 ? 'dust' : t < 0.6 ? 'clove' : t < 0.78 ? 'cinnamon' : t < 0.92 ? 'leaf' : 'petal'
+      });
+    }
+  })();
+  function drawBit(kind, s, x, y, u) {
+    const sc = s.s * (W > 700 ? 1.4 : 1);
+    if (kind === 'steam') {
+      const rr = 26 * sc;
+      const g = dctx.createRadialGradient(x, y, 0, x, y, rr);
+      g.addColorStop(0, s.type === 'dust' ? 'rgba(232,190,90,.55)' : 'rgba(255,255,255,.9)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      dctx.fillStyle = g; dctx.beginPath(); dctx.arc(x, y, rr, 0, 6.29); dctx.fill();
+      return;
+    }
+    if (kind === 'spark' || s.type === 'dust') {
+      dctx.fillStyle = s.ph > 3 ? '#e2b44a' : '#f6e3a8';
+      dctx.beginPath(); dctx.arc(x, y, 2.2 * sc, 0, 6.29); dctx.fill();
+      return;
+    }
+    dctx.save(); dctx.translate(x, y); dctx.rotate(s.rot + u * s.spin);
+    if (s.type === 'clove') {
+      dctx.fillStyle = '#5a2f1c';
+      dctx.fillRect(-1.6 * sc, 0, 3.2 * sc, 13 * sc);
+      dctx.beginPath(); dctx.arc(0, 0, 4.2 * sc, 0, 6.29); dctx.fill();
+    } else if (s.type === 'cinnamon') {
+      dctx.fillStyle = '#9a5a2e';
+      dctx.fillRect(-3 * sc, -14 * sc, 6 * sc, 28 * sc);
+      dctx.fillStyle = '#7a4322';
+      dctx.fillRect(-0.8 * sc, -14 * sc, 1.6 * sc, 28 * sc);
+    } else if (s.type === 'leaf') {
+      dctx.fillStyle = '#4f8a3c';
+      dctx.beginPath(); dctx.ellipse(0, 0, 5 * sc, 11 * sc, 0, 0, 6.29); dctx.fill();
+    } else {
+      dctx.fillStyle = s.ph > 3 ? '#e98a2b' : '#d9539a';
+      dctx.beginPath(); dctx.ellipse(0, 0, 4 * sc, 7 * sc, 0, 0, 6.29); dctx.fill();
+    }
+    dctx.restore();
   }
 
   // ---------- utilidades ----------
@@ -390,10 +453,10 @@ footer span { font-size: 13px; color: var(--ink-soft); }
 
     // Logo: centro da tela → posição do círculo
     const startSize = Math.min(W * (wide ? 0.42 : 0.82), H * 0.52);
-    const sx = (W - startSize) / 2, sy = (H - startSize) / 2 - H * (wide ? 0.04 : 0.06);
+    const sx = (W - startSize) / 2, sy = (H - startSize * RATIO) / 2 - H * (wide ? 0.04 : 0.06);
     const endSize = stage.w * CIRCLE.w;
     const ex = stage.x + stage.w * CIRCLE.cx - endSize / 2;
-    const ey = stage.y + stage.h * CIRCLE.cy - endSize / 2;
+    const ey = stage.y + stage.h * CIRCLE.cy - endSize * RATIO / 2;
     const m = easeIO(seg(p, 0.05, 0.16));
     const size = lerp(startSize, endSize, m);
     const lx = lerp(sx, ex, m), ly = lerp(sy, ey, m);
@@ -411,7 +474,7 @@ footer span { font-size: 13px; color: var(--ink-soft); }
         const tt = clamp((blow - q.d * 0.5) / (1 - q.d * 0.5), 0, 1);
         if (tt <= 0) continue;
         const e = ease(tt);
-        const x0 = lx + q.u * size, y0 = ly + q.v * size;
+        const x0 = lx + q.u * size, y0 = ly + q.v * size * RATIO;
         const x = x0 + q.dx * e * reach * 0.6, y = y0 + q.dy * e * reach * 0.5 + tt * tt * reach * 0.25;
         dctx.globalAlpha = (1 - tt) * 0.95;
         dctx.fillStyle = q.c;
@@ -419,6 +482,29 @@ footer span { font-size: 13px; color: var(--ink-soft); }
       }
       dctx.globalAlpha = 1;
     }
+
+    // Passagens: chuva de especiarias, vapor e brilho cobrindo a troca de vídeo
+    for (const cut of CUTS) {
+      const d = (p - cut.at) / CUT_W;
+      if (Math.abs(d) >= 1) continue;
+      const k = 1 - Math.abs(d);
+      const u = (d + 1) / 2;
+      const kk = easeIO(k);
+      dctx.globalAlpha = kk * cut.veil;
+      const vg = dctx.createRadialGradient(W / 2, H * 0.5, 0, W / 2, H * 0.5, Math.max(W, H) * 0.75);
+      vg.addColorStop(0, cut.kind === 'rain' ? '#fffdf6' : '#fff8e8');
+      vg.addColorStop(1, '#ffffff');
+      dctx.fillStyle = vg; dctx.fillRect(0, 0, W, H);
+      for (const s of WIPE) {
+        let x, y;
+        if (cut.kind === 'rain') { x = s.x * W; y = (s.y - 0.35 + u * (1.1 + s.v)) * H; }
+        else if (cut.kind === 'steam') { x = (s.x + Math.sin(u * 6 + s.ph) * 0.04) * W; y = (s.y + 0.35 - u * (1.0 + s.v)) * H; }
+        else { x = (s.x + (s.x - 0.5) * u * 0.3) * W; y = (s.y + (s.y - 0.5) * u * 0.3) * H; }
+        dctx.globalAlpha = kk * s.a;
+        drawBit(cut.kind, s, x, y, u);
+      }
+    }
+    dctx.globalAlpha = 1;
 
     // Textos e capítulos
     for (const el of beats) {
